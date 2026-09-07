@@ -68,18 +68,30 @@ dismiss a flag that doesn't hold up (ADR-0006). Flag wording may use calibrated
 hedging ("this could allow...") to reflect that partial confidence, rather than
 stating flatly or being omitted (ADR-0007).
 
-> **Build-blocking open item:** ADR-0007 permits hedging language but does not yet
-> bound it. Before this ships, define what hedging vocabulary may and may not
-> imply — specifically, that it can express uncertainty about interpretation but
-> never imply a claim the source sentence doesn't support (`CLAUDE.md`'s "state
-> only what the document says" rule still applies to a hedged flag).
+Hedging is bounded to one trigger: genuine ambiguity in the source sentence's own
+wording, and nothing else (ADR-0010). Low confidence for any other reason — e.g.
+how a court would treat the clause — either produces a plainly-stated flag or gets
+dropped under ADR-0004's plausibility filter; it never produces hedged wording,
+because the reader has no way to check a hedge that isn't about the sentence
+itself.
+
+A reader's own **red line** overrides the plausibility and confidence filters
+entirely: a clause matching a red line always produces a flag, never silently
+dropped for being implausible or low-confidence (ADR-0013). It still needs a
+citable source sentence like any other flag — the override applies to filtering,
+not to ADR-0001's citation requirement.
 
 **Clean read:** a document with no flags or gaps above the severity threshold
 returns a dedicated "this reads as a normal agreement" result — a first-class
 outcome, not an empty list (ADR-0008). The production zero-flag rate is tracked as
-a health metric: if it's near zero, the severity filter is broken, and this metric
-is the only thing that would show it. (Baseline/threshold for "too high or too low"
-is not yet decided — ADR-0008.)
+a health metric against a provisional baseline of 20% (ADR-0011) — a placeholder to
+watch for drift against until real production data replaces it, not a validated
+target. The comparison stays fixed against that 20% until a switchover point, then
+becomes a rolling window instead; the switchover fires at whichever comes first,
+a document-count threshold or a fixed time since launch, so a fast-adopting
+product isn't stuck on the placeholder longer than needed and a slow-adopting one
+still switches once enough calendar time has passed (ADR-0016). Neither actual
+threshold number is set yet.
 
 ### 3. Drafted counter-offer per flagged clause
 
@@ -94,10 +106,17 @@ property of the specific clause and relationship, not a global trait of the
 freelancer, and most readers won't know their leverage in the abstract — they
 recognize it clause by clause.
 
-Gaps do not get counter-offers in v1: a counter-offer replaces existing language,
-and a gap has none to replace. (Not decided by an ADR — stated here as the default
-reading of "counter-offer" in `CONTEXT.md`; flag if a different behavior — e.g.
-drafting clause language to fill the gap — is wanted.)
+Only the soft version is drafted at analysis time; the firm version for a flag is
+generated on-demand the moment the reader switches that flag to firm, not before
+(ADR-0012) — most flags are expected to stay at the default, so this avoids paying
+for a firm draft most readers never see, at the cost of a short wait on switch.
+
+Gaps get no drafted remedy in v1 — no counter-offer, no filler clause language,
+even for a high-severity gap (ADR-0014). This leaves the single best-evidenced
+freelancer pain in the research (an absent late-payment clause) flagged but
+unresolved by v1; drafting language to fill an absence has no anchor in the
+document at all, which is generation, not reading, and stays deferred alongside
+ADR-0002's decision to defer agreement generation entirely.
 
 ### 4. Question box, answered only from the document
 
@@ -116,13 +135,27 @@ next; the same document can't be used to ask what to do about a breach that
 already happened (ADR-0003). When declined, the product says why, rather than
 staying silent.
 
+**"What should I put here instead" is also declined for a gap.** Since gaps get no
+drafted remedy (capability 3, ADR-0014), a question asking Redline to draft filler
+language gets the same decline-and-explain treatment as a remedy question, not an
+improvised answer.
+
 ### 5. Editable red line list
 
 The reader authors and edits a list of **red lines** — terms decided in advance as
-unacceptable. This list persists across documents and drives the analysis (i.e.,
-a red line violation should surface as a flag, or raise an existing flag's
-severity — exact mechanics not yet specified; flag for a follow-up decision before
-build).
+unacceptable. This list persists across documents and drives the analysis: a
+clause matching a red line always surfaces as a flag, bypassing the plausibility
+filter (ADR-0004) and confidence threshold (ADR-0006) that would otherwise apply —
+the reader's own prior decision replaces that judgment for this one clause
+(ADR-0013). It still needs a citable source sentence like any other flag; the
+override is on filtering, not on ADR-0001's citation rule.
+
+Matching is semantic, not literal: a clause triggers the override when the model
+judges it violates the intent of the red line, even if phrased nothing like how the
+reader wrote it (ADR-0015). A client's contract rarely echoes a reader's own
+wording, so requiring literal overlap would make the override rarely fire; the
+flag's citation remains the safety net if a semantic match turns out to be a
+stretch.
 
 ### 6. Saved library of past documents
 
@@ -147,7 +180,10 @@ for," above, an addition to that list made in this document.
 - **Flag dismissal rate** (quality signal). Expected to be nonzero by design under
   ADR-0006 — a flag the reader reads and dismisses as "not a problem for me" is
   the cost of favoring recall. A rate that's too high is a signal the confidence
-  threshold needs retuning, not proof the approach is wrong.
+  threshold needs retuning, not proof the approach is wrong. Track red-line-
+  triggered flags separately from ordinary ones (ADR-0013) — a reader dismissing
+  their own stated red line is a different signal than dismissing a borderline
+  flag the model raised on its own.
 
 ## Assumptions and risks
 
@@ -164,8 +200,6 @@ for," above, an addition to that list made in this document.
 - **Extraction fidelity is a correctness concern, not a convenience.** Whatever the
   in-browser parser produces is the text every citation points at; a parser bug
   surfaces as a citation bug (ADR-0001).
-- **Hedging vocabulary is unbounded.** See the build-blocking open item under
-  capability 2.
 - **Regulatory posture is not neutral.** The FTC's Feb 2025 action against DoNotPay
   penalized AI-legal-substitute claims made without attorney-validated output.
   Positioning copy ("know what you're signing") is a compliance surface, not just
@@ -173,11 +207,13 @@ for," above, an addition to that list made in this document.
 
 ## Open items before build
 
-- Define the hedging vocabulary bound (ADR-0007).
-- Decide the zero-flag-rate baseline that counts as healthy (ADR-0008).
-- Decide whether soft/firm counter-offer text is pre-generated per flag or
-  generated lazily on stance switch (ADR-0009).
-- Decide how a red line violation affects a flag's severity or existence
-  (capability 5, above).
-- Decide whether gaps get any drafted remedy in v1, or stay flag/question-only
-  (capability 3, above).
+All seven items from the previous two drafts are resolved — ADR-0010 through
+ADR-0016. What's left is smaller, operational detail rather than product
+decisions:
+
+- **The document-count and time thresholds for the drift switchover** (ADR-0016) —
+  the mechanism is decided, the actual numbers are not.
+- **An evaluation approach for semantic red-line matching** (ADR-0015) — matching
+  now depends on model judgment rather than exact string comparison, which needs
+  its own test method before it ships, distinct from ADR-0001's citation-matching
+  test.
