@@ -40,3 +40,11 @@ _Avoid_: priority, score, risk level
 **Remedy question**:
 A question about what the reader can do now about an agreement already in force. Out of scope, and answered as such.
 _Avoid_: legal advice, dispute question
+
+**Stance**:
+The reader-selected posture — soft or firm — that determines how strongly a counter-offer pushes back on a flagged clause. Chosen per flag; defaults to soft.
+_Avoid_: tone, aggressiveness, mode
+
+**Clean read**:
+The result when a document produces no flags above the severity threshold. A first-class outcome, not an empty state.
+_Avoid_: no issues found, empty result, no findings
