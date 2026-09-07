@@ -15,16 +15,15 @@ Not job-seekers, not renters, not consumer ToS.
 
 That last exclusion narrows `CLAUDE.md`'s original framing ("a contract, lease,
 freelance agreement, or terms of service") further than the settled-decisions list
-does explicitly, so it's worth stating plainly here: **v1 does not target consumer
-terms of service**, even though nothing in `CLAUDE.md` forbids it by name. Two
-independent reasons converge on this. First, ADR-0002 already scopes the reader to
-freelancers negotiating with clients — a ToS is not that. Second, `research/summary.md`
-§5.2 found the best-evidenced clause harms (auto-renewal, arbitration waivers) live
-in take-it-or-leave-it consumer ToS with no counter-offer to draft, while a free
-competitor (ToS;DR) already covers the major services. Building for ToS would mean
-building the one capability — counter-offers — that doesn't apply there. **Flag for
-sign-off:** this is a real narrowing of the product description in `CLAUDE.md`, not
-just an ADR restatement; confirm it before treating it as settled.
+does explicitly. **Confirmed 2026-09-07: v1 does not accept consumer terms of
+service as input at all**, even though nothing in `CLAUDE.md`'s settled-decisions
+list forbids it by name (ADR-0017). Two independent reasons converge on this.
+First, ADR-0002 already scopes the reader to freelancers negotiating with clients —
+a ToS is not that. Second, `research/summary.md` §5.2 found the best-evidenced
+clause harms (auto-renewal, arbitration waivers) live in take-it-or-leave-it
+consumer ToS with no counter-offer to draft, while a free competitor (ToS;DR)
+already covers the major services. Building for ToS would mean building the one
+capability — counter-offers — that doesn't apply there.
 
 **Known, accepted gap:** only 28% of freelancers use a contract for any given gig
 (ADR-0002). Redline reads documents; the 72% without one get nothing from v1. Not a
@@ -87,11 +86,10 @@ outcome, not an empty list (ADR-0008). The production zero-flag rate is tracked 
 a health metric against a provisional baseline of 20% (ADR-0011) — a placeholder to
 watch for drift against until real production data replaces it, not a validated
 target. The comparison stays fixed against that 20% until a switchover point, then
-becomes a rolling window instead; the switchover fires at whichever comes first,
-a document-count threshold or a fixed time since launch, so a fast-adopting
-product isn't stuck on the placeholder longer than needed and a slow-adopting one
-still switches once enough calendar time has passed (ADR-0016). Neither actual
-threshold number is set yet.
+becomes a rolling window instead; the switchover fires at whichever comes first —
+**500 analyzed documents, or 90 days since launch** — so a fast-adopting product
+isn't stuck on the placeholder longer than needed and a slow-adopting one still
+switches once enough calendar time has passed (ADR-0016).
 
 ### 3. Drafted counter-offer per flagged clause
 
@@ -157,6 +155,21 @@ wording, so requiring literal overlap would make the override rarely fire; the
 flag's citation remains the safety net if a semantic match turns out to be a
 stretch.
 
+Match quality is checked with an LLM-as-judge — a second model call reviews
+whether a match reasonably fits the red line's intent — rather than a
+human-labeled test set (ADR-0018). This trades some rigor for scaling
+automatically to whatever a reader writes — treat its output as a
+review-priority signal, not proof of correctness, since it shares the same
+blind spots as the model it's checking.
+
+When the judge disagrees with a match, the flag still renders exactly as it
+would otherwise — no suppression, no confidence marker shown to the reader.
+The disagreement is logged for review instead (ADR-0019). Holding the flag
+back would break ADR-0013's guarantee that a red line is never silently
+dropped; a visible confidence marker would stretch ADR-0010's hedging bound
+to a kind of uncertainty — match quality, judged by a second model — the
+reader has no way to verify.
+
 ### 6. Saved library of past documents
 
 Past analyses are saved and browsable. Only the extracted text is stored — never
@@ -167,7 +180,7 @@ list and renewal reads useful across sessions rather than per-upload.
 
 Payments, billing, OCR for scanned documents, and sharing a document between
 users — see `CLAUDE.md` for why. Consumer terms of service — see "Who this is
-for," above, an addition to that list made in this document.
+for," above, and ADR-0017.
 
 ## Success metrics
 
@@ -207,13 +220,5 @@ for," above, an addition to that list made in this document.
 
 ## Open items before build
 
-All seven items from the previous two drafts are resolved — ADR-0010 through
-ADR-0016. What's left is smaller, operational detail rather than product
-decisions:
-
-- **The document-count and time thresholds for the drift switchover** (ADR-0016) —
-  the mechanism is decided, the actual numbers are not.
-- **An evaluation approach for semantic red-line matching** (ADR-0015) — matching
-  now depends on model judgment rather than exact string comparison, which needs
-  its own test method before it ships, distinct from ADR-0001's citation-matching
-  test.
+None. Every item raised across this PRD's drafts is resolved — ADR-0001 through
+ADR-0019.

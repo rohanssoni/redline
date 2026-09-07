@@ -4,8 +4,8 @@ Status: accepted
 
 The zero-flag rate (ADR-0008) is compared against the fixed 20% baseline (ADR-0011)
 until a switchover point, then compared against a rolling window instead. The
-switchover fires at whichever comes first: a document-count threshold or a fixed time
-period since launch.
+switchover fires at whichever comes first: **500 analyzed documents, or 90 days since
+launch.**
 
 ## Why
 
@@ -18,7 +18,10 @@ enough calendar time has passed to be confident sparse volume isn't itself the a
 
 ## Consequences
 
-- Neither actual threshold — the document count or the time period — is set here; both
-  need an analytics/product decision before this can run in production.
+- 500 documents gives a reasonably tight estimate of the zero-flag rate around a 20%
+  baseline (roughly ±3.5 points at typical confidence levels); 90 days is one quarter,
+  a natural review cadence. Both are chosen for statistical and operational
+  reasonableness, not derived from Redline-specific data — revisit if actual document
+  volume or variance looks different from this assumption once real data exists.
 - Two comparison logics (fixed vs. rolling) have to be built and swapped, not just one —
   a small amount of extra implementation surface for a monitoring feature.
