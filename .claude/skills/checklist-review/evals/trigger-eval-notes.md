@@ -110,6 +110,28 @@ its own already-installed original. Restore it immediately after the run
 finishes (or if it crashes/gets interrupted — don't leave the repo without
 the real skill).
 
+**Update, same session, after re-running with the real skill isolated:**
+the shadowing theory above was only half right. With the real skill moved
+out, recall went to a flat **0%** (worse, not better) across both iterations
+run before quota cut off again. Root cause is more fundamental: `run_eval.py`
+registers its ephemeral test variant as a file under `.claude/commands/`,
+which Claude Code treats as a **slash command** (must be typed literally,
+e.g. `/checklist-review-skill-<uuid>`), not as an autonomously-triggerable
+**Skill** the way a real `.claude/skills/<name>/SKILL.md` is. A model has no
+reason to run an arbitrary slash command for a natural-language query, so
+recall was never really measuring description quality at all — it was
+measuring a mechanism that doesn't do what the script assumes it does.
+
+**Conclusion: abandon `scripts.run_loop` / `run_eval.py` for trigger
+validation in this Claude Code version.** It's not a Windows-only problem
+(the two encoding/socket bugs were real and are fixed, but this third issue
+is a Claude Code version mismatch, unrelated to OS). The direct manual test
+earlier in this file (real skill, no harness: `claude -p "is PRD.md ready"
+...`) already proved the real skill triggers correctly and immediately —
+treat that as sufficient trigger validation and don't sink further budget
+into this automation. If a future skill-creator version fixes this, it's
+worth retrying then.
+
 **Also found:** the plugin was updated since 2026-09-10's first pass — the
 active `skill-creator` version moved from `85cce0381e78` to `3ea32df27be7`.
 Re-applied both Windows patches (thread+queue reader, `encoding="utf-8"`)
