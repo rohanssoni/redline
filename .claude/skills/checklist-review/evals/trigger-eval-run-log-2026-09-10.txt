@@ -1,0 +1,98 @@
+Split: 12 train, 8 test (holdout=0.4)
+
+============================================================
+Iteration 1/5
+Description: Review a PRD, spec, or ADR in this repo against the standing checklist kept for that document type, and produce a saved report of what passed, what failed, and what's missing. Always use this when the user asks whether a document is "ready," "done," "complete," or asks to "review," "check," or "audit" a PRD, spec, or ADR � including a bare question like "are the specs ready?" or "is this ADR good to merge?" Also use before a spec would be published to the issue tracker (e.g. as a pre-check before /to-spec or /to-tickets), and when the user wants to add, update, or look at a review checklist itself. Do not use this for reviewing code changes (that's /code-review) or for writing a new PRD/spec/ADR from scratch.
+============================================================
+Train: 20/36 correct, precision=100% recall=11% accuracy=56% (102.5s)
+  [FAIL] rate=1/3 expected=True: is PRD.md ready
+  [FAIL] rate=0/3 expected=True: review docs/specs/0001-redline-v1-full-scope-spec.md against
+  [FAIL] rate=0/3 expected=True: can u double check PRD.md is actually done, i keep adding st
+  [FAIL] rate=0/3 expected=True: i want to audit all my ADRs before the eng review meeting fr
+  [FAIL] rate=0/3 expected=True: are the specs ready?
+  [PASS] rate=0/3 expected=False: review the JS file in src/utils/parse.ts for style issues an
+  [FAIL] rate=1/3 expected=True: hey can you check if ADR-0013 in docs/adr still makes sense 
+  [PASS] rate=0/3 expected=False: can you triage the open issues on github and see which ones 
+  [PASS] rate=0/3 expected=False: can you review this PR and check for bugs before I merge, it
+  [PASS] rate=0/3 expected=False: summarize what's in PRD.md for me, i dont want to read the w
+  [PASS] rate=0/3 expected=False: is my code ready to ship, i just finished the auth refactor
+  [PASS] rate=0/3 expected=False: check if this migration script handles the edge case where t
+Test : 13/24 correct, precision=100% recall=8% accuracy=54% (0.0s)
+  [FAIL] rate=0/3 expected=True: is docs/adr/0009-counter-offer-stance-is-reader-selected.md 
+  [FAIL] rate=0/3 expected=True: does PRD.md have everything it needs or am i missing a secti
+  [FAIL] rate=1/3 expected=True: before I run /to-spec on this PRD, can you make sure it actu
+  [FAIL] rate=0/3 expected=True: can you go through my spec and tell me what's missing before
+  [PASS] rate=0/3 expected=False: can you write an ADR for switching from REST to GraphQL, we 
+  [PASS] rate=0/3 expected=False: does this contract violate any of my red lines, its the free
+  [PASS] rate=0/3 expected=False: write me a PRD for the new onboarding flow we discussed
+  [PASS] rate=0/3 expected=False: check my resume against this list of things recruiters look 
+
+Improving description...
+Proposed (19.2s): Trigger whenever the user questions the readiness, completeness, or quality of a PRD, spec, or ADR document living in this repo — not just formal requests but casual ones too: "is X ready/done/complete," "can you double check this is actually finished," "does this ADR still make sense," "audit all my specs/ADRs," "are the specs ready?," or "good to merge/show the team?" The trigger is the *document* being questioned, regardless of how the question is phrased. Also use before a spec is published to the issue tracker (pre-check before /to-spec or /to-tickets), and whenever the user wants to view, add, or update a review checklist itself. This runs the document against the standing checklist for its type and writes a dated pass/fail/missing report; it never edits the document under review. Do not use for reviewing code, diffs, or PRs (that's /code-review), for summarizing a document's contents without judging it, or for drafting a new PRD/spec/ADR from scratch.
+
+============================================================
+Iteration 2/5
+Description: Trigger whenever the user questions the readiness, completeness, or quality of a PRD, spec, or ADR document living in this repo — not just formal requests but casual ones too: "is X ready/done/complete," "can you double check this is actually finished," "does this ADR still make sense," "audit all my specs/ADRs," "are the specs ready?," or "good to merge/show the team?" The trigger is the *document* being questioned, regardless of how the question is phrased. Also use before a spec is published to the issue tracker (pre-check before /to-spec or /to-tickets), and whenever the user wants to view, add, or update a review checklist itself. This runs the document against the standing checklist for its type and writes a dated pass/fail/missing report; it never edits the document under review. Do not use for reviewing code, diffs, or PRs (that's /code-review), for summarizing a document's contents without judging it, or for drafting a new PRD/spec/ADR from scratch.
+============================================================
+Train: 18/36 correct, precision=100% recall=0% accuracy=50% (88.1s)
+  [FAIL] rate=0/3 expected=True: is PRD.md ready
+  [FAIL] rate=0/3 expected=True: can u double check PRD.md is actually done, i keep adding st
+  [FAIL] rate=0/3 expected=True: review docs/specs/0001-redline-v1-full-scope-spec.md against
+  [FAIL] rate=0/3 expected=True: i want to audit all my ADRs before the eng review meeting fr
+  [FAIL] rate=0/3 expected=True: are the specs ready?
+  [FAIL] rate=0/3 expected=True: hey can you check if ADR-0013 in docs/adr still makes sense 
+  [PASS] rate=0/3 expected=False: review the JS file in src/utils/parse.ts for style issues an
+  [PASS] rate=0/3 expected=False: can you triage the open issues on github and see which ones 
+  [PASS] rate=0/3 expected=False: can you review this PR and check for bugs before I merge, it
+  [PASS] rate=0/3 expected=False: is my code ready to ship, i just finished the auth refactor
+  [PASS] rate=0/3 expected=False: summarize what's in PRD.md for me, i dont want to read the w
+  [PASS] rate=0/3 expected=False: check if this migration script handles the edge case where t
+Test : 12/24 correct, precision=100% recall=0% accuracy=50% (0.0s)
+  [FAIL] rate=0/3 expected=True: does PRD.md have everything it needs or am i missing a secti
+  [FAIL] rate=0/3 expected=True: is docs/adr/0009-counter-offer-stance-is-reader-selected.md 
+  [FAIL] rate=0/3 expected=True: before I run /to-spec on this PRD, can you make sure it actu
+  [FAIL] rate=0/3 expected=True: can you go through my spec and tell me what's missing before
+  [PASS] rate=0/3 expected=False: can you write an ADR for switching from REST to GraphQL, we 
+  [PASS] rate=0/3 expected=False: does this contract violate any of my red lines, its the free
+  [PASS] rate=0/3 expected=False: write me a PRD for the new onboarding flow we discussed
+  [PASS] rate=0/3 expected=False: check my resume against this list of things recruiters look 
+
+Improving description...
+Proposed (44.0s): Use to judge whether a PRD (PRD.md), spec (docs/specs/*), or ADR (docs/adr/*) already in this repo is ready, complete, correct, or still valid. Covers direct requests ("review/check/audit this spec") and casual ones ("is PRD.md ready", "double-check this is actually done", "does this ADR still make sense", "are the specs ready?", "audit all my ADRs", "good to merge/show the team"). Trigger is the document itself being judged, however the question is worded. Also use as a pre-check before a spec is published to the issue tracker (before /to-spec or /to-tickets), and whenever the user wants to view, add, or update a review checklist. Runs the document against the standing checklist for its type and writes a dated pass/fail/missing report — it never edits the document under review. Do not use for reviewing code, diffs, or PRs (use /code-review instead), for summarizing a document without judging it, or for drafting a new PRD/spec/ADR from scratch.
+
+============================================================
+Iteration 3/5
+Description: Use to judge whether a PRD (PRD.md), spec (docs/specs/*), or ADR (docs/adr/*) already in this repo is ready, complete, correct, or still valid. Covers direct requests ("review/check/audit this spec") and casual ones ("is PRD.md ready", "double-check this is actually done", "does this ADR still make sense", "are the specs ready?", "audit all my ADRs", "good to merge/show the team"). Trigger is the document itself being judged, however the question is worded. Also use as a pre-check before a spec is published to the issue tracker (before /to-spec or /to-tickets), and whenever the user wants to view, add, or update a review checklist. Runs the document against the standing checklist for its type and writes a dated pass/fail/missing report — it never edits the document under review. Do not use for reviewing code, diffs, or PRs (use /code-review instead), for summarizing a document without judging it, or for drafting a new PRD/spec/ADR from scratch.
+============================================================
+Train: 19/36 correct, precision=100% recall=6% accuracy=53% (107.7s)
+  [FAIL] rate=1/3 expected=True: review docs/specs/0001-redline-v1-full-scope-spec.md against
+  [FAIL] rate=0/3 expected=True: is PRD.md ready
+  [FAIL] rate=0/3 expected=True: i want to audit all my ADRs before the eng review meeting fr
+  [FAIL] rate=0/3 expected=True: can u double check PRD.md is actually done, i keep adding st
+  [PASS] rate=0/3 expected=False: review the JS file in src/utils/parse.ts for style issues an
+  [FAIL] rate=0/3 expected=True: hey can you check if ADR-0013 in docs/adr still makes sense 
+  [FAIL] rate=0/3 expected=True: are the specs ready?
+  [PASS] rate=0/3 expected=False: can you review this PR and check for bugs before I merge, it
+  [PASS] rate=0/3 expected=False: can you triage the open issues on github and see which ones 
+  [PASS] rate=0/3 expected=False: is my code ready to ship, i just finished the auth refactor
+  [PASS] rate=0/3 expected=False: summarize what's in PRD.md for me, i dont want to read the w
+  [PASS] rate=0/3 expected=False: check if this migration script handles the edge case where t
+Test : 12/24 correct, precision=100% recall=0% accuracy=50% (0.0s)
+  [FAIL] rate=0/3 expected=True: does PRD.md have everything it needs or am i missing a secti
+  [FAIL] rate=0/3 expected=True: is docs/adr/0009-counter-offer-stance-is-reader-selected.md 
+  [FAIL] rate=0/3 expected=True: before I run /to-spec on this PRD, can you make sure it actu
+  [FAIL] rate=0/3 expected=True: can you go through my spec and tell me what's missing before
+  [PASS] rate=0/3 expected=False: can you write an ADR for switching from REST to GraphQL, we 
+  [PASS] rate=0/3 expected=False: does this contract violate any of my red lines, its the free
+  [PASS] rate=0/3 expected=False: check my resume against this list of things recruiters look 
+  [PASS] rate=0/3 expected=False: write me a PRD for the new onboarding flow we discussed
+
+Improving description...
+Proposed (55.6s): Judge — don't just read — a PRD.md, a file under docs/specs/, or a file under docs/adr/. Use this skill any time a document's readiness, completeness, correctness, or continued validity is in question, however that's phrased: "is PRD.md ready", "is this done/complete", "double-check this is actually finished", "does this ADR still make sense", "audit all my specs/ADRs", "are the specs ready?", "good to merge/show the team?", plus direct requests like "review/check/audit this spec". The trigger is the document being judged, not the exact wording. Also use as a pre-check before a spec is published to the issue tracker (before /to-spec or /to-tickets), and whenever the user wants to view, add, or update a review checklist. It scores the document against the standing checklist for its type and saves a dated pass/fail/missing report — it never edits the document itself. Skip this for reviewing code, diffs, or PRs (use /code-review), for summarizing a document without judging it, or for drafting a new PRD/spec/ADR from scratch.
+
+============================================================
+Iteration 4/5
+Description: Judge — don't just read — a PRD.md, a file under docs/specs/, or a file under docs/adr/. Use this skill any time a document's readiness, completeness, correctness, or continued validity is in question, however that's phrased: "is PRD.md ready", "is this done/complete", "double-check this is actually finished", "does this ADR still make sense", "audit all my specs/ADRs", "are the specs ready?", "good to merge/show the team?", plus direct requests like "review/check/audit this spec". The trigger is the document being judged, not the exact wording. Also use as a pre-check before a spec is published to the issue tracker (before /to-spec or /to-tickets), and whenever the user wants to view, add, or update a review checklist. It scores the document against the standing checklist for its type and saves a dated pass/fail/missing report — it never edits the document itself. Skip this for reviewing code, diffs, or PRs (use /code-review), for summarizing a document without judging it, or for drafting a new PRD/spec/ADR from scratch.
+============================================================
+Warning: query failed: A process in the process pool was terminated abruptly while the future was running or pending.
+Warning: query failed: A process in the process pool was terminated abruptly while the future was running or pending.

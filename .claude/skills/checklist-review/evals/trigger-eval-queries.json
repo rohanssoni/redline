@@ -1,0 +1,22 @@
+[
+  {"query": "are the specs ready?", "should_trigger": true},
+  {"query": "hey can you check if ADR-0013 in docs/adr still makes sense before I show it to the team tomorrow, i think it might be missing something but not sure what", "should_trigger": true},
+  {"query": "before I run /to-spec on this PRD, can you make sure it actually hits everything it's supposed to", "should_trigger": true},
+  {"query": "is docs/adr/0009-counter-offer-stance-is-reader-selected.md good to merge as-is?", "should_trigger": true},
+  {"query": "can u double check PRD.md is actually done, i keep adding stuff to it and losing track of whether its complete", "should_trigger": true},
+  {"query": "review docs/specs/0001-redline-v1-full-scope-spec.md against whatever checklist we have for specs", "should_trigger": true},
+  {"query": "i want to audit all my ADRs before the eng review meeting friday, starting with 0001", "should_trigger": true},
+  {"query": "does PRD.md have everything it needs or am i missing a section", "should_trigger": true},
+  {"query": "can you go through my spec and tell me what's missing before I hand it off to an agent to build, its in docs/specs/", "should_trigger": true},
+  {"query": "is PRD.md ready", "should_trigger": true},
+  {"query": "can you review this PR and check for bugs before I merge, its #47 on github", "should_trigger": false},
+  {"query": "review the JS file in src/utils/parse.ts for style issues and possible bugs", "should_trigger": false},
+  {"query": "write me a PRD for the new onboarding flow we discussed", "should_trigger": false},
+  {"query": "can you write an ADR for switching from REST to GraphQL, we decided this yesterday", "should_trigger": false},
+  {"query": "check my resume against this list of things recruiters look for, i pasted the list above", "should_trigger": false},
+  {"query": "does this contract violate any of my red lines, its the freelance agreement i uploaded", "should_trigger": false},
+  {"query": "summarize what's in PRD.md for me, i dont want to read the whole thing", "should_trigger": false},
+  {"query": "is my code ready to ship, i just finished the auth refactor", "should_trigger": false},
+  {"query": "can you triage the open issues on github and see which ones are ready for an agent to pick up", "should_trigger": false},
+  {"query": "check if this migration script handles the edge case where the column is null", "should_trigger": false}
+]

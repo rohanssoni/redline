@@ -1,0 +1,44 @@
+{
+  "skill_name": "checklist-review",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Can you check docs/adr/0001-every-flag-cites-its-source.md against our checklist and tell me if it's good to merge?",
+      "expected_output": "A dated review report saved as a sibling of the ADR, verdicts against docs/checklists/adr.md if it exists (it doesn't yet in a fresh repo, so review falls back to general judgment), and any new-checklist-item proposals presented for confirmation rather than silently persisted. The ADR itself is untouched.",
+      "files": [],
+      "expectations": [
+        "docs/adr/0001-every-flag-cites-its-source.md is not modified from its original content",
+        "A new review report file was created as a sibling of the ADR, named with a -review-<date>.md style suffix",
+        "The report states that no checklist exists yet for ADRs (docs/checklists/adr.md)",
+        "The report proposes at least one candidate checklist item rather than inventing standing rules silently",
+        "No checklist file was created or modified without asking the user first"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Is PRD.md ready? Check it against whatever we track for that.",
+      "expected_output": "A dated review report saved as a sibling of PRD.md, reviewing on general judgment since no PRD checklist exists yet, engaging with PRD.md's real content rather than generic boilerplate, with any proposed checklist items left for the user to confirm.",
+      "files": [],
+      "expectations": [
+        "PRD.md is not modified from its original content",
+        "A new review report file was created as a sibling of PRD.md, named with a -review-<date>.md style suffix",
+        "The report states that no checklist exists yet for PRDs (docs/checklists/prd.md)",
+        "The report engages with PRD.md's actual content rather than generic boilerplate",
+        "No checklist file was created or modified without asking the user first"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Before I run /to-tickets on it, can you check docs/specs/0001-redline-v1-full-scope-spec.md is actually complete against our checklist?",
+      "expected_output": "A dated review report saved as a sibling of the spec, checking for the spec template's expected sections since no spec checklist exists yet, with any proposed checklist items left for the user to confirm. The spec itself is untouched.",
+      "files": [],
+      "expectations": [
+        "The spec file itself is not modified from its original content",
+        "A new review report file was created as a sibling of the spec document, named with a -review-<date>.md style suffix",
+        "The report states that no checklist exists yet for specs (docs/checklists/spec.md)",
+        "The report checks for the presence of the spec's expected template sections (Problem Statement, Solution, User Stories, Implementation Decisions, Testing Decisions, Out of Scope, Further Notes)",
+        "No checklist file was created or modified without asking the user first"
+      ]
+    }
+  ]
+}
