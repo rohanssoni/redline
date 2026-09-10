@@ -73,19 +73,51 @@ is still the best-scoring variant found. **Nothing needs to change in
 `SKILL.md` based on this run** — don't take iteration 2, 3, or 4's proposed
 wording and apply it; none of them beat the original.
 
-## A real hypothesis worth testing before tuning wording further
+## UPDATE 2026-09-10 (new session): root cause found, it's a test-harness bug, not a wording problem
 
-`skill-creator`'s own docs note: *"Claude only consults skills for tasks it
-can't easily handle on its own — simple, one-step queries...may not trigger
-a skill even if the description matches perfectly."* A bare question like
-`"is PRD.md ready"` is exactly this kind of simple-looking query. The low,
-stubbornly-flat recall across three different description rewrites (11% →
-0% → 6%) is more consistent with a structural triggering limitation for
-short queries than with a wording problem — no rewording tried so far broke
-out of that range. Worth confirming this theory (e.g. by testing whether
-recall improves substantially on queries that are longer/more
-detail-laden versus the short bare ones) before spending more iterations
-tuning the description itself.
+The "short queries under-trigger structurally" theory above was wrong.
+Directly running `claude -p "is PRD.md ready" --output-format stream-json
+--verbose --include-partial-messages --model claude-sonnet-5` from the repo
+root (no eval harness involved) showed the model invoking the **Skill**
+tool as its literal first action, correctly and immediately, on the exact
+query that scored 0-1/3 in every logged iteration.
+
+The actual cause: `run_eval.py` tests trigger rate by writing an **ephemeral**
+command file with a random-uuid-suffixed name
+(`checklist-review-skill-<uuid>`) and checking whether the model's tool call
+mentions that exact name. But the **real** `checklist-review` skill was
+sitting in `.claude/skills/` for the entire duration of every trigger-eval
+run (it was only ever removed for the earlier, separate baseline-isolation
+problem, and correctly restored afterward). Given a should-trigger query,
+the model reasonably invokes the real, already-installed `checklist-review`
+skill by its real name — which is the *correct* behavior — but the harness's
+strict name-match only recognizes the ephemeral uuid-suffixed variant, so it
+silently scores every one of these correct, real triggers as a miss.
+
+This explains everything the old theory didn't: why recall was low and
+flat regardless of how the description was reworded (rewording the
+ephemeral copy doesn't change whether the model picks the real skill by
+name instead), and why precision stayed perfect throughout (the real skill
+never fires on unrelated queries either way).
+
+**Fix before re-running:** temporarily move `../` (the real
+`.claude/skills/checklist-review/` directory) out of the repo for the
+duration of the trigger-eval loop, exactly like the earlier baseline-
+isolation technique — except here the goal is the opposite: make sure only
+the ephemeral candidate exists, so the measurement reflects the candidate
+description on its own merits instead of losing a popularity contest against
+its own already-installed original. Restore it immediately after the run
+finishes (or if it crashes/gets interrupted — don't leave the repo without
+the real skill).
+
+**Also found:** the plugin was updated since 2026-09-10's first pass — the
+active `skill-creator` version moved from `85cce0381e78` to `3ea32df27be7`.
+Re-applied both Windows patches (thread+queue reader, `encoding="utf-8"`)
+to the new active path; the old path's patches are stale/irrelevant now.
+Check `plugins/cache/claude-plugins-official/skill-creator/` for the
+currently active version (matches the `path` field in a `claude -p
+--output-format stream-json` init event's `plugins` list) before assuming
+either patch set is still in effect.
 
 ## How to resume
 
