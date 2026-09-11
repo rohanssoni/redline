@@ -20,12 +20,22 @@ function flagsIn(sentences: string[]): SampleFlag[] {
     .sort((a, b) => a.rank - b.rank);
 }
 
+const clauses = sampleClauses.map((clause, index) => ({
+  ...clause,
+  bodyId: `sample-clause-${index + 1}`,
+  flags: flagsIn(clause.sentences),
+}));
+
 export function SampleReview() {
-  const [focusRank, setFocusRank] = useState(1);
-  const [showAll, setShowAll] = useState(false);
+  // null means the reader folded the focused clause away and no flag is in focus.
+  const [focusRank, setFocusRank] = useState<number | null>(1);
   const [openedByReader, setOpenedByReader] = useState<ReadonlySet<string>>(() => new Set());
   const focusRef = useRef<HTMLDivElement | null>(null);
   const readerMoved = useRef(false);
+
+  const isOpen = (clause: (typeof clauses)[number]) =>
+    openedByReader.has(clause.heading) || clause.flags.some((flag) => flag.rank === focusRank);
+  const everyClauseOpen = clauses.every(isOpen);
 
   // Clauses fold and unfold over FOLD_MS, so wait for the layout to settle before
   // deciding whether the focused sentence needs scrolling into view.
@@ -48,13 +58,29 @@ export function SampleReview() {
     setFocusRank(rank);
   }
 
-  function toggleClause(heading: string) {
-    setOpenedByReader((current) => {
-      const next = new Set(current);
-      if (next.has(heading)) next.delete(heading);
-      else next.add(heading);
-      return next;
-    });
+  function pressHeading(clause: (typeof clauses)[number]) {
+    if (isOpen(clause)) {
+      if (clause.flags.some((flag) => flag.rank === focusRank)) {
+        readerMoved.current = false;
+        setFocusRank(null);
+      }
+      setOpenedByReader((current) => {
+        if (!current.has(clause.heading)) return current;
+        const next = new Set(current);
+        next.delete(clause.heading);
+        return next;
+      });
+      return;
+    }
+    if (clause.flags.length > 0) {
+      focus(clause.flags[0].rank);
+    } else {
+      setOpenedByReader((current) => new Set(current).add(clause.heading));
+    }
+  }
+
+  function toggleWholeAgreement() {
+    setOpenedByReader(everyClauseOpen ? new Set() : new Set(clauses.map((clause) => clause.heading)));
   }
 
   return (
@@ -88,11 +114,9 @@ export function SampleReview() {
         <h3 className="doc-title">{sampleTitle}</h3>
         <p className="doc-parties">Between the Client and the Contractor</p>
 
-        {sampleClauses.map((clause, index) => {
-          const flags = flagsIn(clause.sentences);
-          const holdsFocus = flags.some((flag) => flag.rank === focusRank);
-          const open = showAll || holdsFocus || openedByReader.has(clause.heading);
-          const bodyId = `sample-clause-${index + 1}`;
+        {clauses.map((clause) => {
+          const open = isOpen(clause);
+          const { flags } = clause;
 
           return (
             <section key={clause.heading} className="clause" data-open={open}>
@@ -106,8 +130,8 @@ export function SampleReview() {
                   type="button"
                   className="clause-toggle"
                   aria-expanded={open}
-                  aria-controls={bodyId}
-                  onClick={() => (flags.length > 0 ? focus(flags[0].rank) : toggleClause(clause.heading))}
+                  aria-controls={clause.bodyId}
+                  onClick={() => pressHeading(clause)}
                 >
                   {clause.heading}
                   <span className="clause-count">
@@ -116,7 +140,7 @@ export function SampleReview() {
                 </button>
               </h4>
 
-              <div className="clause-fold" id={bodyId}>
+              <div className="clause-fold" id={clause.bodyId}>
                 <div className="clause-body" inert={!open}>
                   <div className="clause-inner">
                     {clause.sentences.map((sentence) => {
@@ -184,10 +208,10 @@ export function SampleReview() {
           <button
             type="button"
             className="page-toggle"
-            aria-expanded={showAll}
-            onClick={() => setShowAll((value) => !value)}
+            aria-expanded={everyClauseOpen}
+            onClick={toggleWholeAgreement}
           >
-            {showAll ? "Fold back to the flagged clause" : "Show the whole agreement"}
+            {everyClauseOpen ? "Fold the agreement back" : "Show the whole agreement"}
           </button>
         </div>
       </article>
