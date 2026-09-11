@@ -31,8 +31,23 @@ defect — generating an agreement is deferred until the reading product finds f
 
 ## Scope
 
-The six capabilities below, and nothing else. When a feature idea doesn't appear
-here, it needs a decision before it gets built, per `CLAUDE.md`.
+The six capabilities below, the two ways a document gets in, the landing page, and
+trying a document without an account, and nothing else. When a feature idea doesn't
+appear here, it needs a decision before it gets built, per `CLAUDE.md`.
+
+### Getting a document in
+
+The reader uploads a PDF or Word file, parsed in the browser, and only the extracted
+text is sent or stored (`CLAUDE.md`, settled). Upload is the recommended path and the
+one the product leads with.
+
+The reader can paste the agreement's text instead (ADR-0020). Pasted text is stored and
+checked exactly like extracted text: it is the text every source sentence is verified
+against. Because a paste can garble line breaks or column order, the input step says
+plainly that upload gives the most faithful source sentences.
+
+Scanned or photographed documents are refused on both paths, including an image pasted
+in place of text. There is no OCR.
 
 ### 1. Plain-English summary
 
@@ -176,11 +191,45 @@ Past analyses are saved and browsable. Only the extracted text is stored — nev
 the original uploaded file (`CLAUDE.md`, settled). This is what makes the red line
 list and renewal reads useful across sessions rather than per-upload.
 
+### Landing page
+
+A public page for the reader named above. It demonstrates one thing: a sample
+agreement turning into ranked flags, each showing the exact sentence it came from. It
+offers one action: try it on a document.
+
+The sample agreement is synthetic and labelled as a sample wherever a visitor could
+mistake it for a real contract. Its flags quote its own sentences word for word and are
+held to ADR-0001 exactly like real output.
+
+The page claims nothing the scope excludes: no verdict on whether to sign, no legal
+advice, no scanned or photographed documents, and no document types beyond a
+freelancer's client agreement. One plain line next to the action says Redline shows
+what the document says and doesn't give legal advice. It uses the real product name
+and carries no prices, customers, testimonials, or quotes. Its copy goes through the
+humanizer skill like all other user-facing copy (`CLAUDE.md`).
+
+### Trying a document without an account
+
+The landing page's action lets a visitor try one document without signing in. They get
+the plain-English summary and the severity-ranked flags and gaps, with every flag's
+source sentence, or the clean read. Counter-offers, the question box, red lines, and
+the library need an account. An anonymous analysis runs with no red lines.
+
+- **Nothing is stored.** The text stays in the browser tab. It is sent with the analysis
+  request and verified within it, but never written to the database.
+- **Signing up keeps it.** A visitor who signs up in the same tab gets the text and its
+  analysis saved to their library, without calling the model again. Leaving the tab
+  first loses it, and the result says so.
+- **It is limited.** Anonymous analyses are capped per IP per day, and documents have a
+  maximum length, both enforced server-side with Supabase. No new service or dependency
+  is involved. The exact numbers are not decided.
+
 ## Explicitly out of scope
 
 Payments, billing, OCR for scanned documents, and sharing a document between
 users — see `CLAUDE.md` for why. Consumer terms of service — see "Who this is
-for," above, and ADR-0017.
+for," above, and ADR-0017. Anonymous access to counter-offers, the question box, red
+lines, or the library. A CAPTCHA or other third-party bot check on the no-account try.
 
 ## Success metrics
 
@@ -220,5 +269,11 @@ for," above, and ADR-0017.
 
 ## Open items before build
 
-None. Every item raised across this PRD's drafts is resolved — ADR-0001 through
-ADR-0019.
+- **No-account limits.** The per-IP daily limit and the maximum document length for
+  the no-account try are not chosen.
+- **Positioning has no ADR.** `PRODUCT.md` records "alongside a lawyer" (confirmed
+  2026-09-11). That is a different argument from the cost-of-a-lawyer framing in
+  `research/summary.md` and the spec's problem statement.
+
+Everything else raised across this PRD's drafts is resolved — ADR-0001 through
+ADR-0020.

@@ -100,3 +100,8 @@ secrets.yml
 
 # agent/session local state
 .claude/settings.local.json
+
+# design review captures (regenerated each review round)
+.impeccable/review/
+.impeccable/build/
+.impeccable/questions/

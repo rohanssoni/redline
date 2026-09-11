@@ -2,7 +2,7 @@
 
 Local mirror of [GitHub issue #1](https://github.com/rohanssoni/redline/issues/1)
 (`ready-for-agent`). The issue is the source of truth — this file is a snapshot
-from 2026-09-09 and will go stale if the issue is edited on GitHub without this
+from 2026-09-11 and will go stale if the issue is edited on GitHub without this
 file being re-synced.
 
 ---
@@ -13,7 +13,7 @@ A freelancer or independent contractor receives an agreement from a client and h
 
 ## Solution
 
-Redline reads an uploaded agreement — parsed entirely in the browser, so only the extracted text is ever stored, never the original file — and gives the reader: a plain-English summary; a single severity-ranked list of risky clauses (flags) and missing protections (gaps), where every flag shows the exact sentence it came from so the reader can check it themselves without trusting the tool blindly; a drafted counter-offer for each flagged clause, in a tone (soft or firm) the reader picks per clause based on how much leverage they actually have with that client on that term; a question box that answers strictly from the uploaded document and declines to give advice about a dispute that's already happened; a persistent, editable list of the reader's own "red lines" — terms they've already decided they won't accept — that always gets flagged when violated, regardless of what the model's own judgment would otherwise do; and a saved library so this builds up across documents instead of resetting on every upload.
+Redline reads an agreement the reader uploads (the recommended path) or pastes, and a public landing page shows it working on a labelled sample agreement before anyone signs in. An uploaded file is parsed entirely in the browser, so only the extracted text is ever stored, never the original file. A visitor can try one document without an account and get the summary and ranked flags; nothing about that document is stored unless they sign up. Signed in, Redline gives the reader: a plain-English summary; a single severity-ranked list of risky clauses (flags) and missing protections (gaps), where every flag shows the exact sentence it came from so the reader can check it themselves without trusting the tool blindly; a drafted counter-offer for each flagged clause, in a tone (soft or firm) the reader picks per clause based on how much leverage they actually have with that client on that term; a question box that answers strictly from the uploaded document and declines to give advice about a dispute that's already happened; a persistent, editable list of the reader's own "red lines" — terms they've already decided they won't accept — that always gets flagged when violated, regardless of what the model's own judgment would otherwise do; and a saved library so this builds up across documents instead of resetting on every upload.
 
 ## User Stories
 
@@ -56,6 +56,16 @@ Redline reads an uploaded agreement — parsed entirely in the browser, so only 
 37. As a product owner, I want to track how often a flag gets dismissed by the reader, with red-line-triggered flags tracked separately from ordinary ones, so I can tell whether the confidence threshold or the red-line matching needs retuning.
 38. As an engineer running the eval, I want an automated second-model check on every semantic red-line match, so questionable matches surface for review without a person hand-labeling every one.
 39. As a product owner, I want a judge's disagreement with a match logged rather than shown to the reader or used to suppress the flag, so the "a red line is always flagged" guarantee stays intact while still building a signal for periodic audits.
+40. As a freelancer, I want to paste an agreement's text instead of uploading a file, so I can get it read in whichever form I have it.
+41. As a freelancer, I want to be told that upload gives the most faithful source sentences, so I know what I give up by pasting.
+42. As a freelancer who pastes an image by mistake, I want it refused with a reason, so I'm never shown flags drawn from misread text.
+43. As a visitor, I want to see a sample agreement turn into ranked flags with their source sentences before I sign up, so I understand what Redline does in seconds.
+44. As a visitor, I want the sample clearly labelled as a sample, so I never mistake it for a real contract or a real result.
+45. As a visitor, I want the landing page to say plainly that Redline doesn't give legal advice, so I know what it is and what it isn't.
+46. As a visitor, I want to try one of my own documents without an account and get its summary and ranked flags, so I can judge Redline on my own agreement before signing up.
+47. As a visitor trying without an account, I want my document's text kept out of Redline's database, so nothing about it is stored unless I sign up.
+48. As a visitor who wants to keep a no-account result, I want to sign up in the same tab and find it in my library, without the analysis running again.
+49. As a product owner, I want anonymous analyses limited per IP per day and by document length, so model costs can't run away in a product with no payments.
 
 ## Implementation Decisions
 
@@ -81,6 +91,12 @@ Redline reads an uploaded agreement — parsed entirely in the browser, so only 
 - All three seams call the model via OpenRouter (settled in `CLAUDE.md`).
 - A judge-disagreement log (feeds ADR-0018's periodic-audit signal and the flag-dismissal-rate split in the Success Metrics).
 
+**Input** (ADR-0020): upload is the recommended path; pasted text is the alternative. Both produce the same stored-text shape, so `analyzeDocument` never knows which path was used. A pasted image is refused, because reading it would need OCR.
+
+**Landing page:** a public route rendering a static demonstration. It shows a synthetic sample agreement, labelled as a sample, and an authored analysis of it. The authored flags are held to ADR-0001: a test checks every source sentence verbatim against the sample text, exactly as real output is checked. One action leads to the no-account try. The page states that Redline doesn't give legal advice, and it claims nothing the scope excludes.
+
+**No-account try:** `analyzeDocument(text, [])` runs for a visitor who isn't signed in. It has no red lines, and its result goes back to the browser without being persisted. Only the summary, flags, gaps, and clean read are exposed; `draftCounterOffer` and `answerQuestion` require a signed-in reader. A per-IP daily limit and a maximum document length are checked server-side, using Supabase, before any model call. If the visitor signs up in the same tab, the browser submits the text and analysis it still holds to the document store, with no model call.
+
 **Not specified here, needs a decision before implementation** — see Further Notes: how a consumer ToS is technically distinguished from an in-scope document, since ADR-0017 states the boundary but not an enforcement mechanism.
 
 ## Testing Decisions
@@ -94,6 +110,11 @@ Redline reads an uploaded agreement — parsed entirely in the browser, so only 
   - Hedged wording appears only on a fixture built around genuine sentence-level ambiguity, and never on a fixture built around some other kind of low confidence (ADR-0010).
   - A remedy-question fixture and a gap-fill-request fixture are both declined with a stated reason, never answered (ADR-0003, ADR-0014).
   - Immediately after `analyzeDocument`, only the soft counter-offer exists for a flag; the firm one is absent until `draftCounterOffer(flag, 'firm')` is called (ADR-0012).
+  - Flags on a pasted fixture pass the same verbatim source-sentence check as flags on an uploaded one (ADR-0020).
+  - Every source sentence in the landing page's authored demonstration is found verbatim in the sample agreement text (ADR-0001 applies to the demonstration too).
+  - An anonymous analysis writes no document text and no analysis result to the database.
+  - An anonymous request over the per-IP daily limit, or over the maximum document length, is refused before any model call.
+  - Saving a no-account analysis on sign-up makes no model call.
 - Prior art: none — this is the first spec for a greenfield codebase, so there's no existing test pattern in this repo to follow. The seams above are shaped specifically to make each of these behaviors testable in isolation.
 
 ## Out of Scope
@@ -105,6 +126,9 @@ Redline reads an uploaded agreement — parsed entirely in the browser, so only 
 - Any segment other than freelancers/independent contractors: job-seekers, renters, small landlords, creators (ADR-0002).
 - A human-labeled test set for red-line matching quality — named in ADR-0018 as a future periodic audit, not part of this build.
 - Re-deriving or tuning the specific numbers already decided (the 20% baseline, the 500-document/90-day switchover) — used as given (ADR-0011, ADR-0016).
+- Anonymous access to counter-offers, the question box, red lines, or the library.
+- A CAPTCHA or any third-party bot check on the no-account try.
+- Reading pasted images or screenshots (no OCR, ADR-0020).
 
 ## Further Notes
 
@@ -112,3 +136,5 @@ Redline reads an uploaded agreement — parsed entirely in the browser, so only 
 - **The confidence-signal mechanics are an implementation-level design question**, not resolved at the spec level: ADR-0006 (recall over precision) and ADR-0010 (hedging triggered only by sentence-level ambiguity) both assume the model can distinguish "textual ambiguity" from "other uncertainty" as separate signals. How that distinction is actually produced (structured output fields, a separate classification pass, prompting alone) is left to whoever implements `analyzeDocument`.
 - **Willingness to pay is unvalidated**, and much of the underlying pain-point research is secondhand rather than first-person (see `PRD.md`'s Assumptions and risks). This spec builds the product as scoped; it does not resolve that validation gap, which remains the first thing to check once there's something real to test against freelancers.
 - **Regulatory posture is not neutral.** FTC precedent against AI-legal-substitute claims made without attorney-validated output constrains product copy and disclaimer design (ADR-0003). Not a functional requirement captured elsewhere in this spec, but worth a design/legal pass before ship.
+- **The no-account limits are not chosen.** The per-IP daily limit and maximum document length are decided at implementation (#19) and recorded on that issue.
+- **Landing page and no-account try added 2026-09-11.** They are built as #17–#20, with paste recorded in ADR-0020. The landing page's visual world (Tracked Changes) is recorded in its surface brief and, once built, DESIGN.md.
