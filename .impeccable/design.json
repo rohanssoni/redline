@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-11T17:55:46Z",
+  "title": "Design System: Redline",
+  "extensions": {
+    "colorMeta": {
+      "markup": { "role": "primary", "displayName": "Markup Crimson", "canonical": "#b3122e", "tonalRamp": ["#1f0002", "#4b000c", "#7c001a", "#af092b", "#d63d4a", "#fe636a", "#feafae", "#ffe8e7"] },
+      "markup-wash": { "role": "primary", "displayName": "Markup Wash", "canonical": "#f7dfe3", "tonalRamp": ["#150609", "#2f1f22", "#4d3a3d", "#6c585b", "#8c777b", "#ae989c", "#d8c0c4", "#fee8ec"] },
+      "ink": { "role": "neutral", "displayName": "Review Ink", "canonical": "#1c1e22", "tonalRamp": ["#090b0f", "#222428", "#3d4044", "#5b5e62", "#7b7d82", "#9c9ea4", "#c5c7cd", "#eceef4"] },
+      "ink-hover": { "role": "neutral", "displayName": "Pressed Ink", "canonical": "#383c43", "tonalRamp": ["#080b11", "#20242b", "#3c4047", "#595e65", "#797d85", "#9a9fa7", "#c3c8d0", "#eaeff8"] },
+      "ink-soft": { "role": "neutral", "displayName": "Soft Ink", "canonical": "#3a3f47", "tonalRamp": ["#080b12", "#20242c", "#3b4048", "#595e67", "#787e87", "#999fa8", "#c2c8d2", "#e9eff9"] },
+      "ink-muted": { "role": "neutral", "displayName": "Muted Ink", "canonical": "#50565f", "tonalRamp": ["#070b12", "#1f242c", "#3a4049", "#585e67", "#777e87", "#989fa9", "#c1c8d2", "#e8effa"] },
+      "canvas": { "role": "neutral", "displayName": "Review Canvas", "canonical": "#c9cfd8", "tonalRamp": ["#080b11", "#20242b", "#3b4047", "#595e66", "#787e86", "#999fa7", "#c2c8d1", "#e9eff8"] },
+      "canvas-deep": { "role": "neutral", "displayName": "Canvas Rule", "canonical": "#b7bec9", "tonalRamp": ["#070b13", "#1f242d", "#3a4049", "#585e68", "#777e88", "#989faa", "#c1c8d3", "#e8effb"] },
+      "strip": { "role": "neutral", "displayName": "Chrome Strip", "canonical": "#e7eaee", "tonalRamp": ["#090b0e", "#222427", "#3e4043", "#5b5e61", "#7b7d81", "#9c9fa2", "#c5c7cb", "#eceff3"] },
+      "page": { "role": "neutral", "displayName": "Paper", "canonical": "#ffffff", "tonalRamp": ["#0b0b0b", "#242424", "#404040", "#5d5d5d", "#7d7d7d", "#9e9e9e", "#c7c7c7", "#eeeeee"] },
+      "comment": { "role": "neutral", "displayName": "Comment Grey", "canonical": "#eef0f3", "tonalRamp": ["#0a0b0d", "#232426", "#3e4042", "#5c5e60", "#7c7d80", "#9d9ea1", "#c5c7ca", "#edeff2"] },
+      "rest": { "role": "neutral", "displayName": "Resting Highlight", "canonical": "#e7eaee", "tonalRamp": ["#090b0e", "#222427", "#3e4043", "#5b5e61", "#7b7d81", "#9c9fa2", "#c5c7cb", "#eceff3"] },
+      "rest-line": { "role": "neutral", "displayName": "Resting Mark", "canonical": "#9aa2ad", "tonalRamp": ["#060b13", "#1e242d", "#39404a", "#575e68", "#767e88", "#979faa", "#c0c8d4", "#e7effb"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The one page headline." },
+      "headline": { "displayName": "Headline", "purpose": "Section headings on the canvas." },
+      "lede": { "displayName": "Lede", "purpose": "The paragraph under the display headline, capped at 66ch." },
+      "body": { "displayName": "Body", "purpose": "Section copy and comment card readings." },
+      "body-small": { "displayName": "Body Small", "purpose": "Notes beside the action, rank-index entries, comment hedges, gap explanations." },
+      "title": { "displayName": "Title", "purpose": "Gap statements, the focused rank-index entry, underlined text toggles." },
+      "label": { "displayName": "Label", "purpose": "Page label bands, captions, clause flag counts, footer text." },
+      "action": { "displayName": "Action", "purpose": "Text on the filled action." },
+      "action-compact": { "displayName": "Action Compact", "purpose": "Text on the compact action in the navigation strip." },
+      "wordmark": { "displayName": "Wordmark", "purpose": "The name, beside a 3px ink bar." },
+      "rank-numeral": { "displayName": "Rank Numeral", "purpose": "Flag ranks in fixed-width tabular slots." },
+      "doc-title": { "displayName": "Document Title", "purpose": "The agreement's own title, centred." },
+      "doc-heading": { "displayName": "Document Heading", "purpose": "Clause headings quoted from the document." },
+      "doc-body": { "displayName": "Document Body", "purpose": "Clause sentences quoted from the document." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "The only easing curve: folds, focus colour moves, hover fills." },
+      { "name": "fold", "value": "280ms", "purpose": "Clause and comment folds (grid rows 0fr to 1fr) and focus colour changes on flag marks." },
+      { "name": "hover-fill", "value": "160ms", "purpose": "Background shift on the filled action." },
+      { "name": "reduced-motion", "value": "0ms", "purpose": "All transition durations under prefers-reduced-motion; scroll-to-focus jumps instead of smoothing." }
+    ],
+    "breakpoints": [
+      { "name": "narrow", "value": "640px", "purpose": "At or below: gutter tightens to 44px, rank index drops to two columns, page padding tightens." },
+      { "name": "overhang", "value": "900px", "purpose": "Above: comment cards hang 104px past the page's right edge." },
+      { "name": "margin-index", "value": "1280px", "purpose": "At or above: the rank index moves into the canvas margin as a 212px column." }
+    ],
+    "focusRing": { "value": "outline: 2px solid #1c1e22; outline-offset: 3px", "purpose": "Keyboard focus on every control." }
+  },
+  "components": [
+    {
+      "name": "Primary Action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one filled action per view; ink with paper text and the system's only rounded corners.",
+      "html": "<a class=\"ds-action\" href=\"#\">Try it on an agreement</a>",
+      "css": ".ds-action { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 22px; border-radius: 4px; background: var(--ink, #1c1e22); color: var(--page, #ffffff); font-family: var(--font-ui, 'Schibsted Grotesk', Arial, sans-serif); font-weight: 700; font-size: 1.0625rem; text-decoration: none; white-space: nowrap; transition: background-color 160ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-action:hover { background: #383c43; } .ds-action:focus-visible { outline: 2px solid var(--ink, #1c1e22); outline-offset: 3px; }"
+    },
+    {
+      "name": "Compact Action",
+      "kind": "button",
+      "refersTo": "button-compact",
+      "description": "The filled action at 40px for the navigation strip.",
+      "html": "<a class=\"ds-action-compact\" href=\"#\">Try it on an agreement</a>",
+      "css": ".ds-action-compact { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px; border-radius: 4px; background: var(--ink, #1c1e22); color: var(--page, #ffffff); font-family: var(--font-ui, 'Schibsted Grotesk', Arial, sans-serif); font-weight: 700; font-size: 0.9375rem; text-decoration: none; white-space: nowrap; transition: background-color 160ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-action-compact:hover { background: #383c43; } .ds-action-compact:focus-visible { outline: 2px solid var(--ink, #1c1e22); outline-offset: 3px; }"
+    },
+    {
+      "name": "Text Toggle",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "Unfilled, underlined page-level toggle.",
+      "html": "<button type=\"button\" class=\"ds-text-toggle\">Show the whole agreement</button>",
+      "css": ".ds-text-toggle { padding: 6px 0; border: 0; background: none; color: var(--ink, #1c1e22); font-family: var(--font-ui, 'Schibsted Grotesk', Arial, sans-serif); font-size: 1.0625rem; font-weight: 600; text-decoration: underline; text-underline-offset: 0.25em; cursor: pointer; } .ds-text-toggle:focus-visible { outline: 2px solid var(--ink, #1c1e22); outline-offset: 3px; }"
+    },
+    {
+      "name": "Navigation Strip",
+      "kind": "nav",
+      "refersTo": "nav-strip",
+      "description": "Sticky pale strip with the barred wordmark left and the compact action right.",
+      "html": "<header class=\"ds-nav\"><a class=\"ds-wordmark\" href=\"#\"><span class=\"ds-wordmark-bar\"></span>Redline</a><a class=\"ds-nav-action\" href=\"#\">Try it on an agreement</a></header>",
+      "css": ".ds-nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px 16px; background: var(--strip, #e7eaee); border-bottom: 1px solid var(--canvas-deep, #b7bec9); font-family: var(--font-ui, 'Schibsted Grotesk', Arial, sans-serif); } .ds-wordmark { display: inline-flex; align-items: center; gap: 10px; color: var(--ink, #1c1e22); font-weight: 800; font-size: 1.1875rem; letter-spacing: -0.02em; text-decoration: none; } .ds-wordmark-bar { width: 3px; height: 1.2em; background: var(--ink, #1c1e22); } .ds-nav-action { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px; border-radius: 4px; background: var(--ink, #1c1e22); color: var(--page, #ffffff); font-weight: 700; font-size: 0.9375rem; text-decoration: none; transition: background-color 160ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-nav-action:hover { background: #383c43; } .ds-wordmark:focus-visible, .ds-nav-action:focus-visible { outline: 2px solid var(--ink, #1c1e22); outline-offset: 3px; }"
+    },
+    {
+      "name": "Rank Index",
+      "kind": "nav",
+      "refersTo": "rank-index-item",
+      "description": "Worst-first list of flags; the entry in focus carries the crimson underline.",
+      "html": "<div class=\"ds-rank-index\"><p class=\"ds-rank-caption\">Flags in this sample, worst first</p><ol><li><button type=\"button\" aria-pressed=\"true\"><span class=\"ds-rank-slot\">1</span>Rights to all your work</button></li><li><button type=\"button\" aria-pressed=\"false\"><span class=\"ds-rank-slot\">2</span>Limits on other clients</button></li><li><button type=\"button\" aria-pressed=\"false\"><span class=\"ds-rank-slot\">3</span>No pay if they end it early</button></li></ol></div>",
+      "css": ".ds-rank-index { width: 212px; background: var(--canvas, #c9cfd8); padding: 8px; font-family: var(--font-ui, 'Schibsted Grotesk', Arial, sans-serif); } .ds-rank-caption { margin: 0 0 2px; font-size: 0.875rem; color: var(--ink-soft, #3a3f47); } .ds-rank-index ol { list-style: none; margin: 0; padding: 0; } .ds-rank-index button { display: flex; align-items: baseline; gap: 8px; width: 100%; padding: 5px 0; border: 0; border-bottom: 1px solid var(--canvas-deep, #b7bec9); background: none; text-align: left; font: inherit; font-size: 0.9375rem; color: var(--ink-soft, #3a3f47); cursor: pointer; } .ds-rank-index button:hover { color: var(--ink, #1c1e22); } .ds-rank-index button[aria-pressed=\"true\"] { color: var(--ink, #1c1e22); font-weight: 600; border-bottom: 2px solid var(--markup, #b3122e); padding-bottom: 4px; } .ds-rank-index button:focus-visible { outline: 2px solid var(--ink, #1c1e22); outline-offset: 3px; } .ds-rank-slot { display: inline-block; width: 1.1em; font-weight: 800; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Clause Heading",
+      "kind": "custom",
+      "refersTo": "clause-toggle",
+      "description": "Serif clause heading as a fold toggle, with grouped gutter ranks and a plain-text flag count over a dotted resting rule.",
+      "html": "<div class=\"ds-page-strip\"><h4 class=\"ds-clause-heading\"><span class=\"ds-gutter-ranks\">4</span><button type=\"button\" class=\"ds-clause-toggle\" aria-expanded=\"false\">3. Revisions<span class=\"ds-clause-count\">1 flag</span></button></h4></div>",
+      "css": ".ds-page-strip { background: var(--page, #ffffff); padding: 12px 52px 12px 72px; } .ds-clause-heading { position: relative; margin: 0; font-size: 1.0625rem; } .ds-gutter-ranks { position: absolute; left: -54px; top: 5px; width: 28px; text-align: center; font-family: var(--font-ui, 'Schibsted Grotesk', Arial, sans-serif); font-weight: 800; font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: var(--ink-muted, #50565f); } .ds-clause-toggle { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; width: 100%; padding: 3px 0; border: 0; border-bottom: 1px dotted var(--rest-line, #9aa2ad); background: none; color: var(--ink, #1c1e22); font-family: var(--font-doc, Tinos, 'Times New Roman', serif); font-size: 1.0625rem; font-weight: 700; line-height: 1.4; text-align: left; cursor: pointer; transition: border-color 280ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-clause-toggle:hover { border-bottom-style: solid; } .ds-clause-toggle:focus-visible { outline: 2px solid var(--ink, #1c1e22); outline-offset: 3px; } .ds-clause-count { font-family: var(--font-ui, 'Schibsted Grotesk', Arial, sans-serif); font-weight: 500; font-size: 0.8125rem; color: var(--ink-muted, #50565f); }"
+    },
+    {
+      "name": "Flagged Sentence with Comment",
+      "kind": "custom",
+      "refersTo": "flag-sentence-focus",
+      "description": "The signature: a source sentence with its change bar and gutter rank, and its comment card open beneath it. Hover the rest example to see the resting grey marks.",
+      "html": "<div class=\"ds-sheet\"><div class=\"ds-flag ds-flag-focus\"><button type=\"button\" class=\"ds-gutter-rank\" aria-pressed=\"true\">1</button><p class=\"ds-sentence\"><mark>The Contractor also assigns to the Client all rights in any other work the Contractor creates during the term of this Agreement.</mark></p><div class=\"ds-comment\"><div class=\"ds-comment-leader\"></div><div class=\"ds-comment-inner\"><p class=\"ds-comment-reading\">The client gets the rights to everything you make while this agreement runs.</p></div></div></div><div class=\"ds-flag\"><button type=\"button\" class=\"ds-gutter-rank\" aria-pressed=\"false\">2</button><p class=\"ds-sentence\"><mark>The Contractor shall not provide services to any competitor for a reasonable period.</mark></p></div></div>",
+      "css": ".ds-sheet { background: var(--page, #ffffff); padding: 16px 52px 16px 72px; font-family: var(--font-doc, Tinos, 'Times New Roman', serif); font-size: 1.0625rem; line-height: 1.5; color: var(--ink, #1c1e22); } .ds-flag { position: relative; } .ds-flag + .ds-flag { margin-top: 6px; } .ds-sentence { position: relative; margin: 0; } .ds-sentence::before { content: ''; position: absolute; left: -16px; top: 3px; bottom: 3px; width: 2px; background: var(--rest-line, #9aa2ad); transition: background-color 280ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-sentence mark { color: inherit; background: var(--rest, #e7eaee); padding: 1px 0; box-decoration-break: clone; -webkit-box-decoration-break: clone; transition: background-color 280ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-gutter-rank { position: absolute; left: -54px; top: 0; width: 28px; height: 28px; padding: 0; border: 0; background: none; text-align: center; font-family: var(--font-ui, 'Schibsted Grotesk', Arial, sans-serif); font-weight: 800; font-size: 0.9375rem; font-variant-numeric: tabular-nums; color: var(--ink-muted, #50565f); cursor: pointer; transition: color 280ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-gutter-rank:hover { color: var(--ink, #1c1e22); } .ds-gutter-rank:focus-visible { outline: 2px solid var(--ink, #1c1e22); outline-offset: 3px; } .ds-flag-focus .ds-sentence::before { background: var(--markup, #b3122e); } .ds-flag-focus mark { background: var(--markup-wash, #f7dfe3); } .ds-flag-focus .ds-gutter-rank { color: var(--markup, #b3122e); } .ds-comment { font-family: var(--font-ui, 'Schibsted Grotesk', Arial, sans-serif); line-height: 1.45; } .ds-comment-leader { height: 12px; margin-left: 20px; border-left: 1px dotted var(--markup, #b3122e); } .ds-comment-inner { padding: 12px 18px 13px 20px; background: var(--comment, #eef0f3); border-top: 2px solid var(--markup, #b3122e); } .ds-comment-reading { margin: 0; max-width: 62ch; font-size: 1.0625rem; color: var(--ink, #1c1e22); }"
+    },
+    {
+      "name": "Gap Note",
+      "kind": "card",
+      "refersTo": "gap-note",
+      "description": "A missing term: comment-grey card with a resting top rule and no leader, because there is no sentence to point at.",
+      "html": "<aside class=\"ds-gap-note\"><p class=\"ds-gap-statement\">This agreement has no late-payment term.</p><p class=\"ds-gap-explain\">That's a gap, so there's no sentence to quote. The agreement doesn't contain one.</p></aside>",
+      "css": ".ds-gap-note { display: grid; gap: 2px; padding: 12px 18px; background: var(--comment, #eef0f3); border-top: 2px solid var(--rest-line, #9aa2ad); font-family: var(--font-ui, 'Schibsted Grotesk', Arial, sans-serif); color: var(--ink, #1c1e22); } .ds-gap-statement { margin: 0; font-size: 1.0625rem; font-weight: 600; } .ds-gap-explain { margin: 0; font-size: 0.9375rem; color: var(--ink-soft, #3a3f47); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Tracked Changes",
+    "overview": "Redline looks like a document someone has marked up for review. A white page lies on a cool grey canvas. The agreement's own words are set in a document serif, and everything Redline says is set in a grotesk and placed beside or under those words. Nothing floats above the page. Flags are marks on the page itself: a change bar in the gutter, a highlight behind the sentence, a rank numeral in a fixed slot, and a square comment card opened directly beneath the sentence.\n\nOnly one flag holds focus at a time, and only that flag turns crimson. Every other flag stays visible in resting grey, so a reader can see how much is marked without the page shouting. Choosing a flag moves the crimson: its sentence takes the wash, its change bar lights, its card unfolds under it with a single ease-out, and the previous card folds back to grey. That focus move is the reusable signature. Any surface that shows a flag against its source sentence uses it.\n\nDensity matches a real agreement. Text is set close, rules are hairlines, and the only rounded object is the one filled action. Depth comes from paper stacked on paper and from marks that overlap the page edge. There are no shadows, gradients, pills, or badges.",
+    "keyCharacteristics": [
+      "A white page on a cool grey canvas, with a pale strip for chrome and labels.",
+      "Two typefaces with separate jobs: Tinos for document text, Schibsted Grotesk for Redline's own words.",
+      "A fixed change-bar gutter on the page's left edge is the layout grid. Rank numerals and change bars live in it.",
+      "One crimson focus at a time. Every other flag rests in grey.",
+      "Square paper forms, hairline and dotted rules, flat surfaces.",
+      "Short, single-curve ease-out folds that open in place and never leave the page."
+    ],
+    "rules": [
+      { "name": "The One Focus Rule", "body": "Crimson belongs to the flag in focus and to nothing else. The wordmark, the action, headings, links and hover states stay ink. If two things on screen are crimson, they must be the same flag.", "section": "colors" },
+      { "name": "The Resting Grey Rule", "body": "A flag out of focus keeps its marks in grey (Resting Highlight behind the sentence, Resting Mark for the bar and rules) and never disappears. Focus changes a flag's colour, not whether it is there.", "section": "colors" },
+      { "name": "The Two Hands Rule", "body": "Tinos is only for words quoted from the document: its title, clause headings and sentences. Everything Redline writes, including a comment directly under a Tinos sentence, is Schibsted Grotesk. Never set a reading in the serif, and never set a source sentence in the grotesk.", "section": "typography" },
+      { "name": "The Fixed Slot Rule", "body": "Rank numerals are weight 800 with tabular figures and sit in a fixed-width slot (1.1em in lists, a 28px square in the gutter), so ranks line up in a column however many flags there are.", "section": "typography" },
+      { "name": "The Gutter Is the Grid Rule", "body": "The gutter width is the unit that aligns the system. Change bars and rank numerals live inside it, label bands bleed through it to the page edge, and body text outside the page indents by it. New surfaces set a flagged document in the same gutter and do not invent a second margin system.", "section": "layout" },
+      { "name": "The Paper Stack Rule", "body": "Lift is shown by a lighter sheet or by overlapping an edge, never by a shadow. If an element seems to need a shadow to separate, give it a lighter paper tone or let it cross an edge.", "section": "elevation" },
+      { "name": "The Square Paper Rule", "body": "Only the filled action is rounded, at 4px. Everything else, cards included, stays at 0.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do set every source sentence in Tinos on Paper, with its change bar in the gutter (72px, or 44px at 640px and below) and its rank in a fixed tabular slot.",
+      "Do keep exactly one flag in Markup Crimson, and show every other flag in Resting Highlight and Resting Mark grey.",
+      "Do open comment cards directly under their sentence with the 280ms cubic-bezier(0.16, 1, 0.3, 1) fold, and fold the previous one back at the same time.",
+      "Do separate layers with paper tone (canvas, strip or comment grey, white page) and with overlap past an edge.",
+      "Do write counts and states as plain text in the grotesk (\"1 flag\", \"no flags\"), in sentence case.",
+      "Do run every piece of user-facing copy, including labels, notes, empty states and errors, through the humanizer skill before it is committed."
+    ],
+    "donts": [
+      "Don't use shadows, gradients, pills or badges anywhere. Depth is paper and overlap.",
+      "Don't use Markup Crimson for the wordmark, the action, headings, links, hover states or decoration.",
+      "Don't set Redline's own words in Tinos, or a quoted source sentence in Schibsted Grotesk.",
+      "Don't round anything except the filled action (4px).",
+      "Don't set text in Resting Mark grey; at 2.6:1 on white it is for bars and rules only.",
+      "Don't uppercase or letter-space labels, or add a kicker or eyebrow line above a heading.",
+      "Don't show a gap with a change bar, highlight or leader; it has no source sentence to mark."
+    ]
+  }
+}
