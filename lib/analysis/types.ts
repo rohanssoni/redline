@@ -1,6 +1,7 @@
 import type { ModelClient } from '../model/client';
 import type { CleanRead } from './clean-read';
 import type { Gap } from './gap';
+import type { RedLineMatch } from './red-line-override';
 import type { VerifiedFlag } from './verified-flag';
 
 /** The result when nothing in a document clears the severity threshold. */
@@ -20,6 +21,9 @@ export type {
  * could be given one through (ADR-0005).
  */
 export type { Gap, GapClaim } from './gap';
+
+/** Which flags a red line put in front of the reader (ADR-0013). Internal. */
+export type { RedLineMatch } from './red-line-override';
 
 /** Everything `analyzeDocument` produces for one document. */
 export interface AnalysisResult {
@@ -47,6 +51,19 @@ export interface AnalysisResult {
    * arrive here holding one.
    */
   cleanRead: CleanRead | null;
+  /**
+   * The flags a red line put in front of the reader, and which red line did it
+   * (ADR-0013).
+   *
+   * Internal, and deliberately beside the flags rather than inside them: a
+   * red-line-triggered flag is an ordinary flag with an ordinary source
+   * sentence, and the reader is shown no marker, no badge and no note about the
+   * match. This is what the judge (ADR-0018) and the dismissal rate read.
+   *
+   * Every entry names a flag in `flags`, because both lists are built from what
+   * came back through the source sentence check (ADR-0001).
+   */
+  redLineMatches: RedLineMatch[];
 }
 
 /** Everything `analyzeDocument` reaches outside itself for. */

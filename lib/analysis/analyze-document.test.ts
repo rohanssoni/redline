@@ -225,6 +225,7 @@ describe('analyzeDocument, flag stage', () => {
       'document_summary',
       'document_flags',
       'document_gaps',
+      'red_line_matches',
     ]);
     const request = model.calls[1];
     expect(request.schema.required).toContain('flags');
@@ -710,6 +711,245 @@ describe('analyzeDocument, the clean read', () => {
     ]);
   });
 });
+
+describe('analyzeDocument, the red line override', () => {
+  /** The clause this fixture plants for the override, and the red line for it. */
+  function redLineOnly() {
+    const { text, sidecar } = loadAdhesionFixture();
+    const caught = sidecar.decoys.redLineOnly;
+    expect(caught).toBeDefined();
+    const planted = sidecar.flags.find(
+      (flag) => flag.sourceSentence === caught?.sourceSentence,
+    );
+    expect(planted?.plausible).toBe(false);
+    return { text, sidecar, caught: caught!, planted: planted! };
+  }
+
+  it('flags the clause the plausibility filter drops, once the reader has written the red line', async () => {
+    const { text, sidecar, caught } = redLineOnly();
+
+    const withoutRedLines = await analyzeDocument(text, [], {
+      model: stubModelClientFor(sidecar),
+    });
+    const withRedLines = await analyzeDocument(text, [caught.redLine], {
+      model: stubModelClientFor(sidecar),
+    });
+
+    expect(
+      withoutRedLines.flags.map((flag) => flag.sourceSentence),
+    ).not.toContain(caught.sourceSentence);
+    expect(withRedLines.flags.map((flag) => flag.sourceSentence)).toContain(
+      caught.sourceSentence,
+    );
+  });
+
+  it('flags a red line match that falls under the severity threshold', async () => {
+    const { text, sidecar, caught, planted } = redLineOnly();
+    const model = stubModelClientFor(sidecar);
+    model.reply('red_line_matches', {
+      matches: [
+        redLineProposal(caught, planted, { severity: SEVERITY_THRESHOLD - 1 }),
+      ],
+    });
+
+    const result = await analyzeDocument(text, [caught.redLine], { model });
+
+    const shown = result.flags.find(
+      (flag) => flag.sourceSentence === caught.sourceSentence,
+    );
+    expect(shown).toBeDefined();
+    expect(shown?.severity).toBe(SEVERITY_THRESHOLD - 1);
+    expect(result.cleanRead).toBeNull();
+  });
+
+  it('leaves out a red line match whose sentence is not in the document, and marks nothing', async () => {
+    const { text, sidecar, caught, planted } = redLineOnly();
+    const fabricated =
+      'Contractor shall never show, describe, or refer to this work anywhere, in any medium, for any reason.';
+    expect(text).not.toContain(fabricated);
+    const model = stubModelClientFor(sidecar);
+    model.reply('red_line_matches', {
+      matches: [
+        redLineProposal(caught, planted, {
+          id: 'quote-the-document-does-not-have',
+          sourceSentence: fabricated,
+        }),
+      ],
+    });
+
+    const result = await analyzeDocument(text, [caught.redLine], { model });
+
+    expect(result.flags.map((flag) => flag.sourceSentence)).not.toContain(
+      fabricated,
+    );
+    expect(result.flags.map((flag) => flag.id)).not.toContain(
+      'quote-the-document-does-not-have',
+    );
+    expect(result.redLineMatches).toEqual([]);
+    for (const flag of result.flags) {
+      expect(text).toContain(flag.sourceSentence);
+    }
+  });
+
+  it('matches a clause that is worded nothing like the red line', async () => {
+    const { text, sidecar, caught } = redLineOnly();
+
+    const result = await analyzeDocument(text, [caught.redLine], {
+      model: stubModelClientFor(sidecar),
+    });
+
+    const shown = result.flags.find(
+      (flag) => flag.sourceSentence === caught.sourceSentence,
+    );
+    expect(shown).toBeDefined();
+    // Nothing a string match could have found: the reader's wording and the
+    // clause's wording have no word of substance in common (ADR-0015).
+    expect(sharedWords(caught.redLine, caught.sourceSentence)).toEqual([]);
+  });
+
+  it('records which red line caught the flag, and shows the reader an ordinary flag', async () => {
+    const { text, sidecar, caught } = redLineOnly();
+
+    const result = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+    });
+
+    const shown = result.flags.find(
+      (flag) => flag.sourceSentence === caught.sourceSentence,
+    );
+    expect(result.redLineMatches).toEqual([
+      {
+        flagId: shown?.id,
+        redLine: caught.redLine,
+        sourceSentence: caught.sourceSentence,
+      },
+    ]);
+
+    // The reader is given no way to tell it apart: same keys as the flags the
+    // document's own reading produced, no badge, no note about the match.
+    const ordinary = result.flags.find((flag) => flag.id !== shown?.id);
+    expect(Object.keys(shown!).sort()).toEqual(Object.keys(ordinary!).sort());
+    for (const wording of [shown!.explanation, shown!.clauseType]) {
+      expect(wording).not.toContain(caught.redLine);
+      expect(wording.toLowerCase()).not.toContain('red line');
+    }
+  });
+
+  it('carries everything a soft counter-offer is drafted from, like any other flag', async () => {
+    const { text, sidecar, caught } = redLineOnly();
+
+    const result = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+    });
+
+    const shown = result.flags.find(
+      (flag) => flag.sourceSentence === caught.sourceSentence,
+    );
+    expect(shown).toBeDefined();
+    expect(text).toContain(shown?.sourceSentence);
+    expect(shown?.clauseType.trim().length).toBeGreaterThan(0);
+    expect(shown?.explanation.trim().length).toBeGreaterThan(0);
+    expect(['high', 'medium', 'low']).toContain(shown?.band);
+    expect(shown?.band).toBe(bandFor(shown!.severity));
+  });
+
+  it('fires on nothing when the document breaks none of the reader’s red lines', async () => {
+    const { text, sidecar, caught } = redLineOnly();
+    const unbroken = sidecar.redLines.filter(
+      (redLine) => redLine !== caught.redLine,
+    );
+    expect(unbroken.length).toBeGreaterThan(0);
+
+    const result = await analyzeDocument(text, unbroken, {
+      model: stubModelClientFor(sidecar),
+    });
+    const withoutRedLines = await analyzeDocument(text, [], {
+      model: stubModelClientFor(sidecar),
+    });
+
+    expect(result.redLineMatches).toEqual([]);
+    expect(result.flags.map((flag) => flag.id)).toEqual(
+      withoutRedLines.flags.map((flag) => flag.id),
+    );
+  });
+
+  it('asks nothing of the model about red lines when the reader has written none', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const model = stubModelClientFor(sidecar);
+
+    const result = await analyzeDocument(text, ['   '], { model });
+
+    expect(model.calls.map((call) => call.name)).not.toContain('red_line_matches');
+    expect(result.redLineMatches).toEqual([]);
+  });
+
+  it('sends the reader’s own words to the red line stage', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const model = stubModelClientFor(sidecar);
+
+    await analyzeDocument(text, sidecar.redLines, { model });
+
+    const request = model.calls.find((call) => call.name === 'red_line_matches');
+    expect(request).toBeDefined();
+    const sent = request!.messages.map((message) => message.content).join('\n');
+    for (const redLine of sidecar.redLines) {
+      expect(sent).toContain(redLine);
+    }
+    expect(sent).toContain(sidecar.flags[0].sourceSentence);
+  });
+
+  it('drops a match naming a red line the reader never wrote', async () => {
+    const { text, sidecar, caught, planted } = redLineOnly();
+    const model = stubModelClientFor(sidecar);
+    model.reply('red_line_matches', {
+      matches: [
+        redLineProposal(caught, planted, {
+          redLine: 'I will not sign anything printed in a serif typeface.',
+        }),
+      ],
+    });
+
+    const result = await analyzeDocument(text, [caught.redLine], { model });
+
+    expect(result.redLineMatches).toEqual([]);
+    expect(result.flags.map((flag) => flag.sourceSentence)).not.toContain(
+      caught.sourceSentence,
+    );
+  });
+});
+
+/** One red line match as a model would propose it, from what the fixture says. */
+function redLineProposal(
+  caught: { redLine: string; sourceSentence: string },
+  planted: { id: string; clauseType: string; severity: number; explanation: string },
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    id: planted.id,
+    redLine: caught.redLine,
+    clauseType: planted.clauseType,
+    sourceSentence: caught.sourceSentence,
+    severity: planted.severity,
+    explanation: planted.explanation,
+    textualAmbiguity: false,
+    alternativeReadings: [],
+    harmConfidence: 'full',
+    ...overrides,
+  };
+}
+
+/** The words of substance two pieces of wording have in common. */
+function sharedWords(one: string, other: string): string[] {
+  const wordsOf = (wording: string) =>
+    new Set(
+      wording
+        .toLowerCase()
+        .split(/[^a-z]+/)
+        .filter((word) => word.length > 3),
+    );
+  const first = wordsOf(one);
+  return [...wordsOf(other)].filter((word) => first.has(word));
+}
 
 /** One flag as a model would propose it: dangerous, citable, plainly worded. */
 function proposal(

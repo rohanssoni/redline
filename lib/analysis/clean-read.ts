@@ -28,7 +28,7 @@
  */
 
 import type { GapCheckOutcome } from './gap';
-import type { VerificationOutcome } from './verified-flag';
+import type { VerificationOutcome, VerifiedFlag } from './verified-flag';
 import { SEVERITY_THRESHOLD, aboveThreshold } from './ranking';
 
 /** Every stage of one read of one document, each having run to the end. */
@@ -39,6 +39,17 @@ export interface CompletedRead {
   flagCheck: VerificationOutcome;
   /** The gap stage's own outcome, which only `verifyGaps` can produce. */
   gapCheck: GapCheckOutcome;
+  /**
+   * The flags the reader is actually shown, where that is not simply the ones
+   * above the threshold.
+   *
+   * A clause a red line put through sits in front of the reader whatever its
+   * severity (ADR-0013), so counting the threshold again here would tell a
+   * reader with a flag on their screen that their agreement is clean. Left out,
+   * the count is the threshold's, which is what it is for a read with no red
+   * lines behind it.
+   */
+  shownFlags?: readonly VerifiedFlag[];
 }
 
 // Not exported: naming this key is the only way to write a `CleanRead` literal,
@@ -66,9 +77,9 @@ export type CleanRead = {
 export function cleanReadFor(read: CompletedRead): CleanRead | null {
   if (read.summary.trim().length === 0) return null;
 
-  const reportable =
-    aboveThreshold(read.flagCheck.flags).length +
-    aboveThreshold(read.gapCheck.gaps).length;
+  const shownFlags =
+    read.shownFlags ?? aboveThreshold(read.flagCheck.flags);
+  const reportable = shownFlags.length + aboveThreshold(read.gapCheck.gaps).length;
   if (reportable > 0) return null;
 
   return { threshold: SEVERITY_THRESHOLD } as CleanRead;

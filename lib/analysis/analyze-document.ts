@@ -7,16 +7,11 @@ import {
 } from '../document-text';
 import { AnalysisError, type AnalysisDeps, type AnalysisResult } from './types';
 import { cleanReadFor } from './clean-read';
-import {
-  aboveThreshold,
-  bandFor,
-  dangerousOnly,
-  rankFlags,
-  rankGaps,
-} from './ranking';
+import { aboveThreshold, bandFor, dangerousOnly, rankGaps } from './ranking';
 import { settleWording } from './hedging';
 import { verifyGaps, type GapClaim } from './gap';
-import { verifyFlags, type ProposedFlag } from './verified-flag';
+import { applyRedLineOverride } from './red-line-override';
+import { verifyFlags, type Flag, type ProposedFlag } from './verified-flag';
 
 /**
  * What the model is asked for in the summary stage. `strict: true` on the
@@ -311,6 +306,156 @@ export function gapsRequest(text: string): StructuredRequest {
 }
 
 /**
+ * What the model is asked for in the red line stage.
+ *
+ * The same fields a flag carries, because what comes back is a flag — the reader
+ * is shown no difference — plus the one thing that stage knows and the flag
+ * stage does not: which of the reader's red lines the clause violates.
+ *
+ * There is no `changesYourEconomicsUnilaterally` and no `bindsBothSidesEqually`.
+ * Those two exist to feed ADR-0004's plausibility filter, and a red line match
+ * does not go through it (ADR-0013), so asking for them would be asking the model
+ * for an answer nothing reads.
+ */
+export const redLineMatchesSchema: ObjectSchema = {
+  type: 'object',
+  properties: {
+    matches: {
+      type: 'array',
+      description:
+        'Every clause in this agreement that violates one of the reader’s red lines.',
+      items: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+            description:
+              'A short lowercase name for the clause, words joined by hyphens, such as no-portfolio-use.',
+            minLength: 2,
+          },
+          redLine: {
+            type: 'string',
+            description:
+              'The red line this clause violates, copied from the reader’s list character for character.',
+            minLength: 1,
+          },
+          clauseType: {
+            type: 'string',
+            description:
+              'What kind of clause this is, in three or four plain words, such as "portfolio restriction".',
+            minLength: 3,
+          },
+          sourceSentence: {
+            type: 'string',
+            description:
+              'One sentence copied from the agreement character for character. Never tidied, shortened, joined or repunctuated.',
+            minLength: 20,
+          },
+          severity: {
+            type: 'integer',
+            description:
+              'What this costs the reader if it happens, 0 to 100. Not how often clauses like it appear.',
+            minimum: 0,
+            maximum: 100,
+          },
+          explanation: {
+            type: 'string',
+            description:
+              'Two or three sentences, addressed to the reader as "you", saying what this sentence lets the other side do.',
+            minLength: 40,
+          },
+          textualAmbiguity: {
+            type: 'boolean',
+            description:
+              "True only when the sentence's own wording carries two readings that differ in what the reader is agreeing to.",
+          },
+          alternativeReadings: {
+            type: 'array',
+            description:
+              'The two readings, each one sentence, when textualAmbiguity is true. Empty when it is false.',
+            items: { type: 'string' },
+          },
+          harmConfidence: {
+            type: 'string',
+            description:
+              'full when the sentence plainly does the harm described, partial when the reading is defensible but not certain.',
+            enum: ['full', 'partial'],
+          },
+        },
+        required: [
+          'id',
+          'redLine',
+          'clauseType',
+          'sourceSentence',
+          'severity',
+          'explanation',
+          'textualAmbiguity',
+          'alternativeReadings',
+          'harmConfidence',
+        ],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['matches'],
+  additionalProperties: false,
+};
+
+/** One red line match as the model sends it, before its wording is settled. */
+type RedLineMatchOutput = Omit<Flag, 'band' | 'ambiguity'> & {
+  redLine: string;
+  alternativeReadings: string[];
+};
+
+interface RedLineMatchesOutput {
+  matches: RedLineMatchOutput[];
+}
+
+const RED_LINE_SYSTEM_PROMPT = [
+  'The reader has written down the terms they will not accept. You are given that list and an agreement, and you find the clauses in the agreement that break one of them.',
+  '',
+  'Matching:',
+  '- What the clause does to the reader is the test. The reader wrote their list in their own words and a client’s contract will not use them, so shared wording proves nothing either way.',
+  '- A clause breaks a red line when signing it means giving up the thing the red line says the reader keeps, whatever wording it arrives in.',
+  '- A clause that leaves the reader’s stated line intact is not a match, and an agreement that breaks none of the lines returns an empty list.',
+  '- One entry per clause and red line. Name the red line by copying it from the list, word for word.',
+  '',
+  'Quoting:',
+  '- Every clause you list carries one sentence copied from the agreement, character for character.',
+  '- Copy it. Do not tidy it, do not fix its punctuation or capitalisation, do not shorten it, do not join two sentences, do not translate it.',
+  '- A quote that is not in the document is thrown away and the reader never sees that clause, so a copied sentence matters more than a neat one.',
+  '',
+  'Judging:',
+  '- List the clause even when it looks minor, reads as even-handed, or is how most agreements are drafted. The reader has already decided this one matters to them, and that decision is not yours to review.',
+  '- Severity is still what the clause costs the reader if it happens, rated the same way you would rate any other clause.',
+  '',
+  'Writing:',
+  '- Address the reader as "you" and the other side by the name the document uses.',
+  '- Say only what the sentence says. Do not mention the red line, do not say the reader asked for this, and do not say what a court would do.',
+  '- Write plainly. Do not hedge, and do not soften a clause because it is a common one.',
+  '- textualAmbiguity is about the sentence on the page and nothing else: set it true only when the words themselves carry two readings that differ in what the reader is agreeing to, and put both readings in alternativeReadings. Otherwise leave it false and the list empty.',
+].join('\n');
+
+/** The prompt for the red line stage. Exported so a test can read what was sent. */
+export function redLineMatchesRequest(
+  text: string,
+  redLines: readonly string[],
+): StructuredRequest {
+  const list = redLines.map((redLine) => `- ${redLine}`).join('\n');
+  return {
+    name: 'red_line_matches',
+    schema: redLineMatchesSchema,
+    messages: [
+      { role: 'system', content: RED_LINE_SYSTEM_PROMPT },
+      {
+        role: 'user',
+        content: `The reader will not accept these terms:\n\n${list}\n\nList the clauses in the agreement below that break one of them.\n\n---\n${text}\n---`,
+      },
+    ],
+  };
+}
+
+/**
  * Reads one document: a plain-English summary, the clauses that could cost the
  * reader, and the terms the agreement leaves out, each ranked by what it costs.
  *
@@ -320,18 +465,19 @@ export function gapsRequest(text: string): StructuredRequest {
  * their own gate, `verifyGaps`, and the type they arrive as has no field a source
  * sentence could occupy (ADR-0005). The two lists stay separate here and are
  * interleaved by severity where the reader reads them.
+ *
+ * The reader's red lines get a stage of their own, which runs last and only when
+ * they wrote any. What it finds skips the plausibility filter and the severity
+ * threshold and goes through the same citation gate as everything else
+ * (ADR-0013), which is why it is verified by the same function rather than a
+ * gentler one. The summary never sees the red lines: it says what the document
+ * says, and whose priorities were brought to it changes nothing about that.
  */
 export async function analyzeDocument(
   text: string,
   redLines: string[],
   deps: AnalysisDeps,
 ): Promise<AnalysisResult> {
-  // The reader's red lines override the plausibility filter and the confidence
-  // threshold (ADR-0013). That override is its own slice of work; until it lands
-  // the list is what the document itself supports, so the red lines are carried
-  // but not consulted, and the summary never sees them at all.
-  void redLines;
-
   const documentText = normalizeDocumentText(text);
   if (readableCharacterCount(documentText) < MINIMUM_READABLE_CHARACTERS) {
     throw new AnalysisError(
@@ -346,11 +492,21 @@ export async function analyzeDocument(
     flagsRequest(documentText),
   );
   const absent = await deps.model.complete<GapsOutput>(gapsRequest(documentText));
+  const stated = redLines.map((redLine) => redLine.trim()).filter(Boolean);
+  const matched = stated.length
+    ? await deps.model.complete<RedLineMatchesOutput>(
+        redLineMatchesRequest(documentText, stated),
+      )
+    : { matches: [] };
+
+  // One namespace across both stages: a flag and a red line match naming the
+  // same clause would otherwise arrive as two findings under one id.
+  const naming = names('flag');
 
   // Plausibility first, so an unusual-but-symmetric clause is gone before
   // anything is ranked (ADR-0004); verification last, so what survives is
   // quoting the document rather than the model (ADR-0001).
-  const dangerous = dangerousOnly(withIds(proposed.flags));
+  const dangerous = dangerousOnly(withIds(proposed.flags, naming));
 
   // Between the filter and the citation check, because what a flag is allowed to
   // say is decided before its sentence is looked up and after it is known to be
@@ -358,7 +514,7 @@ export async function analyzeDocument(
   const worded = settleFlagWording(dangerous);
 
   const flagCheck = verifyFlags(worded, documentText);
-  const { flags, dropped } = flagCheck;
+  const { dropped } = flagCheck;
   for (const drop of dropped) {
     console.warn(
       'A flag was dropped because its source sentence is not in the document: %s (%s)',
@@ -366,6 +522,37 @@ export async function analyzeDocument(
       drop.quoted,
     );
   }
+
+  // No `dangerousOnly` on this line and no threshold below it, which is the
+  // whole of the override (ADR-0013). `verifyFlags` is the same call the flag
+  // stage makes, on purpose: the citation gate is not part of what a red line
+  // overrides, and there is no second version of it that would let one through.
+  const claimedMatches = settleFlagWording(
+    redLineMatchesWithIds(matched.matches, stated, naming),
+  );
+  const redLineCheck = verifyFlags(claimedMatches, documentText);
+  for (const drop of redLineCheck.dropped) {
+    console.warn(
+      'A red line match was dropped because its source sentence is not in the document: %s (%s)',
+      drop.id,
+      drop.quoted,
+    );
+  }
+
+  // Keyed on what came back from the gate, so a match whose sentence was not
+  // found leaves no mark for a flag to inherit.
+  const redLineBySentence = new Map<string, string>();
+  for (const match of redLineCheck.flags) {
+    const redLine = claimedMatches.find((claim) => claim.id === match.id)?.redLine;
+    if (redLine !== undefined) {
+      redLineBySentence.set(match.sourceSentence, redLine);
+    }
+  }
+
+  const { flags, redLineMatches } = applyRedLineOverride(
+    [...flagCheck.flags, ...redLineCheck.flags],
+    redLineBySentence,
+  );
 
   const gapCheck = verifyGaps(withGapIds(absent.gaps), documentText);
   const { gaps, dropped: droppedGaps } = gapCheck;
@@ -380,14 +567,23 @@ export async function analyzeDocument(
 
   // Reached only once all three stages have returned, which is what makes the
   // clean read below a statement about the document rather than about the run.
-  const cleanRead = cleanReadFor({ summary: summary.trim(), flagCheck, gapCheck });
+  const cleanRead = cleanReadFor({
+    summary: summary.trim(),
+    flagCheck,
+    gapCheck,
+    // The flags after the override, so a clause a red line put through below the
+    // threshold is something the reader has to work through rather than a
+    // document Redline calls clean (ADR-0008, ADR-0013).
+    shownFlags: flags,
+  });
   recordZeroFlagRate(cleanRead !== null);
 
   return {
     summary: summary.trim(),
-    flags: rankFlags(aboveThreshold(flags)),
+    flags,
     gaps: rankGaps(aboveThreshold(gaps)),
     cleanRead,
+    redLineMatches,
   };
 }
 
@@ -411,13 +607,53 @@ function recordZeroFlagRate(wasCleanRead: boolean): void {
  */
 function withIds(
   proposed: FlagsOutput['flags'],
+  naming: (proposed: string) => string,
 ): Array<ProposedFlag & { alternativeReadings: string[] }> {
-  const naming = names('flag');
   return proposed.map((flag) => ({
     ...flag,
     id: naming(flag.id),
     band: bandFor(flag.severity),
   }));
+}
+
+/**
+ * The same for red line matches, and one thing more: a match naming a red line
+ * the reader did not write is dropped here.
+ *
+ * The override exists to carry the reader's own list past the filters, so the
+ * list is what it has to be checked against. A match citing wording that is not
+ * in it is not the reader's decision being honoured, it is the model routing a
+ * clause of its own choosing around ADR-0004.
+ */
+function redLineMatchesWithIds(
+  matches: readonly RedLineMatchOutput[],
+  stated: readonly string[],
+  naming: (proposed: string) => string,
+): Array<Flag & { redLine: string; alternativeReadings: string[] }> {
+  const kept: Array<Flag & { redLine: string; alternativeReadings: string[] }> = [];
+
+  for (const match of matches) {
+    const redLine = stated.find(
+      (written) => written.toLowerCase() === match.redLine.trim().toLowerCase(),
+    );
+    if (redLine === undefined) {
+      console.warn(
+        'A red line match was dropped because it names no red line the reader wrote: %s (%s)',
+        match.id,
+        match.redLine,
+      );
+      continue;
+    }
+
+    kept.push({
+      ...match,
+      redLine,
+      id: naming(match.id),
+      band: bandFor(match.severity),
+    });
+  }
+
+  return kept;
 }
 
 /**
@@ -429,10 +665,10 @@ function withIds(
  * court would treat it, whether it holds up — has nothing left to tell the reader
  * once that is taken out, so it goes, and the reason is logged.
  */
-function settleFlagWording(
-  flags: readonly (ProposedFlag & { alternativeReadings: string[] })[],
-): ProposedFlag[] {
-  const settled: ProposedFlag[] = [];
+function settleFlagWording<T extends Flag & { alternativeReadings: string[] }>(
+  flags: readonly T[],
+): T[] {
+  const settled: T[] = [];
 
   for (const flag of flags) {
     const wording = settleWording({
@@ -462,7 +698,7 @@ function settleFlagWording(
       explanation: wording.explanation,
       textualAmbiguity: wording.textualAmbiguity,
       ...(wording.ambiguity ? { ambiguity: wording.ambiguity } : {}),
-    });
+    } as T);
   }
 
   return settled;

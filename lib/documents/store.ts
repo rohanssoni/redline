@@ -1,6 +1,10 @@
 import type { AnalysisResult } from '../analysis/types';
 import { cleanReadFor } from '../analysis/clean-read';
-import { aboveThreshold, rankFlags, rankGaps } from '../analysis/ranking';
+import { aboveThreshold, rankGaps } from '../analysis/ranking';
+import {
+  applyRedLineOverride,
+  type RedLineMatch,
+} from '../analysis/red-line-override';
 import { verifyGaps, type GapClaim } from '../analysis/gap';
 import { verifyFlags, type Flag } from '../analysis/verified-flag';
 
@@ -128,17 +132,57 @@ export function toAnalysisResult(
 
   const summary = record.summary as string;
 
+  // The override is applied again on the way out rather than trusted from the
+  // column, for the same reason the quotes are checked again: a red line kept a
+  // flag on the page below the severity threshold (ADR-0013), so a row that lost
+  // its match records would quietly drop it on the next read. What the column
+  // cannot do is put a flag through that no longer quotes the document — these
+  // records are matched against sentences that have already been through
+  // `verifyFlags`, so a hand-edited row naming a sentence the document does not
+  // contain marks nothing.
+  const redLineBySentence = new Map(
+    storedRedLineMatches(record).map((match) => [match.sourceSentence, match.redLine]),
+  );
+  const { flags, redLineMatches } = applyRedLineOverride(
+    flagCheck.flags,
+    redLineBySentence,
+  );
+
   return {
     summary,
-    flags: rankFlags(aboveThreshold(flagCheck.flags)),
+    flags,
     gaps: rankGaps(aboveThreshold(gapCheck.gaps)),
     // Worked out again from what came back through the two gates, never read off
     // the column. `cleanRead` is the field that tells a reader their agreement is
     // fine, and the column is jsonb: a row written by an older version of the
     // analysis, or edited by hand, is exactly where a clean read attached to a
     // document full of flags would come from (ADR-0008).
-    cleanRead: cleanReadFor({ summary, flagCheck, gapCheck }),
+    cleanRead: cleanReadFor({ summary, flagCheck, gapCheck, shownFlags: flags }),
+    redLineMatches,
   };
+}
+
+/** The match records a row holds, ignoring anything that is not one. */
+function storedRedLineMatches(record: Record<string, unknown>): RedLineMatch[] {
+  if (!Array.isArray(record.redLineMatches)) return [];
+  return (record.redLineMatches as unknown[]).filter(isStoredRedLineMatch);
+}
+
+/**
+ * Whether a stored row's match record has what it takes to mark a flag. It is
+ * read as a claim about a sentence, never as permission: the sentence still has
+ * to be one a verified flag came back carrying.
+ */
+function isStoredRedLineMatch(value: unknown): value is RedLineMatch {
+  if (typeof value !== 'object' || value === null) return false;
+  const match = value as Record<string, unknown>;
+  return (
+    typeof match.flagId === 'string' &&
+    typeof match.redLine === 'string' &&
+    match.redLine.trim().length > 0 &&
+    typeof match.sourceSentence === 'string' &&
+    match.sourceSentence.trim().length > 0
+  );
 }
 
 /** Whether a stored row's flag has the fields a flag needs to be shown at all. */

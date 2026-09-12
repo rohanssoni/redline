@@ -135,6 +135,56 @@ describe('a stored analysis, on the way back out', () => {
     expect(readBack?.cleanRead).not.toBeNull();
   });
 
+  it('keeps a flag a red line put through, even under the severity threshold', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const caught = sidecar.decoys.redLineOnly!;
+    const model = stubModelClientFor(sidecar);
+    model.reply('red_line_matches', {
+      matches: [
+        {
+          id: 'under-the-threshold',
+          redLine: caught.redLine,
+          clauseType: 'portfolio restriction',
+          sourceSentence: caught.sourceSentence,
+          severity: SEVERITY_THRESHOLD - 1,
+          explanation: sidecar.flags[sidecar.flags.length - 1].explanation,
+          textualAmbiguity: false,
+          alternativeReadings: [],
+          harmConfidence: 'full',
+        },
+      ],
+    });
+    const analysis = await analyzeDocument(text, [caught.redLine], { model });
+    expect(analysis.redLineMatches).toHaveLength(1);
+
+    const readBack = toAnalysisResult(JSON.parse(JSON.stringify(analysis)), text);
+
+    expect(readBack?.flags.map((flag) => flag.sourceSentence)).toContain(
+      caught.sourceSentence,
+    );
+    expect(readBack?.redLineMatches).toEqual(analysis.redLineMatches);
+  });
+
+  it('marks nothing from a row whose match quotes a sentence the document lost', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const clean = loadCleanFixture();
+    const caught = sidecar.decoys.redLineOnly!;
+    const model = stubModelClientFor(sidecar);
+    const analysis = await analyzeDocument(text, [caught.redLine], { model });
+    expect(analysis.redLineMatches).toHaveLength(1);
+
+    // The same row read against a document that does not contain the sentence.
+    // A red line overrides the filters and never the quote check (ADR-0013), so
+    // what comes back carries neither the flag nor a record of the match.
+    const readBack = toAnalysisResult(
+      JSON.parse(JSON.stringify(analysis)),
+      clean.text,
+    );
+
+    expect(readBack?.flags).toEqual([]);
+    expect(readBack?.redLineMatches).toEqual([]);
+  });
+
   it('reads a column that is not an analysis as nothing at all, never as clean', () => {
     const { text } = loadCleanFixture();
 

@@ -37,7 +37,13 @@ function watchedAnalysis() {
     redLines: string[],
   ): Promise<AnalysisResult> => {
     given.push(redLines);
-    return { summary: 'A summary of this agreement.', flags: [], gaps: [], cleanRead: null };
+    return {
+      summary: 'A summary of this agreement.',
+      flags: [],
+      gaps: [],
+      cleanRead: null,
+      redLineMatches: [],
+    };
   };
   return { given, analyze };
 }
