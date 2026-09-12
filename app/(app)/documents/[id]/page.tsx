@@ -4,6 +4,7 @@ import { createSupabaseDocuments } from '@/lib/documents/supabase-documents';
 import type { StoredDocument } from '@/lib/documents/store';
 import { currentReader } from '@/lib/supabase/server';
 import { AnalysisRunner } from './analysis-runner';
+import { DocumentReview } from './document-review';
 
 export const metadata: Metadata = { title: 'Document — Redline' };
 
@@ -22,6 +23,8 @@ export default async function DocumentPage({
   const document = await loadDocument(id);
   if (!document) notFound();
 
+  const { analysis } = document;
+
   return (
     <>
       <section className="sheet">
@@ -31,9 +34,9 @@ export default async function DocumentPage({
         </p>
         <h1>What this agreement says</h1>
 
-        {document.analysis ? (
+        {analysis ? (
           <div className="summary">
-            {paragraphs(document.analysis.summary).map((paragraph) => (
+            {paragraphs(analysis.summary).map((paragraph) => (
               <p key={paragraph.slice(0, 40)}>{paragraph}</p>
             ))}
           </div>
@@ -41,20 +44,37 @@ export default async function DocumentPage({
           <AnalysisRunner documentId={document.id} />
         )}
 
-        <p className="note sheet-foot">
-          This is what the agreement says, in plain words. The clauses that could
-          cost you, each with the sentence it comes from, come next.
-        </p>
+        {analysis && (
+          <p className="note sheet-foot">
+            {analysis.flags.length === 0
+              ? 'No clause here lets the other side change your terms on its own. The whole agreement is below.'
+              : `${flagCount(analysis.flags.length)} Each one quotes the sentence it comes from, so you can check it yourself.`}
+          </p>
+        )}
       </section>
 
-      <section className="doc-page" aria-label="The text of your agreement">
-        <p className="doc-label">Your document, as Redline read it</p>
-        {paragraphs(document.text).map((paragraph, index) => (
-          <p key={`${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>
-        ))}
-      </section>
+      {analysis ? (
+        <DocumentReview
+          name={document.name}
+          text={document.text}
+          flags={analysis.flags}
+        />
+      ) : (
+        <section className="doc-page" aria-label="The text of your agreement">
+          <p className="doc-label">Your document, as Redline read it</p>
+          {paragraphs(document.text).map((paragraph, index) => (
+            <p key={`${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>
+          ))}
+        </section>
+      )}
     </>
   );
+}
+
+/** How many flags there are, in words a reader would use. */
+function flagCount(count: number): string {
+  if (count === 1) return 'One clause here could cost you.';
+  return `${count} clauses here could cost you, worst first.`;
 }
 
 function paragraphs(text: string): string[] {

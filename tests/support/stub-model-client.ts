@@ -4,7 +4,7 @@ import {
   type ModelClient,
   type StructuredRequest,
 } from '../../lib/model/client';
-import type { FixtureSidecar } from '../fixtures';
+import type { FixtureFlag, FixtureSidecar } from '../fixtures';
 
 /**
  * The model client the suite runs against. It reaches nothing: no network, no
@@ -63,11 +63,54 @@ export function createStubModelClient(replies: StubReplies = {}): StubModelClien
 }
 
 /**
+ * What a model proposing flags for this fixture would send back.
+ *
+ * Every planted clause is proposed, decoys included, because a model favouring
+ * recall proposes them and the code under test is what decides which of them a
+ * reader ever sees. The two plausibility signals are what the sidecar says about
+ * each clause, never what the expected outcome is: `plausible: false` on this
+ * fixture means the clause is even-handed and moves nobody's money, so that is
+ * what the stub reports, and ADR-0004's filter draws its own conclusion.
+ */
+export function proposedFlagsFor(sidecar: FixtureSidecar): unknown[] {
+  const fromFlags = sidecar.flags.map((flag: FixtureFlag) => ({
+    id: flag.id,
+    clauseType: flag.clauseType,
+    sourceSentence: flag.sourceSentence,
+    severity: flag.severity,
+    explanation: flag.explanation,
+    changesYourEconomicsUnilaterally: flag.plausible,
+    bindsBothSidesEqually: !flag.plausible,
+    textualAmbiguity: flag.textualAmbiguity,
+    harmConfidence: flag.harmConfidence,
+  }));
+
+  const symmetric = sidecar.decoys.symmetricUnusual;
+  if (!symmetric) return fromFlags;
+
+  return [
+    ...fromFlags,
+    {
+      id: 'symmetric-unusual',
+      clauseType: 'unusual but even-handed term',
+      sourceSentence: symmetric.sourceSentence,
+      severity: 30,
+      explanation: symmetric.why,
+      changesYourEconomicsUnilaterally: false,
+      bindsBothSidesEqually: true,
+      textualAmbiguity: false,
+      harmConfidence: 'partial',
+    },
+  ];
+}
+
+/**
  * A stub that answers from a fixture sidecar, so a test asserts against the
  * document it loaded rather than against wording invented in the test file.
  */
 export function stubModelClientFor(sidecar: FixtureSidecar): StubModelClient {
   return createStubModelClient({
     document_summary: { summary: sidecar.summary },
+    document_flags: { flags: proposedFlagsFor(sidecar) },
   });
 }

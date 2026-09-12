@@ -1,4 +1,6 @@
-import type { AnalysisResult } from '../analysis/types';
+import type { AnalysisResult, Gap } from '../analysis/types';
+import { rankFlags } from '../analysis/ranking';
+import { verifyFlags, type Flag } from '../analysis/verified-flag';
 
 /**
  * A document as Redline keeps it: the text extracted in the reader's browser,
@@ -60,7 +62,7 @@ export function toStoredDocument(row: DocumentRow): StoredDocument {
     id: row.id,
     name: row.name,
     text: row.extracted_text,
-    analysis: toAnalysisResult(row.analysis),
+    analysis: toAnalysisResult(row.analysis, row.extracted_text),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -70,14 +72,14 @@ export function toDocumentListing(row: Omit<DocumentRow, 'extracted_text'>): Doc
   return {
     id: row.id,
     name: row.name,
-    analysed: toAnalysisResult(row.analysis) !== null,
+    analysed: storedAnalysis(row.analysis) !== null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
-/** The stored analysis, or `null` if the column holds anything else. */
-export function toAnalysisResult(value: unknown): AnalysisResult | null {
+/** The jsonb column, if it holds an analysis at all. */
+function storedAnalysis(value: unknown): Record<string, unknown> | null {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return null;
   }
@@ -88,9 +90,60 @@ export function toAnalysisResult(value: unknown): AnalysisResult | null {
   if (!Array.isArray(record.flags) || !Array.isArray(record.gaps)) {
     return null;
   }
+  return record;
+}
+
+/**
+ * The stored analysis, or `null` if the column holds anything else.
+ *
+ * Every stored flag is checked against the document's text again on the way out.
+ * The column is jsonb, so what a row holds is whatever was written into it, and
+ * a row written by an older version of the analysis — or edited by hand — could
+ * otherwise put a sentence in front of the reader that their document does not
+ * contain (ADR-0001). A flag that no longer quotes the document is dropped here
+ * exactly as it would have been during the run.
+ */
+export function toAnalysisResult(
+  value: unknown,
+  documentText: string,
+): AnalysisResult | null {
+  const record = storedAnalysis(value);
+  if (!record) return null;
+
+  const { flags } = verifyFlags(
+    (record.flags as unknown[]).filter(isStoredFlag),
+    documentText,
+  );
+
   return {
-    summary: record.summary,
-    flags: record.flags as AnalysisResult['flags'],
-    gaps: record.gaps as AnalysisResult['gaps'],
+    summary: record.summary as string,
+    flags: rankFlags(flags),
+    gaps: (record.gaps as unknown[]).filter(isStoredGap),
   };
+}
+
+/** Whether a stored row's flag has the fields a flag needs to be shown at all. */
+function isStoredFlag(value: unknown): value is Flag {
+  if (typeof value !== 'object' || value === null) return false;
+  const flag = value as Record<string, unknown>;
+  return (
+    typeof flag.id === 'string' &&
+    typeof flag.clauseType === 'string' &&
+    typeof flag.sourceSentence === 'string' &&
+    typeof flag.severity === 'number' &&
+    typeof flag.explanation === 'string' &&
+    typeof flag.band === 'string' &&
+    typeof flag.textualAmbiguity === 'boolean' &&
+    (flag.harmConfidence === 'full' || flag.harmConfidence === 'partial')
+  );
+}
+
+function isStoredGap(value: unknown): value is Gap {
+  if (typeof value !== 'object' || value === null) return false;
+  const gap = value as Record<string, unknown>;
+  return (
+    typeof gap.id === 'string' &&
+    typeof gap.statement === 'string' &&
+    typeof gap.severity === 'number'
+  );
 }

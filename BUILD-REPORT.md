@@ -20,8 +20,8 @@ _(filled in at the end of the run)_
 | # | Ticket | Status |
 |---|--------|--------|
 | 17 | Landing page | in progress |
-| 2 | Upload + summary (skeleton) | not started |
-| 3 | Ranked flags with source sentences | not started |
+| 2 | Upload + summary (skeleton) | **done** |
+| 3 | Ranked flags with source sentences | in progress |
 | 4 | Gaps ranked alongside flags | not started |
 | 5 | Hedged wording only for ambiguity | not started |
 | 6 | Clean read | not started |

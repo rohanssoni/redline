@@ -1,24 +1,13 @@
 import type { ModelClient } from '../model/client';
+import type { SeverityBand, VerifiedFlag } from './verified-flag';
 
-/** What a flag or gap costs the reader if it fires (CONTEXT.md: severity). */
-export type SeverityBand = 'high' | 'medium' | 'low';
-
-/** How sure the analysis is that the clause harms the reader (ADR-0006). */
-export type HarmConfidence = 'full' | 'partial';
-
-/** A clause capable of harming the reader, bound to its source sentence (ADR-0001). */
-export interface Flag {
-  id: string;
-  clauseType: string;
-  /** Verbatim from the document text. Verified before a flag can be shown. */
-  sourceSentence: string;
-  severity: number;
-  band: SeverityBand;
-  explanation: string;
-  /** True only where the sentence's own wording is open to two readings (ADR-0010). */
-  textualAmbiguity: boolean;
-  harmConfidence: HarmConfidence;
-}
+export type {
+  Flag,
+  HarmConfidence,
+  ProposedFlag,
+  SeverityBand,
+  VerifiedFlag,
+} from './verified-flag';
 
 /** A term the agreement does not contain. Has no source sentence (ADR-0005). */
 export interface Gap {
@@ -33,7 +22,12 @@ export interface Gap {
 export interface AnalysisResult {
   /** Plain English, no severity, no source sentences. */
   summary: string;
-  flags: Flag[];
+  /**
+   * Worst first. The type is `VerifiedFlag`, not `Flag`: only `verifyFlags` can
+   * produce one, so a flag whose source sentence was not found in the document
+   * has nowhere to go (ADR-0001).
+   */
+  flags: VerifiedFlag[];
   gaps: Gap[];
 }
 

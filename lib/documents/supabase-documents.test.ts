@@ -119,6 +119,50 @@ describe('the documents table, for one reader', () => {
     expect(updated.analysis?.summary).toBe(sidecar.summary);
   });
 
+  it('keeps the ranked flags with the document and reads them back in order', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const analysis = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+    });
+    const { client } = createStubSupabase({ rows: [[rowFor(text, analysis)]] });
+
+    const reopened = await createSupabaseDocuments(client, OWNER).byId('doc-1');
+
+    expect(reopened?.analysis?.flags.map((flag) => flag.id)).toEqual(
+      analysis.flags.map((flag) => flag.id),
+    );
+    for (const flag of reopened?.analysis?.flags ?? []) {
+      expect(text).toContain(flag.sourceSentence);
+    }
+  });
+
+  it('drops a stored flag whose sentence is not in the document it was stored with', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const analysis = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+    });
+    const tampered = {
+      ...analysis,
+      flags: [
+        ...analysis.flags,
+        {
+          ...analysis.flags[0],
+          id: 'not-in-this-document',
+          sourceSentence:
+            'Contractor shall pay Client a penalty of $50,000 on any late delivery.',
+        },
+      ],
+    };
+    const { client } = createStubSupabase({ rows: [[rowFor(text, tampered)]] });
+
+    const reopened = await createSupabaseDocuments(client, OWNER).byId('doc-1');
+
+    expect(reopened?.analysis?.flags.map((flag) => flag.id)).not.toContain(
+      'not-in-this-document',
+    );
+    expect(reopened?.analysis?.flags).toHaveLength(analysis.flags.length);
+  });
+
   it('reads a row whose analysis column holds something else as not analysed', async () => {
     const { text } = loadAdhesionFixture();
     const { client } = createStubSupabase({

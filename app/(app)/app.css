@@ -220,6 +220,35 @@
   color: var(--ink-soft);
 }
 
+/* The reader's document with its flags marked on it.
+   The page, the change-bar gutter, the rank index and the comment cards are the
+   same marks as the landing page, so their rules live in globals.css. What is
+   here is only what the signed-in column changes about them. */
+
+.doc-review {
+  width: 100%;
+}
+
+.doc-review .rank-index {
+  padding-bottom: 16px;
+}
+
+.page-band {
+  margin: -22px -52px 14px calc(var(--gutter) * -1);
+  padding: 6px var(--gutter);
+  background: var(--strip);
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+@media (min-width: 1280px) {
+  /* The index sits in the canvas margin, level with the top of the page. */
+  .doc-review .rank-index {
+    top: 46px;
+  }
+}
+
 /* Sign in and sign up */
 
 .gate {
@@ -295,7 +324,8 @@
     font-size: 1rem;
   }
 
-  .doc-label {
+  .doc-label,
+  .page-band {
     margin: -20px -18px 14px calc(var(--gutter) * -1);
     padding: 6px 18px 6px var(--gutter);
   }
