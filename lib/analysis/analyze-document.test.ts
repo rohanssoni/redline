@@ -6,9 +6,9 @@ import {
   stubModelClientFor,
 } from '../../tests/support/stub-model-client';
 import type { ArraySchema, ObjectSchema } from '../model/json-schema';
-import { ModelOutputError } from '../model/client';
+import { ModelCallError, ModelOutputError } from '../model/client';
 import { analyzeDocument } from './analyze-document';
-import { bandFor, rankFindings } from './ranking';
+import { SEVERITY_THRESHOLD, bandFor, rankFindings } from './ranking';
 import { AnalysisError } from './types';
 
 describe('analyzeDocument, summary stage', () => {
@@ -409,6 +409,153 @@ describe('analyzeDocument, gap stage', () => {
     model.fail('document_gaps', 'OpenRouter is unreachable');
 
     await expect(analyzeDocument(text, [], { model })).rejects.toThrow(/unreachable/);
+  });
+});
+
+describe('analyzeDocument, the clean read', () => {
+  it('returns a clean read for an agreement with nothing in it above the threshold', async () => {
+    const { text, sidecar } = loadCleanFixture();
+    expect(sidecar.cleanRead).toBe(true);
+
+    const result = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+    });
+
+    expect(result.cleanRead).not.toBeNull();
+    expect(result.cleanRead?.threshold).toBe(SEVERITY_THRESHOLD);
+    expect(result.flags).toEqual([]);
+    expect(result.gaps).toEqual([]);
+  });
+
+  it('still shows the plain-English summary on a clean read', async () => {
+    const { text, sidecar } = loadCleanFixture();
+
+    const result = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+    });
+
+    expect(result.cleanRead).not.toBeNull();
+    expect(result.summary).toBe(sidecar.summary);
+    expect(result.summary.trim().length).toBeGreaterThan(0);
+  });
+
+  it('does not return a clean read for the one-sided agreement', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    expect(sidecar.cleanRead).toBe(false);
+
+    const result = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+    });
+
+    expect(result.cleanRead).toBeNull();
+    expect(result.flags.length).toBeGreaterThan(0);
+  });
+
+  it('leaves out what sits under the severity threshold, and clean-reads what is left', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const worst = sidecar.flags[0];
+    const model = stubModelClientFor(sidecar);
+    model.reply('document_flags', {
+      flags: [
+        proposal(worst.sourceSentence, {
+          id: 'barely-worth-mentioning',
+          severity: SEVERITY_THRESHOLD - 1,
+        }),
+      ],
+    });
+    model.reply('document_gaps', {
+      gaps: [
+        {
+          id: 'barely-missing',
+          statement: sidecar.gaps[0].statement,
+          severity: SEVERITY_THRESHOLD - 1,
+          explanation: sidecar.gaps[0].explanation,
+        },
+      ],
+    });
+
+    const result = await analyzeDocument(text, [], { model });
+
+    expect(result.flags).toEqual([]);
+    expect(result.gaps).toEqual([]);
+    expect(result.cleanRead).not.toBeNull();
+  });
+
+  it('keeps a finding that lands exactly on the threshold, and is then not clean', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const worst = sidecar.flags[0];
+    const model = stubModelClientFor(sidecar);
+    model.reply('document_flags', {
+      flags: [
+        proposal(worst.sourceSentence, {
+          id: 'on-the-line',
+          severity: SEVERITY_THRESHOLD,
+        }),
+      ],
+    });
+    model.reply('document_gaps', { gaps: [] });
+
+    const result = await analyzeDocument(text, [], { model });
+
+    expect(result.flags.map((flag) => flag.id)).toEqual(['on-the-line']);
+    expect(result.cleanRead).toBeNull();
+  });
+
+  it('surfaces a model that cannot be reached, at every stage, rather than a clean read', async () => {
+    const { text, sidecar } = loadCleanFixture();
+
+    for (const stage of ['document_summary', 'document_flags', 'document_gaps']) {
+      const model = stubModelClientFor(sidecar);
+      model.fail(stage, 'OpenRouter is unreachable');
+
+      const outcome = await analyzeDocument(text, [], { model }).then(
+        (result) => result,
+        (error: unknown) => error,
+      );
+
+      expect(outcome).toBeInstanceOf(ModelCallError);
+      expect(outcome).not.toHaveProperty('cleanRead');
+    }
+  });
+
+  it('surfaces malformed model output, at every stage, rather than a clean read', async () => {
+    const { text, sidecar } = loadCleanFixture();
+    // What each stage would have to send back to be a clean read, wrecked one
+    // stage at a time: the wrong type, then a required key missing, then an
+    // array where an object belongs.
+    const malformed: Record<string, unknown> = {
+      document_summary: { summary: 17 },
+      document_flags: { gaps: [] },
+      document_gaps: [],
+    };
+
+    for (const [stage, payload] of Object.entries(malformed)) {
+      const model = stubModelClientFor(sidecar);
+      model.reply(stage, payload);
+
+      const outcome = await analyzeDocument(text, [], { model }).then(
+        (result) => result,
+        (error: unknown) => error,
+      );
+
+      expect(outcome).toBeInstanceOf(ModelOutputError);
+      expect(outcome).not.toHaveProperty('cleanRead');
+    }
+  });
+
+  it('does not call a later stage once an earlier one has failed', async () => {
+    const { text, sidecar } = loadCleanFixture();
+    const model = stubModelClientFor(sidecar);
+    model.fail('document_flags', 'OpenRouter is unreachable');
+
+    await expect(analyzeDocument(text, [], { model })).rejects.toBeInstanceOf(
+      ModelCallError,
+    );
+
+    expect(model.calls.map((call) => call.name)).toEqual([
+      'document_summary',
+      'document_flags',
+    ]);
   });
 });
 

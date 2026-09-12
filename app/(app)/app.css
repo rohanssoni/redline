@@ -220,6 +220,42 @@
   color: var(--ink-soft);
 }
 
+/* The clean read: a result in its own right, not a list that happens to be
+   empty (ADR-0008). It is another sheet laid on the canvas, built like the
+   closing panel, and it carries the 2px review bar in ink. The bar never turns
+   crimson here, because crimson belongs to the flag in focus and there is no
+   flag on this page to focus. */
+
+.clean-read {
+  position: relative;
+  background: var(--page);
+  border-top: 2px solid var(--ink);
+  padding: 32px 52px 36px var(--gutter);
+  display: grid;
+  gap: 12px;
+}
+
+.clean-read-label {
+  margin: -32px -52px 10px calc(var(--gutter) * -1);
+  padding: 6px var(--gutter);
+  background: var(--strip);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+.clean-read h2 {
+  font-size: clamp(1.625rem, 1.1rem + 1.6vw, 2.25rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.clean-read-body {
+  max-width: 58ch;
+  color: var(--ink-soft);
+}
+
 /* The reader's document with its flags marked on it.
    The page, the change-bar gutter, the rank index and the comment cards are the
    same marks as the landing page, so their rules live in globals.css. What is
@@ -316,6 +352,15 @@
 
   .sheet-label {
     margin: -24px -18px 18px calc(var(--gutter) * -1);
+    padding: 6px 18px 6px var(--gutter);
+  }
+
+  .clean-read {
+    padding: 24px 18px 28px var(--gutter);
+  }
+
+  .clean-read-label {
+    margin: -24px -18px 14px calc(var(--gutter) * -1);
     padding: 6px 18px 6px var(--gutter);
   }
 

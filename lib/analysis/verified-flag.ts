@@ -66,12 +66,23 @@ export interface DroppedFlag {
   reason: string;
 }
 
-export interface VerificationOutcome {
+// Not exported either, and for the same reason one step up: a `VerificationOutcome`
+// is evidence that the flag stage ran to the end, so nothing outside this module
+// may write one. `{ flags: [], dropped: [] }` is the shape a caller would reach
+// for to claim "the flag stage found nothing" without having run it.
+declare const theFlagStageRanToTheEnd: unique symbol;
+
+/**
+ * What the flag stage produced, and proof that it produced it. Only `verifyFlags`
+ * can make one, so a caller holding a `VerificationOutcome` holds a flag stage
+ * that finished rather than one that threw partway (ADR-0008).
+ */
+export type VerificationOutcome = {
   /** Every flag that may be shown. */
   flags: VerifiedFlag[];
   /** Every flag that may not, with the quote that failed. */
   dropped: DroppedFlag[];
-}
+} & { readonly [theFlagStageRanToTheEnd]: true };
 
 /**
  * Keeps the flags whose quoted sentence is in `documentText`, rewritten to carry
@@ -108,5 +119,5 @@ export function verifyFlags(
     } as VerifiedFlag);
   }
 
-  return { flags, dropped };
+  return { flags, dropped } as VerificationOutcome;
 }

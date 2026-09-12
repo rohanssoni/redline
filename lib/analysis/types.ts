@@ -1,6 +1,10 @@
 import type { ModelClient } from '../model/client';
+import type { CleanRead } from './clean-read';
 import type { Gap } from './gap';
 import type { VerifiedFlag } from './verified-flag';
+
+/** The result when nothing in a document clears the severity threshold. */
+export type { CleanRead, CompletedRead } from './clean-read';
 
 export type {
   Flag,
@@ -32,6 +36,16 @@ export interface AnalysisResult {
    * cannot arrive here claiming a citation (ADR-0005).
    */
   gaps: Gap[];
+  /**
+   * The clean read, when a finished read found nothing above the severity
+   * threshold, and `null` when it found something (ADR-0008).
+   *
+   * This, not `flags.length === 0`, is what decides the reader sees the clean
+   * read. Only `cleanReadFor` can produce the type, and it can only be called
+   * with stages that ran, so a failed or half-finished analysis has no way to
+   * arrive here holding one.
+   */
+  cleanRead: CleanRead | null;
 }
 
 /** Everything `analyzeDocument` reaches outside itself for. */

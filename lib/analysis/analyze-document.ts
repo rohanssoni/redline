@@ -6,7 +6,14 @@ import {
   readableCharacterCount,
 } from '../document-text';
 import { AnalysisError, type AnalysisDeps, type AnalysisResult } from './types';
-import { bandFor, dangerousOnly, rankFlags, rankGaps } from './ranking';
+import { cleanReadFor } from './clean-read';
+import {
+  aboveThreshold,
+  bandFor,
+  dangerousOnly,
+  rankFlags,
+  rankGaps,
+} from './ranking';
 import { verifyGaps, type GapClaim } from './gap';
 import { verifyFlags, type ProposedFlag } from './verified-flag';
 
@@ -321,7 +328,8 @@ export async function analyzeDocument(
   // anything is ranked (ADR-0004); verification last, so what survives is
   // quoting the document rather than the model (ADR-0001).
   const dangerous = dangerousOnly(withIds(proposed.flags));
-  const { flags, dropped } = verifyFlags(dangerous, documentText);
+  const flagCheck = verifyFlags(dangerous, documentText);
+  const { flags, dropped } = flagCheck;
   for (const drop of dropped) {
     console.warn(
       'A flag was dropped because its source sentence is not in the document: %s (%s)',
@@ -330,10 +338,8 @@ export async function analyzeDocument(
     );
   }
 
-  const { gaps, dropped: droppedGaps } = verifyGaps(
-    withGapIds(absent.gaps),
-    documentText,
-  );
+  const gapCheck = verifyGaps(withGapIds(absent.gaps), documentText);
+  const { gaps, dropped: droppedGaps } = gapCheck;
   for (const drop of droppedGaps) {
     console.warn(
       'A gap was dropped because %s: %s (%s)',
@@ -343,11 +349,31 @@ export async function analyzeDocument(
     );
   }
 
+  // Reached only once all three stages have returned, which is what makes the
+  // clean read below a statement about the document rather than about the run.
+  const cleanRead = cleanReadFor({ summary: summary.trim(), flagCheck, gapCheck });
+  recordZeroFlagRate(cleanRead !== null);
+
   return {
     summary: summary.trim(),
-    flags: rankFlags(flags),
-    gaps: rankGaps(gaps),
+    flags: rankFlags(aboveThreshold(flags)),
+    gaps: rankGaps(aboveThreshold(gaps)),
+    cleanRead,
   };
+}
+
+/**
+ * The zero-flag rate, the production health metric ADR-0008 asks for, written
+ * where the platform already collects logs.
+ *
+ * Nothing else in the product would surface a severity filter that has started
+ * suppressing too hard: the symptom is documents quietly coming back with
+ * nothing in them, and a rate is the only thing that shows it. One line per
+ * finished read is enough to count both sides of that ratio. The baseline it is
+ * compared against is not decided here, and ADR-0008 says so.
+ */
+function recordZeroFlagRate(wasCleanRead: boolean): void {
+  console.info('redline.analysis.completed cleanRead=%s', wasCleanRead);
 }
 
 /**

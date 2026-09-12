@@ -37,6 +37,10 @@ _Avoid_: missing clause, omission, absence
 What a flag or gap costs the reader if it fires. Not how often it fires.
 _Avoid_: priority, score, risk level
 
+**Severity threshold**:
+The severity a flag or gap has to reach before the reader is shown it at all. One named constant, `SEVERITY_THRESHOLD`, and the clean read is defined as nothing reaching it.
+_Avoid_: cutoff, minimum score, noise filter
+
 **Remedy question**:
 A question about what the reader can do now about an agreement already in force. Out of scope, and answered as such.
 _Avoid_: legal advice, dispute question
@@ -46,5 +50,5 @@ The reader-selected posture — soft or firm — that determines how strongly a 
 _Avoid_: tone, aggressiveness, mode
 
 **Clean read**:
-The result when a document produces no flags above the severity threshold. A first-class outcome, not an empty state.
+The result when a document produces no flags and no gaps above the severity threshold. A first-class outcome, not an empty state. In code it is `CleanRead`, a branded type only a read whose every stage finished can produce, so a failed analysis cannot render as one.
 _Avoid_: no issues found, empty result, no findings

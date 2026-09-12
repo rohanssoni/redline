@@ -4,6 +4,7 @@ import { createSupabaseDocuments } from '@/lib/documents/supabase-documents';
 import type { StoredDocument } from '@/lib/documents/store';
 import { currentReader } from '@/lib/supabase/server';
 import { AnalysisRunner } from './analysis-runner';
+import { CleanReadResult } from './clean-read-result';
 import { DocumentReview } from './document-review';
 
 export const metadata: Metadata = { title: 'Document — Redline' };
@@ -44,14 +45,21 @@ export default async function DocumentPage({
           <AnalysisRunner documentId={document.id} />
         )}
 
-        {analysis && (
+        {analysis && !analysis.cleanRead && (
           <p className="note sheet-foot">
             {whatRedlineFound(analysis.flags.length, analysis.gaps.length)}
           </p>
         )}
       </section>
 
-      {analysis ? (
+      {/* The clean read is its own result and takes the place of the ranked
+          list, never an empty one (ADR-0008). Which branch runs is decided by
+          whether there is a `CleanRead` to hand the component, so a read that
+          broke cannot land here: it has no analysis at all, and the runner above
+          shows the reader what happened instead. */}
+      {analysis?.cleanRead && <CleanReadResult cleanRead={analysis.cleanRead} />}
+
+      {analysis && !analysis.cleanRead ? (
         <DocumentReview
           name={document.name}
           text={document.text}
@@ -75,10 +83,13 @@ export default async function DocumentPage({
  * counted separately here because they are different claims: a flag quotes a
  * sentence and a gap says a sentence is missing (ADR-0005). They are ranked
  * together below, on the page itself.
+ *
+ * Nothing here says a document is fine. Only a `CleanRead` may say that, and a
+ * document holding one never reaches this line (ADR-0008).
  */
 function whatRedlineFound(flags: number, gaps: number): string {
   if (flags === 0 && gaps === 0) {
-    return 'No clause here lets the other side change your terms on its own, and Redline found no gaps. The whole agreement is below.';
+    return 'The whole agreement is below.';
   }
   if (flags === 0) {
     return `No clause here lets the other side change your terms on its own. ${gapCount(gaps)}`;

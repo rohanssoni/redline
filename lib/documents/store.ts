@@ -1,5 +1,6 @@
 import type { AnalysisResult } from '../analysis/types';
-import { rankFlags, rankGaps } from '../analysis/ranking';
+import { cleanReadFor } from '../analysis/clean-read';
+import { aboveThreshold, rankFlags, rankGaps } from '../analysis/ranking';
 import { verifyGaps, type GapClaim } from '../analysis/gap';
 import { verifyFlags, type Flag } from '../analysis/verified-flag';
 
@@ -116,19 +117,27 @@ export function toAnalysisResult(
   const record = storedAnalysis(value);
   if (!record) return null;
 
-  const { flags } = verifyFlags(
+  const flagCheck = verifyFlags(
     (record.flags as unknown[]).filter(isStoredFlag),
     documentText,
   );
-  const { gaps } = verifyGaps(
+  const gapCheck = verifyGaps(
     (record.gaps as unknown[]).filter(isStoredGap),
     documentText,
   );
 
+  const summary = record.summary as string;
+
   return {
-    summary: record.summary as string,
-    flags: rankFlags(flags),
-    gaps: rankGaps(gaps),
+    summary,
+    flags: rankFlags(aboveThreshold(flagCheck.flags)),
+    gaps: rankGaps(aboveThreshold(gapCheck.gaps)),
+    // Worked out again from what came back through the two gates, never read off
+    // the column. `cleanRead` is the field that tells a reader their agreement is
+    // fine, and the column is jsonb: a row written by an older version of the
+    // analysis, or edited by hand, is exactly where a clean read attached to a
+    // document full of flags would come from (ADR-0008).
+    cleanRead: cleanReadFor({ summary, flagCheck, gapCheck }),
   };
 }
 

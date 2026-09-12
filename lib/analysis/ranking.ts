@@ -23,6 +23,34 @@ export const HIGH_BAND_FLOOR = 65;
 /** At or above this, a flag is worth reading. Below it, worth knowing. */
 export const MEDIUM_BAND_FLOOR = 35;
 
+/**
+ * The severity threshold: what a flag or a gap has to cost the reader before it
+ * is worth putting in front of them at all (PRD §2, ADR-0008).
+ *
+ * It is a name rather than a number scattered through the code because the clean
+ * read is defined by it. "Nothing in this agreement is above the severity
+ * threshold" is the claim the clean read makes, so there has to be one place that
+ * says what the threshold is, and one function that answers to it.
+ *
+ * It sits below `MEDIUM_BAND_FLOOR`, so the low band still reaches the reader: a
+ * term worth knowing about is not the same as a term worth burying. What it
+ * removes is the bottom of the scale, where a finding costs the reader so little
+ * that listing it would push the ones that matter further down the page.
+ */
+export const SEVERITY_THRESHOLD = 20;
+
+/** Whether a severity is worth the reader's time at all (ADR-0008). */
+export function clearsSeverityThreshold(severity: number): boolean {
+  return severity >= SEVERITY_THRESHOLD;
+}
+
+/** The findings of one kind that clear the threshold. The rest are not shown. */
+export function aboveThreshold<T extends { severity: number }>(
+  findings: readonly T[],
+): T[] {
+  return findings.filter((finding) => clearsSeverityThreshold(finding.severity));
+}
+
 /** The band the reader sees for a severity. */
 export function bandFor(severity: number): SeverityBand {
   if (severity >= HIGH_BAND_FLOOR) return 'high';

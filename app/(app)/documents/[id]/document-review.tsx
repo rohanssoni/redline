@@ -177,9 +177,15 @@ export function DocumentReview({
           );
         })}
 
-        {(marked.length === 0 || rankedGaps.length > 0) && (
+        {(flags.length === 0 || rankedGaps.length > 0) && (
           <div className="page-foot">
-            {marked.length === 0 && (
+            {/* Says only what it can see: this document has no flags on it, and
+                the gaps below are what is left. It never speaks for the whole
+                read, because a document with nothing in it at all gets the clean
+                read instead and never renders this component (ADR-0008). The
+                test is `flags.length`, not `marked.length`: flags that exist but
+                could not be placed on the page are still flags. */}
+            {flags.length === 0 && (
               <aside className="gap-note" aria-label="What Redline found">
                 <p className="gap-statement">No flags on this one.</p>
                 <p className="gap-explain">

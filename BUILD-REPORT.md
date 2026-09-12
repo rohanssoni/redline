@@ -22,9 +22,9 @@ _(filled in at the end of the run)_
 | 17 | Landing page | in progress |
 | 2 | Upload + summary (skeleton) | **done** |
 | 3 | Ranked flags with source sentences | **done** |
-| 4 | Gaps ranked alongside flags | in progress |
+| 4 | Gaps ranked alongside flags | **done** |
 | 5 | Hedged wording only for ambiguity | not started |
-| 6 | Clean read | not started |
+| 6 | Clean read | in progress |
 | 7 | Zero-flag rate tracking | not started |
 | 8 | Soft counter-offer | not started |
 | 9 | Firm on demand | not started |
@@ -77,6 +77,13 @@ flags go and whether they can be restored (#15), whether red lines are edited on
 their own screen or in a panel beside the result (#10), and what the account menu
 holds. Each ticket brief tells the agent to decide, build, and record the choice
 with its reason rather than stall on it.
+
+### The run was interrupted once, mid-ticket
+On 2026-09-11 the session hit its usage limit while #6 was being built. The agent
+died having written one partial file (`lib/analysis/analysis-error.ts`), which was
+deleted rather than salvaged — a half-written file from a dead agent is a worse
+starting point than a clean restart, and the suite was confirmed green (140 tests)
+before #6 was dispatched again. Nothing was committed in that state.
 
 _(more decisions appended as the run proceeds)_
 

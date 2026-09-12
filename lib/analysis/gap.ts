@@ -65,12 +65,21 @@ export interface DroppedGap {
   reason: string;
 }
 
-export interface GapCheckOutcome {
+// Not exported, mirroring the flag stage: a `GapCheckOutcome` is evidence that
+// the gap stage ran to the end, so nothing outside this module can write one.
+declare const theGapStageRanToTheEnd: unique symbol;
+
+/**
+ * What the gap stage produced, and proof that it produced it. Only `verifyGaps`
+ * can make one, so an empty `gaps` here means the stage looked and found nothing
+ * rather than that nobody looked (ADR-0008).
+ */
+export type GapCheckOutcome = {
   /** Every gap that may be shown. */
   gaps: Gap[];
   /** Every gap that may not, with the statement that failed. */
   dropped: DroppedGap[];
-}
+} & { readonly [theGapStageRanToTheEnd]: true };
 
 /**
  * How many of the document's own words in a row make a statement a quotation.
@@ -135,7 +144,7 @@ export function verifyGaps(
     } as Gap);
   }
 
-  return { gaps, dropped };
+  return { gaps, dropped } as GapCheckOutcome;
 }
 
 /** Why this gap cannot be shown, or `null` when it can. */
