@@ -27,11 +27,11 @@ _(filled in at the end of the run)_
 | 6 | Clean read | **done** |
 | 7 | Zero-flag rate tracking | not started |
 | 8 | Soft counter-offer | **done** |
-| 9 | Firm on demand | in progress |
+| 9 | Firm on demand | **done** |
 | 10 | Editable red line list | **done** |
 | 11 | Red line always flags | **done** |
 | 12 | LLM judge on matches | **done** |
-| 13 | Question box | not started |
+| 13 | Question box | in progress |
 | 14 | Library | not started |
 | 15 | Dismiss a flag | not started |
 | 16 | Counter-offers sent | not started |

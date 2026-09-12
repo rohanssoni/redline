@@ -6,6 +6,7 @@ import { currentReader } from '@/lib/supabase/server';
 import { AnalysisRunner } from './analysis-runner';
 import { CleanReadResult } from './clean-read-result';
 import { DocumentReview } from './document-review';
+import { QuestionBox } from './question-box';
 
 export const metadata: Metadata = { title: 'Document — Redline' };
 
@@ -76,6 +77,11 @@ export default async function DocumentPage({
           ))}
         </section>
       )}
+
+      {/* Docked at the foot of the page, under the document it answers from.
+          It is here for every document that has text, read or not: the answer
+          is built from the text, and nothing in it reads the analysis. */}
+      <QuestionBox documentId={document.id} />
     </>
   );
 }

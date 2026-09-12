@@ -1,5 +1,6 @@
 'use server';
 
+import { answerQuestion } from '@/lib/analysis/answer-question';
 import {
   FIRM_DRAFT_FAILED,
   firmCounterOffer,
@@ -60,5 +61,64 @@ export async function requestFirmCounterOffer(
     // is in the log above; what the reader needs to know is that the wording on
     // screen is untouched and asking again is worth doing.
     return { error: FIRM_DRAFT_FAILED };
+  }
+}
+
+/** What came back for one question: an answer from the document, or a reason there is none. */
+export interface QuestionState {
+  answer?: string;
+  /** Why there is no answer. Shown to the reader exactly as it arrives. */
+  reason?: string;
+}
+
+/** What the reader is told when the answering itself didn't finish. */
+const ASK_FAILED =
+  'That question didn’t get through. Nothing about your document has changed, so try it again.';
+
+/**
+ * Puts one question to one document the reader owns.
+ *
+ * The text comes out of the store rather than off the page, so what is answered
+ * from is the document Redline read. A question the seam declines comes back
+ * with its reason and is shown as it stands: the decline is the product working
+ * (ADR-0003, ADR-0014), not an error, and nothing here rewords it.
+ */
+export async function askAboutDocument(
+  documentId: string,
+  question: string,
+): Promise<QuestionState> {
+  const reader = await currentReader();
+  if (!reader) {
+    return {
+      reason: process.env.NEXT_PUBLIC_SUPABASE_URL
+        ? 'Sign in to ask about this document.'
+        : SIGN_IN_UNAVAILABLE,
+    };
+  }
+
+  try {
+    const document = await createSupabaseDocuments(
+      reader.supabase,
+      reader.user.id,
+    ).byId(documentId);
+    if (!document) {
+      return {
+        reason: 'That document isn’t in your library any more, so there’s nothing to ask about.',
+      };
+    }
+
+    const result = await answerQuestion(document.text, question, {
+      model: createOpenRouterClient(),
+    });
+    return 'declined' in result
+      ? { reason: result.reason }
+      : { answer: result.answer };
+  } catch (error) {
+    console.error(
+      'The question put to document %s did not finish',
+      documentId,
+      error,
+    );
+    return { reason: ASK_FAILED };
   }
 }

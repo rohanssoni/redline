@@ -61,6 +61,29 @@ export interface FixtureDecoys {
   redLineOnly?: RedLineOnlyDecoy;
 }
 
+/**
+ * A question a reader could put to this document, described the way a model
+ * routing and answering it would describe it — never by what Redline should do
+ * with it. The boundary of ADR-0003 is drawn in `scopeOf`, from these two
+ * signals, and a fixture that stated the outcome instead would be testing
+ * nothing.
+ */
+export interface FixtureQuestion {
+  id: string;
+  /** The question in the reader's own words. */
+  question: string;
+  /** What the question is, and why it is in the fixture. */
+  why: string;
+  /** Asks what to do about something that has already happened (ADR-0003). */
+  asksWhatToDoNow: boolean;
+  /** Asks for wording the agreement does not contain (ADR-0014). */
+  asksForWordingNotInTheDocument: boolean;
+  /** Whether the text of this document answers it. */
+  addressedByTheDocument: boolean;
+  /** What a model answering from this document sends back. Empty where it can't. */
+  answer: string;
+}
+
 export interface FixtureSidecar {
   name: string;
   textFile: string;
@@ -70,6 +93,8 @@ export interface FixtureSidecar {
   gaps: FixtureGap[];
   decoys: FixtureDecoys;
   redLines: string[];
+  /** The questions planted on this document, where it has any. */
+  questions?: FixtureQuestion[];
 }
 
 export interface LoadedFixture {

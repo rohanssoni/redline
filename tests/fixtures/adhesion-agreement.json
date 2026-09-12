@@ -133,5 +133,52 @@
   "redLines": [
     "I need to be able to show what I make to people who might hire me next.",
     "I will not take equity, credit, or exposure in place of money."
+  ],
+  "questions": [
+    {
+      "id": "late-payment-remedy",
+      "question": "Halverson has had my second invoice for six weeks and still hasn't paid it. What are my options?",
+      "why": "A remedy question (CONTEXT.md): it asks what the reader can do about money already unpaid under an agreement already running. Declined under ADR-0003 whatever the document's age.",
+      "asksWhatToDoNow": true,
+      "asksForWordingNotInTheDocument": false,
+      "addressedByTheDocument": false,
+      "answer": ""
+    },
+    {
+      "id": "renewal-read",
+      "question": "I already signed this one. What should I negotiate differently in the next agreement with them?",
+      "why": "A renewal read on the same signed document: the signature it informs is the next one, so it is a prospective read and is answered normally (ADR-0003). This is the other direction of the boundary.",
+      "asksWhatToDoNow": false,
+      "asksForWordingNotInTheDocument": false,
+      "addressedByTheDocument": true,
+      "answer": "The terms worth changing next time are the ones that leave what you earn in Halverson’s hands. Halverson can revise the deliverables in Exhibit A at any time and the $14,000 fee stays the same, payment falls due only once Halverson accepts the work in its sole discretion with no time limit on that decision, and Halverson can end the agreement at any point without paying for work it has not accepted. You also assign everything you create during the term whether or not it relates to this job, and you agree not to work for anyone competing with Halverson for three years. Those are the clauses that decide what the engagement is worth to you."
+    },
+    {
+      "id": "gap-wording",
+      "question": "There is nothing in here about paying late. What should I put in instead?",
+      "why": "A request for wording to fill a gap. The agreement has no late-payment term, so there is no sentence to work from and nothing to check invented wording against (ADR-0014).",
+      "asksWhatToDoNow": false,
+      "asksForWordingNotInTheDocument": true,
+      "addressedByTheDocument": false,
+      "answer": ""
+    },
+    {
+      "id": "not-covered",
+      "question": "Does this agreement say who pays for printing the final logo files?",
+      "why": "A question about the document that the document does not answer. It gets the document-doesn’t-say answer rather than a plausible guess.",
+      "asksWhatToDoNow": false,
+      "asksForWordingNotInTheDocument": false,
+      "addressedByTheDocument": false,
+      "answer": ""
+    },
+    {
+      "id": "scope-changes",
+      "question": "Can Halverson change the deliverables after I have started work?",
+      "why": "An ordinary question the text answers outright, in Section 2.",
+      "asksWhatToDoNow": false,
+      "asksForWordingNotInTheDocument": false,
+      "addressedByTheDocument": true,
+      "answer": "Yes. Section 2 lets Halverson modify, add to or revise the Services and the deliverables in Exhibit A at any time on written notice to you, and the Fee stays unchanged. Nothing in the agreement gives you a right to refuse a revision or to be paid more for one."
+    }
   ]
 }

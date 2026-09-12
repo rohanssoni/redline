@@ -4,7 +4,12 @@ import {
   type ModelClient,
   type StructuredRequest,
 } from '../../lib/model/client';
-import type { FixtureFlag, FixtureGap, FixtureSidecar } from '../fixtures';
+import type {
+  FixtureFlag,
+  FixtureGap,
+  FixtureQuestion,
+  FixtureSidecar,
+} from '../fixtures';
 
 /**
  * The model client the suite runs against. It reaches nothing: no network, no
@@ -243,6 +248,69 @@ export function counterOfferFor(request: StructuredRequest): unknown {
 }
 
 /**
+ * The question this request is about, found in the sidecar by the wording the
+ * reader used. Throws rather than guessing: a request about a question nobody
+ * planted means the test is asking the stub to invent one.
+ */
+function askedAbout(
+  sidecar: FixtureSidecar,
+  request: StructuredRequest,
+): FixtureQuestion {
+  const asked = request.messages
+    .filter((message) => message.role === 'user')
+    .map((message) => message.content)
+    .join('\n');
+
+  const planted = (sidecar.questions ?? []).find((question) =>
+    asked.includes(question.question),
+  );
+  if (!planted) {
+    throw new Error(
+      `No question in ${sidecar.name} matches what ${request.name} was asked.`,
+    );
+  }
+  return planted;
+}
+
+/**
+ * How a model describes the question it was handed: what the reader asked for,
+ * and nothing about what should happen to it.
+ *
+ * Both signals come out of the sidecar, which states them about the question
+ * itself. Nothing here reads the document, the fixture's flags, or what the
+ * test expects — a remedy question and a renewal read reach this function
+ * looking identical apart from what the sidecar says each one asks for, which
+ * is exactly the distinction `scopeOf` is being tested on.
+ */
+export function questionScopeFor(
+  sidecar: FixtureSidecar,
+  request: StructuredRequest,
+): unknown {
+  const question = askedAbout(sidecar, request);
+  return {
+    asksWhatToDoNow: question.asksWhatToDoNow,
+    asksForWordingNotInTheDocument: question.asksForWordingNotInTheDocument,
+  };
+}
+
+/**
+ * What a model answering from this document sends back: the sidecar's answer
+ * where the text covers the question, and an empty one where it does not. A
+ * model with nothing to answer from says so in its own field rather than
+ * writing a plausible paragraph, and what the reader then reads is Redline's.
+ */
+export function documentAnswerFor(
+  sidecar: FixtureSidecar,
+  request: StructuredRequest,
+): unknown {
+  const question = askedAbout(sidecar, request);
+  return {
+    addressedByTheDocument: question.addressedByTheDocument,
+    answer: question.addressedByTheDocument ? question.answer : '',
+  };
+}
+
+/**
  * A stub that answers from a fixture sidecar, so a test asserts against the
  * document it loaded rather than against wording invented in the test file.
  */
@@ -256,5 +324,9 @@ export function stubModelClientFor(sidecar: FixtureSidecar): StubModelClient {
     }),
     red_line_match_judgment: agreeingJudgmentFor,
     counter_offer: counterOfferFor,
+    question_scope: (request: StructuredRequest) =>
+      questionScopeFor(sidecar, request),
+    document_answer: (request: StructuredRequest) =>
+      documentAnswerFor(sidecar, request),
   });
 }

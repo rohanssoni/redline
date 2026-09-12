@@ -452,3 +452,107 @@
     padding: 20px;
   }
 }
+
+/* The question box, docked at the foot of the document.
+   A sheet like every other, with the strip label the page and the summary
+   carry, so asking reads as part of the same document rather than a chat
+   window bolted to it. The answer arrives as a comment: the reader's question
+   in their own hand above it, the answer in the document's face below, on the
+   comment ground the flag readings use. A decline takes the crimson rule, the
+   same mark the review uses for something the reader has to take in. */
+
+.ask {
+  position: relative;
+  background: var(--page);
+  padding: 22px 52px 28px var(--gutter);
+  display: grid;
+  gap: 8px;
+}
+
+.ask-label {
+  margin: -22px -52px 8px calc(var(--gutter) * -1);
+  padding: 6px var(--gutter);
+  background: var(--strip);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+.ask-note {
+  max-width: 62ch;
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+.ask-form {
+  margin-top: 6px;
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  width: 100%;
+  max-width: 62ch;
+}
+
+.ask-form textarea {
+  font: inherit;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--rest-line);
+  border-radius: 0;
+  background: var(--page);
+  color: var(--ink);
+  resize: vertical;
+}
+
+.ask-form textarea:focus-visible {
+  border-color: var(--ink);
+}
+
+.ask-form button:disabled {
+  color: var(--ink-soft);
+  cursor: default;
+  text-decoration: none;
+}
+
+.ask-state {
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+.ask-answer {
+  margin-top: 8px;
+  padding: 14px 18px;
+  background: var(--comment);
+  border-left: 3px solid var(--rest-line);
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  max-width: 62ch;
+}
+
+.ask-question {
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.ask-text {
+  font-family: var(--font-doc);
+  font-size: 0.9375rem;
+  color: var(--ink);
+}
+
+.ask-text[data-tone='declined'] {
+  color: var(--ink);
+  padding-left: 12px;
+  border-left: 2px solid var(--markup);
+}
+
+@media (max-width: 640px) {
+  .ask {
+    padding: 20px 18px 24px var(--gutter);
+  }
+
+  .ask-label {
+    margin: -20px -18px 8px calc(var(--gutter) * -1);
+    padding: 6px 18px 6px var(--gutter);
+  }
+}
