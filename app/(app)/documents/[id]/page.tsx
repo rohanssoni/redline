@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import { openFromLibrary, readableDate } from '@/lib/documents/library';
 import { createSupabaseDocuments } from '@/lib/documents/supabase-documents';
 import type { StoredDocument } from '@/lib/documents/store';
+import { flagsSetAside } from '@/lib/dismissals/set-aside-flag';
+import { createSupabaseFlagDismissals } from '@/lib/dismissals/supabase-flag-dismissals';
 import { currentReader } from '@/lib/supabase/server';
 import { AnalysisRunner } from './analysis-runner';
 import { CleanReadResult } from './clean-read-result';
@@ -18,13 +20,32 @@ export const metadata: Metadata = { title: 'Document — Redline' };
  * document with no analysis yet starts a read, and the reader's browser asks
  * for that one explicitly through `AnalysisRunner`.
  */
-async function loadDocument(id: string): Promise<StoredDocument | null> {
+async function loadDocument(
+  id: string,
+): Promise<{ document: StoredDocument | null; setAside: string[] }> {
   const reader = await currentReader();
-  if (!reader) return null;
-  return openFromLibrary(
+  if (!reader) return { document: null, setAside: [] };
+
+  const document = await openFromLibrary(
     { documents: createSupabaseDocuments(reader.supabase, reader.user.id) },
     id,
   );
+
+  // Which flags this reader has already dealt with. A read that fails here
+  // leaves every flag on the page rather than taking the document down with it:
+  // the flags and their sentences are the product, and where the reader put them
+  // is how they were last left.
+  let setAside: string[] = [];
+  try {
+    setAside = await flagsSetAside(
+      { dismissals: createSupabaseFlagDismissals(reader.supabase, reader.user.id) },
+      id,
+    );
+  } catch (error) {
+    console.error('The flags set aside on document %s were not read', id, error);
+  }
+
+  return { document, setAside };
 }
 
 export default async function DocumentPage({
@@ -33,7 +54,7 @@ export default async function DocumentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const document = await loadDocument(id);
+  const { document, setAside } = await loadDocument(id);
   if (!document) notFound();
 
   const { analysis } = document;
@@ -79,6 +100,7 @@ export default async function DocumentPage({
           flags={analysis.flags}
           gaps={analysis.gaps}
           counterOffers={analysis.counterOffers}
+          setAside={setAside}
         />
       ) : (
         <section className="doc-page" aria-label="The text of your agreement">

@@ -32,8 +32,8 @@ _(filled in at the end of the run)_
 | 11 | Red line always flags | **done** |
 | 12 | LLM judge on matches | **done** |
 | 13 | Question box | **done** |
-| 14 | Library | in progress |
-| 15 | Dismiss a flag | not started |
+| 14 | Library | **done** |
+| 15 | Dismiss a flag | in progress |
 | 16 | Counter-offers sent | not started |
 | 18 | Paste text | not started |
 | 19 | No-account try | not started |

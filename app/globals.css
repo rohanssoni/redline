@@ -493,6 +493,72 @@ p {
   color: var(--ink-soft);
 }
 
+/* A flag the reader has set aside.
+
+   It keeps its place, its number and its mark on the page. What changes is the
+   weight: the change bar and the highlight rest even while the comment is open,
+   so the clause reads as handled rather than as gone. Nothing here strikes it
+   through or greys it out to the point of being unreadable — the reader decided
+   it was not their problem, which is not the same as it not being there. */
+
+.flagged[data-quiet="true"][data-focus="true"] .sentence::before {
+  background: var(--rest-line);
+}
+
+.flagged[data-quiet="true"][data-focus="true"] .comment-inner {
+  border-top-color: var(--rest-line);
+}
+
+.flagged[data-quiet="true"] mark,
+.flagged[data-quiet="true"][data-focus="true"] mark {
+  background: var(--rest);
+}
+
+.flagged[data-quiet="true"][data-focus="true"] .gutter-rank {
+  color: var(--ink-soft);
+}
+
+.flagged[data-quiet="true"][data-focus="true"] .comment-leader {
+  border-left-color: var(--rest-line);
+}
+
+.aside-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 14px;
+}
+
+.aside-action {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--canvas-deep);
+}
+
+.aside-state {
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+.aside-state[data-tone="refused"] {
+  margin-top: 8px;
+  padding-left: 12px;
+  border-left: 2px solid var(--markup);
+  color: var(--ink);
+}
+
+.rank-name[data-quiet="true"] {
+  color: var(--ink-soft);
+  opacity: 0.72;
+}
+
+.rank-aside {
+  margin-left: auto;
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
 /* The counter-offer, inside a flag's comment */
 
 .counter-offer {

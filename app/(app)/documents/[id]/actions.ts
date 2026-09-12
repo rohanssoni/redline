@@ -6,6 +6,13 @@ import {
   firmCounterOffer,
 } from '@/lib/analysis/firm-counter-offer';
 import { createSupabaseDocuments } from '@/lib/documents/supabase-documents';
+import {
+  bringFlagBack,
+  setFlagAside,
+  SET_ASIDE_FAILED,
+  type SetAsideDeps,
+} from '@/lib/dismissals/set-aside-flag';
+import { createSupabaseFlagDismissals } from '@/lib/dismissals/supabase-flag-dismissals';
 import { createOpenRouterClient } from '@/lib/model/openrouter';
 import { SIGN_IN_UNAVAILABLE } from '@/lib/supabase/config';
 import { currentReader } from '@/lib/supabase/server';
@@ -61,6 +68,95 @@ export async function requestFirmCounterOffer(
     // is in the log above; what the reader needs to know is that the wording on
     // screen is untouched and asking again is worth doing.
     return { error: FIRM_DRAFT_FAILED };
+  }
+}
+
+/** What came back when a reader moved a flag out of their way, or back into it. */
+export interface SetAsideState {
+  /** Where the flag now sits, as the store has it. */
+  setAside?: boolean;
+  /** Why it did not move. Shown to the reader exactly as it arrives. */
+  error?: string;
+}
+
+/** The stores behind setting a flag aside, for the reader who is signed in. */
+function setAsideDeps(
+  reader: NonNullable<Awaited<ReturnType<typeof currentReader>>>,
+): SetAsideDeps {
+  return {
+    documents: createSupabaseDocuments(reader.supabase, reader.user.id),
+    dismissals: createSupabaseFlagDismissals(reader.supabase, reader.user.id),
+  };
+}
+
+/**
+ * Moves one flag out of the reader's way.
+ *
+ * Nothing about the read changes: the flag keeps its place, its number and its
+ * sentence, and the analysis is not rewritten. What is written is a row saying
+ * this reader has dealt with this clause, which is what brings it back quietly
+ * next time and what the rate is counted from.
+ *
+ * Whether a red line is what put the flag there is decided in
+ * `setFlagAside`, from the stored read. The browser is not asked, because the
+ * browser is not told (ADR-0013).
+ */
+export async function setFlagAsideAction(
+  documentId: string,
+  flagId: string,
+): Promise<SetAsideState> {
+  const reader = await currentReader();
+  if (!reader) {
+    return {
+      error: process.env.NEXT_PUBLIC_SUPABASE_URL
+        ? 'Sign in to keep track of the flags you’ve dealt with.'
+        : SIGN_IN_UNAVAILABLE,
+    };
+  }
+
+  try {
+    const result = await setFlagAside(setAsideDeps(reader), documentId, flagId);
+    return result.at === 'set-aside'
+      ? { setAside: true }
+      : { error: 'reason' in result ? result.reason : SET_ASIDE_FAILED };
+  } catch (error) {
+    console.error(
+      'Flag %s of document %s was not set aside',
+      flagId,
+      documentId,
+      error,
+    );
+    return { error: SET_ASIDE_FAILED };
+  }
+}
+
+/** Puts one flag back where it was, and deletes the record that it was moved. */
+export async function bringFlagBackAction(
+  documentId: string,
+  flagId: string,
+): Promise<SetAsideState> {
+  const reader = await currentReader();
+  if (!reader) {
+    return {
+      error: process.env.NEXT_PUBLIC_SUPABASE_URL
+        ? 'Sign in to keep track of the flags you’ve dealt with.'
+        : SIGN_IN_UNAVAILABLE,
+    };
+  }
+
+  try {
+    const result = await bringFlagBack(setAsideDeps(reader), documentId, flagId);
+    return result.at === 'brought-back'
+      ? { setAside: false }
+      : { error: 'reason' in result ? result.reason : SET_ASIDE_FAILED };
+  } catch (error) {
+    console.error(
+      'Flag %s of document %s was not brought back',
+      flagId,
+      documentId,
+      error,
+    );
+    return { error: SET_ASIDE_FAILED };
   }
 }
 

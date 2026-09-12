@@ -68,3 +68,7 @@ _Avoid_: uncertainty, low confidence, vagueness
 **Hedge**:
 The wording Redline shows under a flag whose source sentence reads two ways, built from both readings so the reader can check it against the sentence. Never used for doubt about courts, enforcement or consequences.
 _Avoid_: caveat, disclaimer, qualifier
+
+**Set aside**:
+What a reader does to a flag they have read and decided is not a problem for them. The flag keeps its place, its number and its mark on the sentence, and the reader can bring it back. Recorded as a dismissal, along with whether a red line put the flag there, and the two dismissal rates are counted apart. Only a flag can be set aside; a gap cannot. In code it is `ShownFlag` and the `flag_dismissals` table.
+_Avoid_: ignore, hide, resolve, false positive
