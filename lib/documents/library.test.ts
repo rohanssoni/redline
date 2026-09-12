@@ -1,7 +1,8 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { loadAdhesionFixture } from '../../tests/fixtures';
+import { importsReachedFrom } from '../../tests/support/import-graph';
 import { createStubSupabase } from '../../tests/support/stub-supabase';
 import {
   createStubModelClient,
@@ -353,55 +354,3 @@ describe('the migration that makes those queries safe', () => {
     );
   });
 });
-
-/**
- * Every file of this repo's own source that the seed file reaches, directly or
- * through another of its imports. Packages are left alone: what is being
- * checked is which of Redline's own modules a screen can run.
- */
-function importsReachedFrom(seed: string): string[] {
-  const seen = new Set<string>();
-  const queue = [resolve(ROOT, seed)];
-
-  while (queue.length > 0) {
-    const file = queue.shift() as string;
-    if (seen.has(file)) continue;
-    seen.add(file);
-
-    const source = readFileSync(file, 'utf8');
-    // Type-only imports are erased before anything runs, so they are not a way
-    // to reach anything. What is being traced here is what the screen can call.
-    const specifiers = [
-      ...source.matchAll(/(?:^|\n)\s*(?:import|export)\s+([^;]*?)from\s+'([^']+)'/g),
-    ]
-      .filter((match) => !/^type\b/.test(match[1].trim()))
-      .map((match) => match[2]);
-    for (const specifier of specifiers) {
-      const target = resolveImport(file, specifier);
-      if (target) queue.push(target);
-    }
-  }
-
-  seen.delete(resolve(ROOT, seed));
-  return [...seen];
-}
-
-/** Where an import specifier lands in this repo, or null if it leaves it. */
-function resolveImport(from: string, specifier: string): string | null {
-  const base = specifier.startsWith('@/')
-    ? resolve(ROOT, specifier.slice(2))
-    : specifier.startsWith('.')
-      ? resolve(dirname(from), specifier)
-      : null;
-  if (!base) return null;
-
-  for (const candidate of [
-    `${base}.ts`,
-    `${base}.tsx`,
-    join(base, 'index.ts'),
-    join(base, 'index.tsx'),
-  ]) {
-    if (existsSync(candidate)) return candidate;
-  }
-  return null;
-}

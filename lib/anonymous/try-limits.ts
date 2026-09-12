@@ -76,6 +76,19 @@ export const LIMIT_UNAVAILABLE_REASON =
  * and the flags are the whole read, and the account buys the work that comes
  * after reading.
  */
+/**
+ * What a visitor holding a finished read is told about losing it.
+ *
+ * It sits with the result, while the document is still there to keep. A visitor
+ * who reads this after closing the tab has been told something true and useless:
+ * nothing was written down, so there is nothing to restore, and the only thing
+ * this sentence can do is arrive in time.
+ */
+export const LEAVING_LOSES_IT =
+  'Close this tab and this read goes with it. Nothing was saved: not the words, ' +
+  'not what Redline found, and there’s no copy here to send you. An account ' +
+  'keeps this one.';
+
 export const WHAT_AN_ACCOUNT_ADDS = [
   'Redline drafts wording you can send back for each flag.',
   'You can ask questions and get answers from this document only.',

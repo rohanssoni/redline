@@ -6,8 +6,12 @@ import {
   extractDocumentText,
 } from '@/lib/parsing/extract-document-text';
 import { pastedImageReason, readPaste } from '@/lib/parsing/pasted-text';
-import { WHAT_AN_ACCOUNT_ADDS } from '@/lib/anonymous/try-limits';
+import {
+  LEAVING_LOSES_IT,
+  WHAT_AN_ACCOUNT_ADDS,
+} from '@/lib/anonymous/try-limits';
 import type { AnonymousRead } from '@/lib/anonymous/try-document';
+import { KeepForm } from './keep-form';
 import { TryReview } from './try-review';
 
 type Step =
@@ -55,14 +59,18 @@ export function TryPanel() {
       return;
     }
 
-    let body: { read?: AnonymousRead; error?: string };
+    let body: { read?: AnonymousRead; text?: string; error?: string };
     try {
-      body = (await response.json()) as { read?: AnonymousRead; error?: string };
+      body = (await response.json()) as {
+        read?: AnonymousRead;
+        text?: string;
+        error?: string;
+      };
     } catch {
       body = {};
     }
 
-    if (!response.ok || !body.read) {
+    if (!response.ok || !body.read || typeof body.text !== 'string') {
       setStep({
         at: 'refused',
         reason:
@@ -72,7 +80,11 @@ export function TryPanel() {
       return;
     }
 
-    setStep({ at: 'read', name, text, read: body.read });
+    // The text that comes back, not the text that went up. They differ by the
+    // one normalisation on the way in, and this is the string every flag was
+    // checked against — so it is the one the page marks up, and the one that
+    // gets stored if the visitor makes an account.
+    setStep({ at: 'read', name, text: body.text, read: body.read });
   }
 
   async function take(file: File) {
@@ -113,23 +125,28 @@ export function TryPanel() {
         />
 
         <section className="try-account" aria-labelledby="try-account-heading">
-          <h2 id="try-account-heading">What an account adds</h2>
+          {/* First thing under the result, while the document is still here to
+              keep. After the tab is closed this sentence has nothing to offer. */}
+          <div className="try-keep-warning" role="note">
+            <p className="try-keep-warning-title">This read is only in this tab</p>
+            <p>{LEAVING_LOSES_IT}</p>
+          </div>
+
+          <h2 id="try-account-heading">Keep this read</h2>
           <ul className="try-account-list">
             {WHAT_AN_ACCOUNT_ADDS.map((line) => (
               <li key={line}>{line}</li>
             ))}
           </ul>
-          <div className="action-row">
-            <a className="action" href="/sign-up">
-              Make an account
-            </a>
-            <div className="action-notes">
-              <p>
-                This read wasn’t saved. The text stayed in this tab and goes when
-                you close it.
-              </p>
-            </div>
-          </div>
+
+          <KeepForm name={step.name} text={step.text} read={step.read} />
+
+          <p className="try-keep-note">
+            Your account is made and this read goes into it as it stands.
+            Redline doesn’t read the document again, so what’s in your library
+            is word for word what’s on this page.
+          </p>
+
           <button
             className="link-button"
             type="button"

@@ -74,8 +74,12 @@ What a reader does to a flag they have read and decided is not a problem for the
 _Avoid_: ignore, hide, resolve, false positive
 
 **Try**:
-One read taken without an account: the summary and the ranked flags and gaps, or the clean read, run against no red lines. The text is sent with the request, verified inside it, and never written to the database, so a try has no id and cannot be reopened. Counted per caller per UTC day against a maximum document length, both settled before any model call. In code it is `tryDocument` and the `anonymous_tries` table.
+One read taken without an account: the summary and the ranked flags and gaps, or the clean read, run against no red lines. The text is sent with the request, verified inside it, and never written to the database, so a try has no id and cannot be reopened. It lives in the tab that asked for it and goes when that tab goes, unless the visitor keeps it. Counted per caller per UTC day against a maximum document length, both settled before any model call. In code it is `tryDocument` and the `anonymous_tries` table.
 _Avoid_: free trial, demo, preview, guest analysis
+
+**Keep a try**:
+Making an account from a no-account result and writing that same read into the new library. The tab submits the text and the analysis it is already holding, so no model is called and the stored text is the analysed text character for character. The flags are verified against the stored text before and after the write, and a document whose flags no longer verify is refused rather than saved. In code it is `keepTriedDocument`.
+_Avoid_: convert, upgrade, migrate, claim, re-analyse
 
 **Zero-flag rate**:
 The share of finished reads that came back as a clean read, watched so a severity filter that has started suppressing everything is caught. A health metric, not a target to move: a clean read is a real result, and what is read is the gap between the rate and the baseline in force — a fixed 20% until 500 reads or 90 days since launch, a rolling window after that (ADR-0011, ADR-0016). Launch is the first finished read recorded. In code it is `ZeroFlagRate` and the `analysis_reads` table.

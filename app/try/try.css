@@ -238,3 +238,69 @@
     padding-right: 18px;
   }
 }
+
+/* Keeping the read: the warning that has to arrive before the tab closes, and
+   the account form that is the way to act on it. Both sit inside .try-account,
+   so the whole of "you will lose this, here is how not to" reads as one block. */
+.try-keep-warning {
+  justify-self: stretch;
+  max-width: 64ch;
+  background: var(--markup-wash);
+  border-left: 3px solid var(--markup);
+  padding: 14px 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+.try-keep-warning-title {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.try-keep-form {
+  justify-self: stretch;
+  max-width: 34ch;
+  display: grid;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.try-keep-form .field {
+  display: grid;
+  gap: 6px;
+}
+
+.try-keep-form .field label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.try-keep-form .field input {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--rest-line);
+  border-radius: 0;
+  background: var(--page);
+  color: var(--ink);
+}
+
+.try-keep-form .field input:focus-visible {
+  border-color: var(--ink);
+}
+
+.try-keep-form .note {
+  font-size: 0.875rem;
+  color: var(--ink-muted);
+}
+
+.try-keep-form .action {
+  justify-self: start;
+}
+
+.try-keep-note {
+  max-width: 64ch;
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}

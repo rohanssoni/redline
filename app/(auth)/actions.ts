@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { signUpProblem } from '@/lib/auth/sign-up-messages';
 import { SIGN_IN_UNAVAILABLE } from '@/lib/supabase/config';
 import { serverSupabase } from '@/lib/supabase/server';
 
@@ -66,17 +67,6 @@ export async function signUp(
   }
 
   redirect('/documents/new');
-}
-
-/** Supabase says what went wrong in its own words. This says it in the reader's. */
-function signUpProblem(reason: string): string {
-  if (/already registered|already exists/i.test(reason)) {
-    return 'There is already an account on that email address. Sign in instead.';
-  }
-  if (/rate limit|too many/i.test(reason)) {
-    return 'That is a few attempts in a row. Wait a minute and try it again.';
-  }
-  return 'The account couldn’t be set up. Check the email address and try again.';
 }
 
 export async function signOut(): Promise<void> {

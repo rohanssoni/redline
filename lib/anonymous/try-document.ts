@@ -54,10 +54,20 @@ export interface AnonymousRead {
   cleanRead: CleanRead | null;
 }
 
-/** The read, or the reason there isn't one, with the status to answer with. */
+/**
+ * The read, or the reason there isn't one, with the status to answer with.
+ *
+ * A read comes back with `text`: the exact string every flag was checked
+ * against. The visitor's browser sent the text it parsed, and this is that text
+ * after the one normalisation on the way in (`lib/document-text.ts`), so it is
+ * not always the same string. The difference matters twice — it is what the
+ * marked-up page lines its flags up against, and it is what gets stored if the
+ * visitor makes an account (`keep-try.ts`) — so the analysed text goes back
+ * rather than leaving the tab to assume its own copy will do.
+ */
 export type TryOutcome =
-  | { read: AnonymousRead; refused?: undefined; status?: undefined }
-  | { read?: undefined; refused: string; status: number };
+  | { read: AnonymousRead; text: string; refused?: undefined; status?: undefined }
+  | { read?: undefined; text?: undefined; refused: string; status: number };
 
 /** What a visitor whose text is too thin to read is told. */
 export const TOO_LITTLE_TEXT_REASON =
@@ -90,6 +100,7 @@ export async function tryDocument(
   const analysis = await analyzeDocument(documentText, [], { model: deps.model });
 
   return {
+    text: documentText,
     read: {
       summary: analysis.summary,
       flags: analysis.flags,

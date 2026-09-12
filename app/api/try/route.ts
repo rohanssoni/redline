@@ -76,7 +76,11 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ read: outcome.read });
+    // The analysed text goes back with the read. It is what the flags were
+    // checked against, so it is what the tab marks them up on, and what it
+    // sends back to be stored if the visitor makes an account. Still nothing is
+    // written here: the text goes to the one browser that sent it.
+    return NextResponse.json({ read: outcome.read, text: outcome.text });
   } catch (error) {
     console.error('A try without an account did not finish', error);
     return NextResponse.json(

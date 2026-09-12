@@ -19,7 +19,7 @@ _(filled in at the end of the run)_
 
 | # | Ticket | Status |
 |---|--------|--------|
-| 17 | Landing page | in progress |
+| 17 | Landing page | **done** |
 | 2 | Upload + summary (skeleton) | **done** |
 | 3 | Ranked flags with source sentences | **done** |
 | 4 | Gaps ranked alongside flags | **done** |
@@ -36,8 +36,8 @@ _(filled in at the end of the run)_
 | 15 | Dismiss a flag | **done** |
 | 16 | Counter-offers sent | **done** |
 | 18 | Paste text | **done** |
-| 19 | No-account try | in progress |
-| 20 | Keep a no-account analysis | not started |
+| 19 | No-account try | **done** |
+| 20 | Keep a no-account analysis | in progress |
 
 ---
 
