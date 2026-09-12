@@ -1,6 +1,7 @@
 import type { ModelClient } from '../model/client';
 import type { DocumentsGateway, StoredDocument } from '../documents/store';
 import type { JudgeLogGateway } from '../judge/store';
+import type { ZeroFlagLogGateway } from '../zero-flag/store';
 import { redLineTexts, type RedLinesGateway } from '../red-lines/store';
 import { analyzeDocument } from './analyze-document';
 import { draftSoftCounterOffers } from './counter-offer';
@@ -15,6 +16,13 @@ export interface ReadDocumentDeps {
    * it: the log is the only place the judge's opinion goes (ADR-0019).
    */
   judgeLog?: JudgeLogGateway;
+  /**
+   * Where this read is counted towards the zero-flag rate (ADR-0008). Handed
+   * straight through, like the judge log, and nothing that comes back reflects
+   * it: what the rate says about the severity filter is for whoever audits it,
+   * and no screen reads it.
+   */
+  zeroFlagLog?: ZeroFlagLogGateway;
   /**
    * The read itself, which is `analyzeDocument` everywhere in the product. It
    * is named here because the red lines this function fetches are handed
@@ -48,6 +56,7 @@ export async function readDocument(
   const analysis = await analyse(document.text, redLineTexts(redLines), {
     model: deps.model,
     judgeLog: deps.judgeLog,
+    zeroFlagLog: deps.zeroFlagLog,
   });
 
   // One soft draft per flag, and only for flags: what is handed over is

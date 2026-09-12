@@ -72,3 +72,7 @@ _Avoid_: caveat, disclaimer, qualifier
 **Set aside**:
 What a reader does to a flag they have read and decided is not a problem for them. The flag keeps its place, its number and its mark on the sentence, and the reader can bring it back. Recorded as a dismissal, along with whether a red line put the flag there, and the two dismissal rates are counted apart. Only a flag can be set aside; a gap cannot. In code it is `ShownFlag` and the `flag_dismissals` table.
 _Avoid_: ignore, hide, resolve, false positive
+
+**Zero-flag rate**:
+The share of finished reads that came back as a clean read, watched so a severity filter that has started suppressing everything is caught. A health metric, not a target to move: a clean read is a real result, and what is read is the gap between the rate and the baseline in force — a fixed 20% until 500 reads or 90 days since launch, a rolling window after that (ADR-0011, ADR-0016). Launch is the first finished read recorded. In code it is `ZeroFlagRate` and the `analysis_reads` table.
+_Avoid_: false negative rate, miss rate, accuracy

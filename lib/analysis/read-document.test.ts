@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { loadAdhesionFixture, loadCleanFixture } from '../../tests/fixtures';
 import { stubModelClientFor } from '../../tests/support/stub-model-client';
 import { createStubSupabase } from '../../tests/support/stub-supabase';
+import { createStubZeroFlagLog } from '../../tests/support/stub-zero-flag-log';
 import { createSupabaseDocuments } from '../documents/supabase-documents';
 import { toAnalysisResult } from '../documents/store';
 import { createSupabaseRedLines } from '../red-lines/supabase-red-lines';
@@ -245,6 +246,31 @@ describe('reading one of the reader’s documents', () => {
       expect(counterOffer.sourceSentence).toBe(flag?.sourceSentence);
     }
     expect(saved?.name).toBe('Halverson agreement.pdf');
+  });
+
+  it('counts the finished read towards the zero-flag rate', async () => {
+    const { text, sidecar } = loadCleanFixture();
+    const { client } = createStubSupabase({
+      rows: [
+        [documentRow('doc-1', 'Studio terms.pdf', text)],
+        [],
+        [documentRow('doc-1', 'Studio terms.pdf', text)],
+      ],
+    });
+    const zeroFlagLog = createStubZeroFlagLog();
+
+    const saved = await readDocument(
+      {
+        documents: createSupabaseDocuments(client, OWNER),
+        redLines: createSupabaseRedLines(client, OWNER),
+        model: stubModelClientFor(sidecar),
+        zeroFlagLog,
+      },
+      'doc-1',
+    );
+
+    expect(saved).not.toBeNull();
+    expect(zeroFlagLog.written).toEqual([{ cleanRead: true }]);
   });
 
   it('reads nothing, and asks for no red lines, when the document is not the reader’s', async () => {

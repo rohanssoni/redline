@@ -1,5 +1,6 @@
 import type { ModelClient } from '../model/client';
 import type { JudgeLogGateway } from '../judge/store';
+import type { ZeroFlagLogGateway } from '../zero-flag/store';
 import type { CleanRead } from './clean-read';
 import type { CounterOffer } from './counter-offer';
 import type { Gap } from './gap';
@@ -110,6 +111,15 @@ export interface AnalysisDeps {
    * and the judge is a signal about the matcher (ADR-0019).
    */
   judgeLog?: JudgeLogGateway;
+  /**
+   * Where each finished read is counted for the zero-flag rate (ADR-0008).
+   * Optional for the same reason the judge log is: the reader's result does not
+   * depend on it, and a read that could not be counted is still a read that
+   * happened correctly. What it records is one boolean per finished read —
+   * whether the document came back as a clean read — and nothing about the
+   * document itself.
+   */
+  zeroFlagLog?: ZeroFlagLogGateway;
 }
 
 /** Raised when a document cannot be analysed, with a reason a reader can read. */

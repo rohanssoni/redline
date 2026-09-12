@@ -25,7 +25,7 @@ _(filled in at the end of the run)_
 | 4 | Gaps ranked alongside flags | **done** |
 | 5 | Hedged wording only for ambiguity | **done** |
 | 6 | Clean read | **done** |
-| 7 | Zero-flag rate tracking | not started |
+| 7 | Zero-flag rate tracking | in progress |
 | 8 | Soft counter-offer | **done** |
 | 9 | Firm on demand | **done** |
 | 10 | Editable red line list | **done** |
@@ -34,7 +34,7 @@ _(filled in at the end of the run)_
 | 13 | Question box | **done** |
 | 14 | Library | **done** |
 | 15 | Dismiss a flag | **done** |
-| 16 | Counter-offers sent | in progress |
+| 16 | Counter-offers sent | **done** |
 | 18 | Paste text | not started |
 | 19 | No-account try | not started |
 | 20 | Keep a no-account analysis | not started |

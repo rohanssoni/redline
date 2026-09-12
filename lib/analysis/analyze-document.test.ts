@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { loadAdhesionFixture, loadCleanFixture } from '../../tests/fixtures';
 import { createStubJudgeLog } from '../../tests/support/stub-judge-log';
+import { createStubZeroFlagLog } from '../../tests/support/stub-zero-flag-log';
 import {
   createStubModelClient,
   proposedFlagsFor,
@@ -714,6 +715,91 @@ describe('analyzeDocument, the clean read', () => {
       'document_summary',
       'document_flags',
     ]);
+  });
+});
+
+describe('analyzeDocument, counting the read for the zero-flag rate', () => {
+  it('records a clean read as one', async () => {
+    const { text, sidecar } = loadCleanFixture();
+    expect(sidecar.cleanRead).toBe(true);
+    const zeroFlagLog = createStubZeroFlagLog();
+
+    const result = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+      zeroFlagLog,
+    });
+
+    expect(result.cleanRead).not.toBeNull();
+    expect(zeroFlagLog.written).toEqual([{ cleanRead: true }]);
+  });
+
+  it('records a read with flags in it as one that was not clean', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const zeroFlagLog = createStubZeroFlagLog();
+
+    const result = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+      zeroFlagLog,
+    });
+
+    expect(result.flags.length).toBeGreaterThan(0);
+    expect(result.cleanRead).toBeNull();
+    expect(zeroFlagLog.written).toEqual([{ cleanRead: false }]);
+  });
+
+  it('counts one read per finished analysis, so the share has its denominator', async () => {
+    const clean = loadCleanFixture();
+    const adhesion = loadAdhesionFixture();
+    const zeroFlagLog = createStubZeroFlagLog();
+
+    await analyzeDocument(clean.text, [], {
+      model: stubModelClientFor(clean.sidecar),
+      zeroFlagLog,
+    });
+    await analyzeDocument(adhesion.text, [], {
+      model: stubModelClientFor(adhesion.sidecar),
+      zeroFlagLog,
+    });
+    await analyzeDocument(clean.text, [], {
+      model: stubModelClientFor(clean.sidecar),
+      zeroFlagLog,
+    });
+
+    expect(zeroFlagLog.written).toEqual([
+      { cleanRead: true },
+      { cleanRead: false },
+      { cleanRead: true },
+    ]);
+  });
+
+  it('counts nothing for a read that broke, so a failure cannot read as clean', async () => {
+    const { text, sidecar } = loadCleanFixture();
+    const model = stubModelClientFor(sidecar);
+    model.fail('document_flags', 'OpenRouter is unreachable');
+    const zeroFlagLog = createStubZeroFlagLog();
+
+    await expect(
+      analyzeDocument(text, [], { model, zeroFlagLog }),
+    ).rejects.toBeInstanceOf(ModelCallError);
+
+    expect(zeroFlagLog.written).toEqual([]);
+  });
+
+  it('gives the reader their read even when the count could not be written', async () => {
+    const { text, sidecar } = loadCleanFixture();
+    const zeroFlagLog = createStubZeroFlagLog();
+    zeroFlagLog.fail('the database is down');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const result = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+      zeroFlagLog,
+    });
+
+    expect(result.cleanRead).not.toBeNull();
+    expect(result.summary).toBe(sidecar.summary);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
 

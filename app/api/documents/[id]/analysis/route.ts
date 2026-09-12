@@ -7,6 +7,7 @@ import { createSupabaseRedLines } from '@/lib/red-lines/supabase-red-lines';
 import { createOpenRouterClient } from '@/lib/model/openrouter';
 import { SIGN_IN_UNAVAILABLE } from '@/lib/supabase/config';
 import { currentReader } from '@/lib/supabase/server';
+import { createSupabaseZeroFlagLog } from '@/lib/zero-flag/supabase-zero-flag-log';
 
 /**
  * Reads a stored document and keeps the result with it. The reader's own red
@@ -40,6 +41,11 @@ export async function POST(
         // Written during the run and read by nobody until someone audits the
         // matcher (ADR-0018). The response below carries no part of it.
         judgeLog: createSupabaseJudgeLog(reader.supabase, reader.user.id),
+        // One row per finished read, holding whether it came back clean and
+        // nothing about the document (ADR-0008). The response below carries no
+        // part of it either: the rate is for whoever watches the severity
+        // filter, not for the reader.
+        zeroFlagLog: createSupabaseZeroFlagLog(reader.supabase, reader.user.id),
       },
       id,
     );

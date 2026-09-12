@@ -13,6 +13,7 @@ import { verifyGaps, type GapClaim } from './gap';
 import { applyRedLineOverride } from './red-line-override';
 import { reviewRedLineMatches } from './red-line-judge';
 import { verifyFlags, type Flag, type ProposedFlag } from './verified-flag';
+import type { ZeroFlagLogGateway } from '../zero-flag/store';
 
 /**
  * What the model is asked for in the summary stage. `strict: true` on the
@@ -594,7 +595,7 @@ export async function analyzeDocument(
     // document Redline calls clean (ADR-0008, ADR-0013).
     shownFlags: flags,
   });
-  recordZeroFlagRate(cleanRead !== null);
+  await recordFinishedRead(deps.zeroFlagLog, cleanRead !== null);
 
   return {
     summary: summary.trim(),
@@ -612,17 +613,32 @@ export async function analyzeDocument(
 }
 
 /**
- * The zero-flag rate, the production health metric ADR-0008 asks for, written
- * where the platform already collects logs.
+ * Writes down that a read finished and whether it came back clean, which is one
+ * side of the zero-flag rate ADR-0008 asks for.
  *
- * Nothing else in the product would surface a severity filter that has started
- * suppressing too hard: the symptom is documents quietly coming back with
- * nothing in them, and a rate is the only thing that shows it. One line per
- * finished read is enough to count both sides of that ratio. The baseline it is
- * compared against is not decided here, and ADR-0008 says so.
+ * Every finished read is recorded, clean or not: the metric is a share, and a
+ * numerator with no denominator says nothing. What it is compared against is
+ * decided in `lib/zero-flag/store.ts` (ADR-0011, ADR-0016), not here.
+ *
+ * A log that is absent or refuses costs the reader nothing. The read has
+ * already happened and is already correct; the metric watches the filter, and a
+ * missing row is a gap in a health check rather than a reason to fail a read
+ * somebody is waiting for. It is awaited rather than left running, so a run
+ * that finished has been counted by the time it returns.
  */
-function recordZeroFlagRate(wasCleanRead: boolean): void {
-  console.info('redline.analysis.completed cleanRead=%s', wasCleanRead);
+async function recordFinishedRead(
+  zeroFlagLog: ZeroFlagLogGateway | undefined,
+  wasCleanRead: boolean,
+): Promise<void> {
+  if (!zeroFlagLog) return;
+  try {
+    await zeroFlagLog.record({ cleanRead: wasCleanRead });
+  } catch (error) {
+    console.warn(
+      'A finished read was not counted towards the zero-flag rate: %s',
+      error instanceof Error ? error.message : String(error),
+    );
+  }
 }
 
 /**
