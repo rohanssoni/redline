@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
-import { analyzeDocument } from '@/lib/analysis/analyze-document';
+import { readDocument } from '@/lib/analysis/read-document';
 import { AnalysisError } from '@/lib/analysis/types';
 import { createSupabaseDocuments } from '@/lib/documents/supabase-documents';
+import { createSupabaseRedLines } from '@/lib/red-lines/supabase-red-lines';
 import { createOpenRouterClient } from '@/lib/model/openrouter';
 import { SIGN_IN_UNAVAILABLE } from '@/lib/supabase/config';
 import { currentReader } from '@/lib/supabase/server';
 
 /**
  * Reads a stored document and keeps the result with it. The reader's own red
- * lines drive this read; the list that holds them is built alongside the
- * ranking stage, so nothing is passed here yet.
+ * lines drive this read, and they are fetched inside `readDocument` on every
+ * run rather than carried in from anywhere.
  */
 export async function POST(
   _request: Request,
@@ -28,20 +29,22 @@ export async function POST(
   }
 
   const { id } = await params;
-  const documents = createSupabaseDocuments(reader.supabase, reader.user.id);
-  const document = await documents.byId(id);
-  if (!document) {
-    return NextResponse.json(
-      { error: 'That document isn’t in your library.' },
-      { status: 404 },
-    );
-  }
 
   try {
-    const analysis = await analyzeDocument(document.text, [], {
-      model: createOpenRouterClient(),
-    });
-    const saved = await documents.recordAnalysis(document.id, analysis);
+    const saved = await readDocument(
+      {
+        documents: createSupabaseDocuments(reader.supabase, reader.user.id),
+        redLines: createSupabaseRedLines(reader.supabase, reader.user.id),
+        model: createOpenRouterClient(),
+      },
+      id,
+    );
+    if (!saved) {
+      return NextResponse.json(
+        { error: 'That document isn’t in your library.' },
+        { status: 404 },
+      );
+    }
     return NextResponse.json({ analysis: saved.analysis });
   } catch (error) {
     console.error('The analysis of document %s did not finish', id, error);

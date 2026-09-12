@@ -23,12 +23,12 @@ _(filled in at the end of the run)_
 | 2 | Upload + summary (skeleton) | **done** |
 | 3 | Ranked flags with source sentences | **done** |
 | 4 | Gaps ranked alongside flags | **done** |
-| 5 | Hedged wording only for ambiguity | in progress |
+| 5 | Hedged wording only for ambiguity | **done** |
 | 6 | Clean read | **done** |
 | 7 | Zero-flag rate tracking | not started |
 | 8 | Soft counter-offer | not started |
 | 9 | Firm on demand | not started |
-| 10 | Editable red line list | not started |
+| 10 | Editable red line list | in progress |
 | 11 | Red line always flags | not started |
 | 12 | LLM judge on matches | not started |
 | 13 | Question box | not started |

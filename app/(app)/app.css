@@ -285,6 +285,79 @@
   }
 }
 
+/* Red lines: the reader's own list, on a screen of its own.
+   Each one is a line of the reader's writing with a change bar in the gutter,
+   the same mark a flagged sentence carries on a page. They rest in grey; the
+   crimson bar belongs to the flag in focus, and nothing is in focus here. */
+
+.red-lines-empty {
+  max-width: 62ch;
+}
+
+.red-line-add {
+  margin-top: 22px;
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  max-width: 62ch;
+}
+
+.red-lines {
+  margin-top: 22px;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+  max-width: 62ch;
+}
+
+.red-line {
+  padding: 14px 0 14px 18px;
+  border-left: 3px solid var(--rest-line);
+  background: var(--comment);
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.red-line:focus-within {
+  border-left-color: var(--ink);
+}
+
+.red-line-body {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  width: 100%;
+}
+
+.red-line-label {
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+.red-line textarea,
+.red-line-add textarea {
+  font: inherit;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--rest-line);
+  border-radius: 0;
+  background: var(--page);
+  color: var(--ink);
+  resize: vertical;
+}
+
+.red-line textarea:focus-visible,
+.red-line-add textarea:focus-visible {
+  border-color: var(--ink);
+}
+
+.red-line .link-button:disabled {
+  color: var(--ink-soft);
+  cursor: default;
+  text-decoration: none;
+}
+
 /* Sign in and sign up */
 
 .gate {
