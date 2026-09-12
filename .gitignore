@@ -105,3 +105,9 @@ secrets.yml
 .impeccable/review/
 .impeccable/build/
 .impeccable/questions/
+
+# vendor build output, copied in by scripts/copy-pdf-worker.mjs
+/public/pdf.worker.min.mjs
+
+# migrations are source, not a database dump
+!supabase/migrations/*.sql

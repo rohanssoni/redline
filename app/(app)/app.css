@@ -1,0 +1,306 @@
+/* The signed-in frame and the screens inside it. Tokens come from globals.css. */
+
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.shell-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px 22px;
+  flex-wrap: wrap;
+}
+
+.shell-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-left: 4px;
+  font-size: 0.9375rem;
+}
+
+.shell-nav-links a {
+  text-decoration: none;
+  color: var(--ink-soft);
+}
+
+.shell-nav-links a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.shell-account {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+.shell-account-name {
+  max-width: 24ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link-button {
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+  cursor: pointer;
+}
+
+.work {
+  flex: 1;
+  width: var(--column);
+  margin: 0 auto;
+  padding-block: 32px 64px;
+  display: grid;
+  gap: 22px;
+}
+
+/* A sheet of paper on the canvas: the panel every screen is built from. */
+
+.sheet {
+  position: relative;
+  background: var(--page);
+  padding: 32px 52px 36px var(--gutter);
+}
+
+.sheet-label {
+  margin: -32px -52px 22px calc(var(--gutter) * -1);
+  padding: 6px var(--gutter);
+  background: var(--strip);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sheet h1 {
+  font-size: clamp(1.625rem, 1.1rem + 1.6vw, 2.25rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.sheet h2 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.sheet p {
+  max-width: 62ch;
+}
+
+.sheet-body {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.note {
+  max-width: 62ch;
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+/* The upload step */
+
+.drop {
+  margin-top: 22px;
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  padding: 32px;
+  background: var(--comment);
+  border-top: 2px solid var(--rest-line);
+}
+
+.drop[data-over='true'] {
+  border-top-color: var(--ink);
+}
+
+.drop input[type='file'] {
+  font: inherit;
+  max-width: 100%;
+}
+
+.drop-hint {
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+.file-name {
+  font-weight: 600;
+}
+
+/* States: working, and refused */
+
+.state {
+  margin-top: 22px;
+  padding: 12px 18px;
+  background: var(--comment);
+  border-top: 2px solid var(--rest-line);
+  display: grid;
+  gap: 4px;
+  max-width: 62ch;
+}
+
+.state[data-tone='refused'] {
+  border-top-color: var(--markup);
+}
+
+.state-title {
+  font-weight: 600;
+}
+
+.state p {
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+.state-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+/* The summary, in Redline's own words */
+
+.summary {
+  margin-top: 12px;
+  max-width: 64ch;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+}
+
+.summary p + p {
+  margin-top: 12px;
+}
+
+.sheet-foot {
+  margin-top: 22px;
+}
+
+/* The reader's document, in its own words */
+
+.doc-page {
+  position: relative;
+  background: var(--page);
+  padding: 22px 52px 32px var(--gutter);
+  font-family: var(--font-doc);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.doc-page p + p {
+  margin-top: 6px;
+}
+
+.doc-label {
+  margin: -22px -52px 14px calc(var(--gutter) * -1);
+  padding: 6px var(--gutter);
+  background: var(--strip);
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+/* Sign in and sign up */
+
+.gate {
+  width: min(520px, 100% - 32px);
+  margin: 0 auto;
+  padding-block: 64px;
+  display: grid;
+  gap: 22px;
+}
+
+.gate-sheet {
+  background: var(--page);
+  padding: 32px;
+  display: grid;
+  gap: 16px;
+}
+
+.gate-sheet h1 {
+  font-size: 1.625rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.field input {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid var(--rest-line);
+  border-radius: 0;
+  background: var(--page);
+  color: var(--ink);
+}
+
+.field input:focus-visible {
+  border-color: var(--ink);
+}
+
+.gate form {
+  display: grid;
+  gap: 16px;
+}
+
+.gate .action {
+  justify-self: start;
+}
+
+.gate-swap {
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 640px) {
+  .sheet {
+    padding: 24px 18px 28px var(--gutter);
+  }
+
+  .sheet-label {
+    margin: -24px -18px 18px calc(var(--gutter) * -1);
+    padding: 6px 18px 6px var(--gutter);
+  }
+
+  .doc-page {
+    padding: 20px 18px 28px var(--gutter);
+    font-size: 1rem;
+  }
+
+  .doc-label {
+    margin: -20px -18px 14px calc(var(--gutter) * -1);
+    padding: 6px 18px 6px var(--gutter);
+  }
+
+  .drop {
+    padding: 20px;
+  }
+}

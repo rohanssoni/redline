@@ -58,6 +58,26 @@ Reason: the PRD requires flags and gaps to interleave in one severity-ordered
 list (ADR-0005), which needs a total order, while the reader needs a word, not a
 number. A band alone cannot order within a band.
 
+### The no-account limits (#19)
+The ticket left both open and said to record them before merge. Chosen here:
+
+- **3 anonymous analyses per IP per calendar day (UTC).**
+- **50,000 characters of extracted text maximum.**
+
+Reason: a freelancer's client agreement runs roughly 1,000–4,000 words, so 50,000
+characters clears a long one with room to spare while capping what a single
+anonymous request can cost. Three tries a day lets a visitor retry a failed parse
+and still try a second document before signing up, and bounds daily spend per IP
+in a product with no payments and no bot check (a CAPTCHA is out of scope). Both
+are enforced server-side in Supabase before any model call.
+
+### Where the design briefs left a question open, the build answered it
+Three surface-brief questions had no answer and no owner to ask: where dismissed
+flags go and whether they can be restored (#15), whether red lines are edited on
+their own screen or in a panel beside the result (#10), and what the account menu
+holds. Each ticket brief tells the agent to decide, build, and record the choice
+with its reason rather than stall on it.
+
 _(more decisions appended as the run proceeds)_
 
 ---
