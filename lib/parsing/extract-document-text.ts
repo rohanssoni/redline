@@ -1,8 +1,4 @@
-import {
-  normalizeDocumentText,
-  unreadableReason,
-  type TextSource,
-} from '../document-text';
+import { documentInput, DocumentReadError, type DocumentInput } from './document-input';
 import { parsableKind, unsupportedFileReason, type ParsableKind } from './file-kind';
 import { assemblePdfText, type PdfTextItem } from './pdf-text';
 
@@ -12,19 +8,15 @@ import { assemblePdfText, type PdfTextItem } from './pdf-text';
  * is the only thing the server is ever sent (`CLAUDE.md`, settled).
  */
 
-export interface ExtractedDocument {
-  /** The file's own name, kept so the reader recognises it in their library. */
-  name: string;
-  kind: ParsableKind;
-  text: string;
-}
+export { DocumentReadError };
 
-/** Raised with a reason written for the reader, not for a log. */
-export class DocumentReadError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'DocumentReadError';
-  }
+/**
+ * What the parser found. `kind` is which parser read it, and it is used here and
+ * dropped: what leaves for the server is the `DocumentInput` underneath, the
+ * same shape a paste produces (ADR-0020).
+ */
+export interface ExtractedDocument extends DocumentInput {
+  kind: ParsableKind;
 }
 
 export async function extractDocumentText(file: File): Promise<ExtractedDocument> {
@@ -35,14 +27,8 @@ export async function extractDocumentText(file: File): Promise<ExtractedDocument
 
   const buffer = await file.arrayBuffer();
   const raw = kind === 'pdf' ? await readPdf(buffer) : await readDocx(buffer);
-  const text = normalizeDocumentText(raw);
 
-  const unreadable = unreadableReason(text, kind as TextSource);
-  if (unreadable !== null) {
-    throw new DocumentReadError(unreadable);
-  }
-
-  return { name: file.name, kind, text };
+  return { ...documentInput(file.name, raw, kind), kind };
 }
 
 /** Where the pdf.js worker is served from. Copied into `public` at install. */

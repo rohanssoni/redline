@@ -6,6 +6,8 @@ import {
   DocumentReadError,
   extractDocumentText,
 } from '@/lib/parsing/extract-document-text';
+import { saveDocument } from '@/lib/documents/save-document';
+import { PastePanel } from './paste-panel';
 
 type Step =
   | { at: 'waiting' }
@@ -17,6 +19,11 @@ type Step =
  * Where a file becomes text. The parsing happens here, in the reader's browser;
  * what leaves this component is the extracted text and the file's name, and the
  * file itself stays on the reader's machine (`CLAUDE.md`, settled).
+ *
+ * This is also the step where the reader chooses how to get their agreement in.
+ * Upload leads, and pasting the text is the alternative underneath it, with the
+ * reason upload is worth the trouble stated where the choice is made rather than
+ * tucked away (ADR-0020).
  */
 export function UploadStep() {
   const router = useRouter();
@@ -43,28 +50,12 @@ export function UploadStep() {
     }
 
     setStep({ at: 'saving', fileName: extracted.name });
-    try {
-      const response = await fetch('/api/documents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: extracted.name, text: extracted.text }),
-      });
-      const body = (await response.json()) as { id?: string; error?: string };
-      if (!response.ok || !body.id) {
-        setStep({
-          at: 'refused',
-          reason: body.error ?? 'The document couldn’t be saved. Try it again.',
-        });
-        return;
-      }
-      router.push(`/documents/${body.id}`);
-    } catch {
-      setStep({
-        at: 'refused',
-        reason:
-          'Redline couldn’t be reached. Check your connection and send the file again.',
-      });
+    const outcome = await saveDocument(extracted);
+    if (!outcome.saved) {
+      setStep({ at: 'refused', reason: outcome.reason });
+      return;
     }
+    router.push(`/documents/${outcome.id}`);
   }
 
   return (
@@ -148,6 +139,17 @@ export function UploadStep() {
           </div>
         </div>
       ) : null}
+
+      <div className="input-alt">
+        <p className="note">
+          Uploading gives you the most faithful source sentences. Redline checks
+          every sentence it quotes against the text you give it, and text copied
+          out of a PDF can come across with lines broken in odd places or two
+          columns run together. A quote would still match your paste word for
+          word, and not match the agreement you are signing.
+        </p>
+        <PastePanel />
+      </div>
     </section>
   );
 }

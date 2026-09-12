@@ -178,6 +178,58 @@
   align-items: center;
 }
 
+/* The other way in: pasted text, kept secondary to upload */
+
+.input-alt {
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rest-line);
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+
+.paste {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  width: 100%;
+  max-width: 62ch;
+}
+
+.paste h2 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.paste-label {
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+.paste textarea,
+.paste input[type='text'] {
+  font: inherit;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--rest-line);
+  border-radius: 0;
+  background: var(--page);
+  color: var(--ink);
+  resize: vertical;
+}
+
+.paste textarea:focus-visible,
+.paste input[type='text']:focus-visible {
+  border-color: var(--ink);
+}
+
+.paste .link-button:disabled {
+  color: var(--ink-soft);
+  cursor: default;
+  text-decoration: none;
+}
+
 /* The summary, in Redline's own words */
 
 .summary {
