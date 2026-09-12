@@ -14,6 +14,7 @@ import {
   rankFlags,
   rankGaps,
 } from './ranking';
+import { settleWording } from './hedging';
 import { verifyGaps, type GapClaim } from './gap';
 import { verifyFlags, type ProposedFlag } from './verified-flag';
 
@@ -129,6 +130,12 @@ export const flagsSchema: ObjectSchema = {
             description:
               "True only when the sentence's own wording carries two readings that differ in what the reader is agreeing to.",
           },
+          alternativeReadings: {
+            type: 'array',
+            description:
+              'The two readings, each one sentence, when textualAmbiguity is true. Empty when it is false.',
+            items: { type: 'string' },
+          },
           harmConfidence: {
             type: 'string',
             description:
@@ -145,6 +152,7 @@ export const flagsSchema: ObjectSchema = {
           'changesYourEconomicsUnilaterally',
           'bindsBothSidesEqually',
           'textualAmbiguity',
+          'alternativeReadings',
           'harmConfidence',
         ],
         additionalProperties: false,
@@ -155,8 +163,17 @@ export const flagsSchema: ObjectSchema = {
   additionalProperties: false,
 };
 
+/**
+ * One flag as the model sends it, which is not yet a `ProposedFlag`: the two
+ * readings arrive beside the explanation, and `settleWording` turns them into the
+ * hedge the reader sees, or into nothing (ADR-0010, ADR-0022).
+ */
+type FlagOutput = Omit<ProposedFlag, 'band' | 'ambiguity'> & {
+  alternativeReadings: string[];
+};
+
 interface FlagsOutput {
-  flags: Array<Omit<ProposedFlag, 'band'>>;
+  flags: FlagOutput[];
 }
 
 const FLAGS_SYSTEM_PROMPT = [
@@ -176,10 +193,16 @@ const FLAGS_SYSTEM_PROMPT = [
   '',
   'Severity is what the clause costs the reader if it happens, not how often clauses like it turn up. Rate the consequence.',
   '',
+  'Two separate things you are asked about each clause, which are not the same question:',
+  '- harmConfidence is how sure you are that this clause costs the reader. Partial is fine and changes nothing about how you write.',
+  '- textualAmbiguity is about the sentence on the page and nothing else. Set it true only when the words themselves carry two readings that differ in what the reader is agreeing to, and a reader could see both by reading the sentence again.',
+  '- When textualAmbiguity is true, put both readings in alternativeReadings, one sentence each, plainly worded: what the sentence means read the first way, and what it means read the second.',
+  '- When it is false, leave alternativeReadings empty. Being unsure whether a clause holds up, whether a court would allow it, or what happens in practice is not ambiguity in the sentence. Those clauses are written plainly like any other.',
+  '',
   'Writing:',
   '- Address the reader as "you" and the other side by the name the document uses.',
   '- Say only what the sentence says. Do not say what a court would do, what the law requires, or whether the clause is enforceable.',
-  '- Write plainly. Do not hedge.',
+  '- Write plainly. Do not hedge, including where you set textualAmbiguity: the two readings carry that, and Redline writes what the reader is shown.',
 ].join('\n');
 
 /** The prompt for the flag stage. Exported so a test can read what was sent. */
@@ -328,7 +351,13 @@ export async function analyzeDocument(
   // anything is ranked (ADR-0004); verification last, so what survives is
   // quoting the document rather than the model (ADR-0001).
   const dangerous = dangerousOnly(withIds(proposed.flags));
-  const flagCheck = verifyFlags(dangerous, documentText);
+
+  // Between the filter and the citation check, because what a flag is allowed to
+  // say is decided before its sentence is looked up and after it is known to be
+  // worth showing at all (ADR-0010).
+  const worded = settleFlagWording(dangerous);
+
+  const flagCheck = verifyFlags(worded, documentText);
   const { flags, dropped } = flagCheck;
   for (const drop of dropped) {
     console.warn(
@@ -380,13 +409,63 @@ function recordZeroFlagRate(wasCleanRead: boolean): void {
  * Gives each proposed flag its band and an id no other flag in the run shares,
  * so two readings of one clause can never collide in the list or in a key.
  */
-function withIds(proposed: FlagsOutput['flags']): ProposedFlag[] {
+function withIds(
+  proposed: FlagsOutput['flags'],
+): Array<ProposedFlag & { alternativeReadings: string[] }> {
   const naming = names('flag');
   return proposed.map((flag) => ({
     ...flag,
     id: naming(flag.id),
     band: bandFor(flag.severity),
   }));
+}
+
+/**
+ * Settles what each flag is allowed to say before anything is shown: a hedge only
+ * where the source sentence genuinely reads two ways and both readings came back
+ * with it, and plain wording everywhere else (ADR-0010, ADR-0022).
+ *
+ * A flag whose every sentence hedged about something outside the document — how a
+ * court would treat it, whether it holds up — has nothing left to tell the reader
+ * once that is taken out, so it goes, and the reason is logged.
+ */
+function settleFlagWording(
+  flags: readonly (ProposedFlag & { alternativeReadings: string[] })[],
+): ProposedFlag[] {
+  const settled: ProposedFlag[] = [];
+
+  for (const flag of flags) {
+    const wording = settleWording({
+      explanation: flag.explanation,
+      textualAmbiguity: flag.textualAmbiguity,
+      alternativeReadings: flag.alternativeReadings,
+    });
+
+    if (!wording) {
+      console.warn(
+        'A flag was dropped because nothing was left of its reading once the unverifiable hedging came out: %s',
+        flag.id,
+      );
+      continue;
+    }
+
+    for (const struck of wording.struck) {
+      console.warn(
+        'A hedge the reader could not have checked was taken out of %s: %s',
+        flag.id,
+        struck,
+      );
+    }
+
+    settled.push({
+      ...flag,
+      explanation: wording.explanation,
+      textualAmbiguity: wording.textualAmbiguity,
+      ...(wording.ambiguity ? { ambiguity: wording.ambiguity } : {}),
+    });
+  }
+
+  return settled;
 }
 
 /**

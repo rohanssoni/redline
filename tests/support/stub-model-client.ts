@@ -82,6 +82,7 @@ export function proposedFlagsFor(sidecar: FixtureSidecar): unknown[] {
     changesYourEconomicsUnilaterally: flag.plausible,
     bindsBothSidesEqually: !flag.plausible,
     textualAmbiguity: flag.textualAmbiguity,
+    alternativeReadings: readingsFor(sidecar, flag),
     harmConfidence: flag.harmConfidence,
   }));
 
@@ -99,9 +100,28 @@ export function proposedFlagsFor(sidecar: FixtureSidecar): unknown[] {
       changesYourEconomicsUnilaterally: false,
       bindsBothSidesEqually: true,
       textualAmbiguity: false,
+      alternativeReadings: [],
       harmConfidence: 'partial',
     },
   ];
+}
+
+/**
+ * The two readings a model would send back for a clause whose sentence reads two
+ * ways, taken from the sidecar's ambiguous decoy rather than written here. A
+ * clause the sidecar does not call ambiguous gets none, which is what a model
+ * that found no second reading sends.
+ */
+function readingsFor(sidecar: FixtureSidecar, flag: FixtureFlag): string[] {
+  const ambiguous = sidecar.decoys.textuallyAmbiguous;
+  if (
+    !flag.textualAmbiguity ||
+    !ambiguous ||
+    ambiguous.sourceSentence !== flag.sourceSentence
+  ) {
+    return [];
+  }
+  return [ambiguous.readingA, ambiguous.readingB];
 }
 
 /**

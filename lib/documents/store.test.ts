@@ -43,6 +43,39 @@ describe('a stored analysis, on the way back out', () => {
     expect(readBack?.flags.length).toBe(analysis.flags.length);
   });
 
+  it('brings a hedge back with the two readings it was built on', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const analysis = await analyzeDocument(text, [], {
+      model: stubModelClientFor(sidecar),
+    });
+    const hedged = analysis.flags.find((flag) => flag.ambiguity);
+    expect(hedged).toBeDefined();
+
+    const readBack = toAnalysisResult(JSON.parse(JSON.stringify(analysis)), text);
+
+    const stored = readBack?.flags.find((flag) => flag.id === hedged?.id);
+    expect(stored?.ambiguity?.hedge).toBe(hedged?.ambiguity?.hedge);
+    expect(stored?.ambiguity?.readings).toEqual(hedged?.ambiguity?.readings);
+  });
+
+  it('drops a row whose hedge has lost the readings under it', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const analysis = await analyzeDocument(text, [], {
+      model: stubModelClientFor(sidecar),
+    });
+    const stored = JSON.parse(JSON.stringify(analysis)) as {
+      flags: Record<string, unknown>[];
+    };
+    const hedged = stored.flags.find((flag) => flag.ambiguity);
+    expect(hedged).toBeDefined();
+    delete hedged!.ambiguity;
+
+    const readBack = toAnalysisResult(stored, text);
+
+    expect(readBack?.flags.map((flag) => flag.id)).not.toContain(hedged!.id);
+    expect(readBack?.flags.length).toBe(analysis.flags.length - 1);
+  });
+
   it('refuses a row that claims a clean read while carrying a gap', async () => {
     const { text, sidecar } = loadAdhesionFixture();
     const gap = sidecar.gaps[0];

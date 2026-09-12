@@ -254,6 +254,158 @@ describe('analyzeDocument, flag stage', () => {
   });
 });
 
+describe('analyzeDocument, hedged wording', () => {
+  /** Everything of a flag the reader reads, the hedge included. */
+  function wordingOf(flag: { explanation: string; ambiguity?: { hedge: string } }) {
+    return [flag.explanation, flag.ambiguity?.hedge ?? ''].join(' ');
+  }
+
+  it('hedges the clause whose sentence reads two ways, and shows the reader both', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const ambiguous = sidecar.decoys.textuallyAmbiguous;
+    expect(ambiguous).toBeDefined();
+
+    const result = await analyzeDocument(text, [], {
+      model: stubModelClientFor(sidecar),
+    });
+
+    const shown = result.flags.find(
+      (flag) => flag.sourceSentence === ambiguous?.sourceSentence,
+    );
+    expect(shown).toBeDefined();
+    expect(wordingOf(shown!)).toMatch(/could be read two ways/i);
+    expect(wordingOf(shown!)).toContain(ambiguous?.readingA);
+    expect(wordingOf(shown!)).toContain(ambiguous?.readingB);
+    expect(shown?.textualAmbiguity).toBe(true);
+  });
+
+  it('states the clause nobody is sure a court would allow plainly, and never hedges it', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const uncertain = sidecar.decoys.nonTextualLowConfidence;
+    expect(uncertain).toBeDefined();
+
+    const result = await analyzeDocument(text, [], {
+      model: stubModelClientFor(sidecar),
+    });
+
+    const shown = result.flags.find(
+      (flag) => flag.sourceSentence === uncertain?.sourceSentence,
+    );
+    expect(shown).toBeDefined();
+    expect(shown?.harmConfidence).toBe('partial');
+    expect(shown?.ambiguity).toBeUndefined();
+    expect(shown?.textualAmbiguity).toBe(false);
+    expect(wordingOf(shown!)).not.toMatch(
+      /\b(could|may|might|possibly|arguably|probably|likely|unclear)\b/i,
+    );
+  });
+
+  it('hedges nothing else in the document, however unsure the reading is', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const ambiguous = sidecar.decoys.textuallyAmbiguous;
+
+    const result = await analyzeDocument(text, [], {
+      model: stubModelClientFor(sidecar),
+    });
+
+    const hedged = result.flags.filter((flag) => flag.ambiguity);
+    expect(hedged.map((flag) => flag.sourceSentence)).toEqual([
+      ambiguous?.sourceSentence,
+    ]);
+    for (const flag of result.flags) {
+      // Every hedge carries the two readings it rests on, so there is no wording
+      // the reader is asked to take on trust.
+      if (!flag.ambiguity) continue;
+      expect(flag.ambiguity.readings).toHaveLength(2);
+      for (const reading of flag.ambiguity.readings) {
+        expect(flag.ambiguity.hedge).toContain(reading);
+      }
+    }
+  });
+
+  it('words a clause plainly when the model claims ambiguity with no second reading', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const ambiguous = sidecar.decoys.textuallyAmbiguous;
+    const model = stubModelClientFor(sidecar);
+    model.reply('document_flags', {
+      flags: [
+        proposal(ambiguous!.sourceSentence, {
+          id: 'claims-ambiguity-shows-none',
+          textualAmbiguity: true,
+          alternativeReadings: [],
+        }),
+      ],
+    });
+
+    const result = await analyzeDocument(text, [], { model });
+
+    expect(result.flags).toHaveLength(1);
+    expect(result.flags[0].ambiguity).toBeUndefined();
+    expect(result.flags[0].textualAmbiguity).toBe(false);
+    expect(result.flags[0].explanation.trim().length).toBeGreaterThan(0);
+  });
+
+  it('takes a hedge about enforcement out of the wording and keeps the flag', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const uncertain = sidecar.decoys.nonTextualLowConfidence;
+    const planted = sidecar.flags.find(
+      (flag) => flag.sourceSentence === uncertain?.sourceSentence,
+    );
+    const model = stubModelClientFor(sidecar);
+    model.reply('document_flags', {
+      flags: [
+        proposal(uncertain!.sourceSentence, {
+          id: 'hedged-about-a-court',
+          explanation: `${planted?.explanation} A court might well decline to enforce something this wide.`,
+        }),
+      ],
+    });
+
+    const result = await analyzeDocument(text, [], { model });
+
+    expect(result.flags.map((flag) => flag.id)).toEqual(['hedged-about-a-court']);
+    expect(result.flags[0].explanation).toBe(planted?.explanation);
+    expect(result.flags[0].explanation).not.toMatch(/court/i);
+    expect(result.flags[0].ambiguity).toBeUndefined();
+  });
+
+  it('drops a flag that had nothing to say beyond how a court might treat it', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const worst = sidecar.flags[0];
+    const model = stubModelClientFor(sidecar);
+    model.reply('document_flags', {
+      flags: [
+        proposal(worst.sourceSentence, {
+          id: 'nothing-but-a-hedge',
+          explanation:
+            'A court would probably not enforce an indemnity this wide. It is unclear whether anyone tries to in practice.',
+        }),
+        proposal(sidecar.flags[1].sourceSentence, { id: 'says-what-it-does' }),
+      ],
+    });
+
+    const result = await analyzeDocument(text, [], { model });
+
+    expect(result.flags.map((flag) => flag.id)).toEqual(['says-what-it-does']);
+  });
+
+  it('asks the model for ambiguity and harm confidence as two separate answers', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const model = stubModelClientFor(sidecar);
+
+    await analyzeDocument(text, [], { model });
+
+    const item = (model.calls[1].schema.properties.flags as ArraySchema)
+      .items as ObjectSchema;
+    expect(item.required).toContain('textualAmbiguity');
+    expect(item.required).toContain('harmConfidence');
+    expect(item.required).toContain('alternativeReadings');
+    expect(item.properties.textualAmbiguity.type).toBe('boolean');
+    expect(item.properties.harmConfidence.type).toBe('string');
+    expect(item.properties.alternativeReadings.type).toBe('array');
+  });
+});
+
 describe('analyzeDocument, gap stage', () => {
   it('returns the terms the agreement leaves out, each as a whole-document claim', async () => {
     const { text, sidecar } = loadAdhesionFixture();

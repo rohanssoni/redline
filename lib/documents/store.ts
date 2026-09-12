@@ -153,7 +153,34 @@ function isStoredFlag(value: unknown): value is Flag {
     typeof flag.explanation === 'string' &&
     typeof flag.band === 'string' &&
     typeof flag.textualAmbiguity === 'boolean' &&
+    hasCheckableHedging(flag) &&
     (flag.harmConfidence === 'full' || flag.harmConfidence === 'partial')
+  );
+}
+
+/**
+ * Whether a stored row's hedge still has its two readings under it (ADR-0010).
+ *
+ * The column is jsonb, so a row is whatever was written into it. A row claiming
+ * ambiguity with no readings attached is a hedge the reader has nothing to check,
+ * which is the one thing hedged wording may never be, so the flag is dropped here
+ * the same way a flag that no longer quotes the document is.
+ */
+function hasCheckableHedging(flag: Record<string, unknown>): boolean {
+  if (flag.ambiguity === undefined || flag.ambiguity === null) {
+    return flag.textualAmbiguity === false;
+  }
+  if (flag.textualAmbiguity !== true) return false;
+
+  const ambiguity = flag.ambiguity as Record<string, unknown>;
+  return (
+    typeof ambiguity.hedge === 'string' &&
+    ambiguity.hedge.trim().length > 0 &&
+    Array.isArray(ambiguity.readings) &&
+    ambiguity.readings.length === 2 &&
+    ambiguity.readings.every(
+      (reading) => typeof reading === 'string' && reading.trim().length > 0,
+    )
   );
 }
 

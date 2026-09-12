@@ -23,8 +23,8 @@ _(filled in at the end of the run)_
 | 2 | Upload + summary (skeleton) | **done** |
 | 3 | Ranked flags with source sentences | **done** |
 | 4 | Gaps ranked alongside flags | **done** |
-| 5 | Hedged wording only for ambiguity | not started |
-| 6 | Clean read | in progress |
+| 5 | Hedged wording only for ambiguity | in progress |
+| 6 | Clean read | **done** |
 | 7 | Zero-flag rate tracking | not started |
 | 8 | Soft counter-offer | not started |
 | 9 | Firm on demand | not started |

@@ -17,6 +17,21 @@ export type SeverityBand = 'high' | 'medium' | 'low';
 /** How sure the analysis is that the clause harms the reader (ADR-0006). */
 export type HarmConfidence = 'full' | 'partial';
 
+/**
+ * A source sentence that reads two ways, and the hedged wording built from both
+ * of them (ADR-0010, ADR-0022).
+ *
+ * The readings travel with the hedge rather than behind it, because the hedge is
+ * only allowed to exist while the reader can check it. `settleWording` in
+ * `hedging.ts` is the only thing that makes one.
+ */
+export interface AmbiguousSentence {
+  /** The two readings the sentence's own wording leaves open. */
+  readings: [string, string];
+  /** What the reader is shown, built from those two readings. */
+  hedge: string;
+}
+
 /** A clause capable of harming the reader, bound to its source sentence. */
 export interface Flag {
   id: string;
@@ -28,6 +43,12 @@ export interface Flag {
   explanation: string;
   /** True only where the sentence's own wording is open to two readings (ADR-0010). */
   textualAmbiguity: boolean;
+  /**
+   * The hedge and the two readings it rests on, where the flag is hedged, and
+   * absent where it is plainly worded. Set only alongside `textualAmbiguity`:
+   * a hedge with no readings under it is the thing ADR-0010 forbids.
+   */
+  ambiguity?: AmbiguousSentence;
   harmConfidence: HarmConfidence;
 }
 
@@ -114,7 +135,13 @@ export function verifyFlags(
       severity: flag.severity,
       band: flag.band,
       explanation: flag.explanation,
-      textualAmbiguity: flag.textualAmbiguity,
+      // Carried only where both signals agree. A flag claiming ambiguity with no
+      // readings behind it goes on plainly worded, rather than hedging at the
+      // reader with nothing they can check (ADR-0010).
+      ...(flag.textualAmbiguity && flag.ambiguity
+        ? { ambiguity: flag.ambiguity }
+        : {}),
+      textualAmbiguity: Boolean(flag.textualAmbiguity && flag.ambiguity),
       harmConfidence: flag.harmConfidence,
     } as VerifiedFlag);
   }

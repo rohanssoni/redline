@@ -170,6 +170,13 @@ export function DocumentReview({
                   <div className="comment-leader" aria-hidden="true" />
                   <div className="comment-inner">
                     <p className="comment-reading">{flag.explanation}</p>
+                    {/* The hedge sits under the reading, next to the sentence it
+                        is about, because the reader checks it by rereading that
+                        sentence (ADR-0010). A flag with no `ambiguity` on it is
+                        plainly worded and gets nothing here. */}
+                    {flag.ambiguity && (
+                      <p className="comment-hedge">{flag.ambiguity.hedge}</p>
+                    )}
                   </div>
                 </div>
               </div>

@@ -7,6 +7,7 @@ import type { VerifiedFlag } from './verified-flag';
 export type { CleanRead, CompletedRead } from './clean-read';
 
 export type {
+  AmbiguousSentence,
   Flag,
   HarmConfidence,
   ProposedFlag,

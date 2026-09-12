@@ -68,9 +68,9 @@ export function isDangerousToTheReader(flag: ProposedFlag): boolean {
 }
 
 /** The flags that clear the plausibility filter. The rest are gone, not demoted. */
-export function dangerousOnly(
-  proposed: readonly ProposedFlag[],
-): ProposedFlag[] {
+export function dangerousOnly<T extends ProposedFlag>(
+  proposed: readonly T[],
+): T[] {
   return proposed.filter(isDangerousToTheReader);
 }
 

@@ -52,3 +52,11 @@ _Avoid_: tone, aggressiveness, mode
 **Clean read**:
 The result when a document produces no flags and no gaps above the severity threshold. A first-class outcome, not an empty state. In code it is `CleanRead`, a branded type only a read whose every stage finished can produce, so a failed analysis cannot render as one.
 _Avoid_: no issues found, empty result, no findings
+
+**Textual ambiguity**:
+A source sentence whose own wording carries two readings that differ in what the reader is agreeing to. The only thing that licenses hedged wording on a flag, and separate from how sure the analysis is that the clause harms the reader. In code it is `textualAmbiguity` plus the `ambiguity` the readings and the hedge travel in.
+_Avoid_: uncertainty, low confidence, vagueness
+
+**Hedge**:
+The wording Redline shows under a flag whose source sentence reads two ways, built from both readings so the reader can check it against the sentence. Never used for doubt about courts, enforcement or consequences.
+_Avoid_: caveat, disclaimer, qualifier
