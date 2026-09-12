@@ -26,9 +26,11 @@ export interface FirmDraft {
  * takes a few seconds and says so. The stance lives in this component, one per
  * flag, so choosing firm here reaches no other flag on the page.
  *
- * `onCopied` is the seam a later ticket reads to count how often a draft is
- * actually sent. Nothing counts anything today, and the copy works whether or not
- * anyone is listening.
+ * `onCopied` is how a copy gets counted. Copying is the closest Redline can get
+ * to watching a draft be sent, so it is what the primary success metric is built
+ * on — recorded and reported as a copy, never as a confirmed send. It fires only
+ * after the wording actually reached the clipboard, and the copy works whether
+ * or not anyone is listening.
  */
 export function CounterOfferNote({
   soft,

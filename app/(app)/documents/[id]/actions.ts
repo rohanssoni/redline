@@ -5,6 +5,8 @@ import {
   FIRM_DRAFT_FAILED,
   firmCounterOffer,
 } from '@/lib/analysis/firm-counter-offer';
+import { recordCounterOfferCopy } from '@/lib/copies/copy-counter-offer';
+import { createSupabaseCounterOfferCopies } from '@/lib/copies/supabase-counter-offer-copies';
 import { createSupabaseDocuments } from '@/lib/documents/supabase-documents';
 import {
   bringFlagBack,
@@ -157,6 +159,57 @@ export async function bringFlagBackAction(
       error,
     );
     return { error: SET_ASIDE_FAILED };
+  }
+}
+
+/**
+ * Writes down that the reader copied one flag's counter-offer.
+ *
+ * Returns nothing, and the page does not wait on it. The wording is already on
+ * the clipboard by the time this runs, so there is no outcome the reader needs:
+ * a count that did not get written is a gap in a metric, not something that
+ * happened to their document. Nothing is shown to them either way.
+ *
+ * `stance` is what the page had on screen, and it is used to look the draft up
+ * rather than to fill the row in. What is recorded is the stance of the draft
+ * the store holds, so the firm count can only grow by a firm draft that exists
+ * (ADR-0009, ADR-0012).
+ */
+export async function recordCounterOfferCopyAction(
+  documentId: string,
+  flagId: string,
+  stance: string,
+): Promise<void> {
+  const reader = await currentReader();
+  // No sign-in, no Supabase, no row. A visitor's one try has no drafted
+  // counter-offer to copy, so there is nothing being dropped here.
+  if (!reader) return;
+
+  try {
+    const result = await recordCounterOfferCopy(
+      {
+        documents: createSupabaseDocuments(reader.supabase, reader.user.id),
+        copies: createSupabaseCounterOfferCopies(reader.supabase, reader.user.id),
+      },
+      documentId,
+      flagId,
+      stance,
+    );
+    if (result.at === 'refused') {
+      console.warn(
+        'A copy of flag %s of document %s was not counted: %s',
+        flagId,
+        documentId,
+        result.reason,
+      );
+    }
+  } catch (error) {
+    console.error(
+      'The copy of flag %s of document %s was not recorded',
+      flagId,
+      documentId,
+      error,
+    );
   }
 }
 
