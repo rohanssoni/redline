@@ -1,5 +1,6 @@
-import type { AnalysisResult, Gap } from '../analysis/types';
-import { rankFlags } from '../analysis/ranking';
+import type { AnalysisResult } from '../analysis/types';
+import { rankFlags, rankGaps } from '../analysis/ranking';
+import { verifyGaps, type GapClaim } from '../analysis/gap';
 import { verifyFlags, type Flag } from '../analysis/verified-flag';
 
 /**
@@ -102,6 +103,11 @@ function storedAnalysis(value: unknown): Record<string, unknown> | null {
  * otherwise put a sentence in front of the reader that their document does not
  * contain (ADR-0001). A flag that no longer quotes the document is dropped here
  * exactly as it would have been during the run.
+ *
+ * Every stored gap goes back through `verifyGaps` for the same reason. A row
+ * edited by hand could otherwise put a gap in front of the reader with a
+ * sentence stapled to it, which is the one thing a gap may never carry
+ * (ADR-0005), and the column is the one place that key could come from.
  */
 export function toAnalysisResult(
   value: unknown,
@@ -114,11 +120,15 @@ export function toAnalysisResult(
     (record.flags as unknown[]).filter(isStoredFlag),
     documentText,
   );
+  const { gaps } = verifyGaps(
+    (record.gaps as unknown[]).filter(isStoredGap),
+    documentText,
+  );
 
   return {
     summary: record.summary as string,
     flags: rankFlags(flags),
-    gaps: (record.gaps as unknown[]).filter(isStoredGap),
+    gaps: rankGaps(gaps),
   };
 }
 
@@ -138,12 +148,19 @@ function isStoredFlag(value: unknown): value is Flag {
   );
 }
 
-function isStoredGap(value: unknown): value is Gap {
+/**
+ * Whether a stored row's gap has the fields a gap needs to be shown. It is read
+ * as a `GapClaim`, not a `Gap`: a row has been nowhere near `verifyGaps`, and
+ * saying otherwise here would hand the reader the guarantee without the check.
+ */
+function isStoredGap(value: unknown): value is GapClaim {
   if (typeof value !== 'object' || value === null) return false;
   const gap = value as Record<string, unknown>;
   return (
     typeof gap.id === 'string' &&
     typeof gap.statement === 'string' &&
-    typeof gap.severity === 'number'
+    typeof gap.severity === 'number' &&
+    typeof gap.explanation === 'string' &&
+    typeof gap.band === 'string'
   );
 }

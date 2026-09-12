@@ -21,8 +21,8 @@ _(filled in at the end of the run)_
 |---|--------|--------|
 | 17 | Landing page | in progress |
 | 2 | Upload + summary (skeleton) | **done** |
-| 3 | Ranked flags with source sentences | in progress |
-| 4 | Gaps ranked alongside flags | not started |
+| 3 | Ranked flags with source sentences | **done** |
+| 4 | Gaps ranked alongside flags | in progress |
 | 5 | Hedged wording only for ambiguity | not started |
 | 6 | Clean read | not started |
 | 7 | Zero-flag rate tracking | not started |

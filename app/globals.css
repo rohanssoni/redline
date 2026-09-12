@@ -505,6 +505,19 @@ p {
   font-family: var(--font-ui);
 }
 
+.gap-notes {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  width: 100%;
+}
+
+.gap-caption {
+  max-width: 62ch;
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
 .gap-note {
   display: grid;
   gap: 2px;
@@ -513,8 +526,21 @@ p {
   border-top: 2px solid var(--rest-line);
 }
 
+/* A gap takes the crimson the way a flag does, on its top rule only. It has no
+   change bar and no highlight, because there is no sentence to mark. */
+.gap-note[data-focus="true"] {
+  border-top-color: var(--markup);
+}
+
 .gap-statement {
   font-weight: 600;
+}
+
+.gap-rank {
+  display: inline-block;
+  width: 1.4em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
 }
 
 .gap-explain {

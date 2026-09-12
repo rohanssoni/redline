@@ -2,31 +2,80 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { markUpDocument, textLines } from '@/lib/analysis/marked-document';
-import type { Flag } from '@/lib/analysis/types';
+import { rankFindings } from '@/lib/analysis/ranking';
+import type { Flag, GapClaim } from '@/lib/analysis/types';
 
 const FOLD_MS = 280;
 
 /**
- * The reader's document with its flags marked on it: the ranked list beside the
- * page, the source sentence highlighted in place, and the reading folded open
- * under the sentence it came from. One flag holds the crimson at a time.
+ * The reader's document with what Redline found on it: one ranked list beside
+ * the page holding flags and gaps together, each flag's source sentence
+ * highlighted in place with its reading folded open underneath, and the gaps at
+ * the page foot where there is no sentence to point at (ADR-0005).
+ *
+ * A gap is numbered in the same list as the flags because severity decides the
+ * order for both. It never gets a change bar, a highlight or a leader, because
+ * it has nothing on the page to mark, and the type it arrives as has no field a
+ * sentence could be put in.
  */
 export function DocumentReview({
   name,
   text,
   flags,
+  gaps,
 }: {
   name: string;
   text: string;
   flags: Flag[];
+  gaps: GapClaim[];
 }) {
-  const { pieces, marked } = useMemo(() => markUpDocument(text, flags), [text, flags]);
+  const findings = useMemo(() => rankFindings(flags, gaps), [flags, gaps]);
+
+  const flagRanks = useMemo(
+    () =>
+      new Map(
+        findings
+          .filter((finding) => finding.kind === 'flag')
+          .map((finding) => [finding.id, finding.rank]),
+      ),
+    [findings],
+  );
+
+  const { pieces, marked } = useMemo(
+    () =>
+      markUpDocument(text, flags, (flag, index) => flagRanks.get(flag.id) ?? index + 1),
+    [text, flags, flagRanks],
+  );
+
+  // A flag Redline could not place on the page is not in the list either, so the
+  // reader is never offered a number with nothing behind it.
+  const onThePage = useMemo(
+    () => new Set(marked.map((each) => each.flag.id)),
+    [marked],
+  );
+  const listed = useMemo(
+    () =>
+      findings.filter(
+        (finding) => finding.kind === 'gap' || onThePage.has(finding.id),
+      ),
+    [findings, onThePage],
+  );
+  const rankedGaps = useMemo(
+    () => listed.filter((finding) => finding.kind === 'gap'),
+    [listed],
+  );
 
   const [focusRank, setFocusRank] = useState<number | null>(
-    marked.length > 0 ? 1 : null,
+    listed.length > 0 ? listed[0].rank : null,
   );
-  const focusRef = useRef<HTMLDivElement | null>(null);
+  const focusRef = useRef<HTMLElement | null>(null);
   const readerMoved = useRef(false);
+
+  // A callback ref rather than the ref object, because the focused thing is a
+  // flag's block on the page or a gap note at its foot, and both scroll the same.
+  function keepFocused(node: HTMLElement | null) {
+    focusRef.current = node;
+  }
 
   // The comment folds open over FOLD_MS, so the page settles before it is
   // decided whether the sentence needs scrolling to.
@@ -52,24 +101,26 @@ export function DocumentReview({
   return (
     <section className="review doc-review" aria-labelledby="flags-heading">
       <h2 id="flags-heading" className="visually-hidden">
-        The clauses that could cost you
+        What this agreement could cost you
       </h2>
 
-      {marked.length > 0 && (
+      {listed.length > 0 && (
         <div className="rank-index">
           <p className="rank-index-caption" id="flag-index-caption">
-            Flags in this agreement, worst first
+            What Redline found, worst first
           </p>
           <ol aria-labelledby="flag-index-caption">
-            {marked.map(({ flag, rank }) => (
-              <li key={flag.id}>
+            {listed.map((finding) => (
+              <li key={`${finding.kind}-${finding.id}`}>
                 <button
                   type="button"
-                  aria-pressed={rank === focusRank}
-                  onClick={() => focus(rank)}
+                  aria-pressed={finding.rank === focusRank}
+                  onClick={() => focus(finding.rank)}
                 >
-                  <span className="rank-slot">{rank}</span>
-                  {flag.clauseType}
+                  <span className="rank-slot">{finding.rank}</span>
+                  {finding.kind === 'flag'
+                    ? finding.flag.clauseType
+                    : finding.gap.statement}
                 </button>
               </li>
             ))}
@@ -77,7 +128,7 @@ export function DocumentReview({
         </div>
       )}
 
-      <article className="page" aria-label={`${name}, with its flags`}>
+      <article className="page" aria-label={`${name}, marked up`}>
         <p className="page-band">
           {marked.length === 0
             ? 'Your document, as Redline read it'
@@ -98,7 +149,7 @@ export function DocumentReview({
           return (
             <div
               key={flag.id}
-              ref={isFocus ? focusRef : undefined}
+              ref={isFocus ? keepFocused : undefined}
               className="flagged"
               data-focus={isFocus}
             >
@@ -126,15 +177,45 @@ export function DocumentReview({
           );
         })}
 
-        {marked.length === 0 && (
+        {(marked.length === 0 || rankedGaps.length > 0) && (
           <div className="page-foot">
-            <aside className="gap-note" aria-label="What Redline found">
-              <p className="gap-statement">No flags on this one.</p>
-              <p className="gap-explain">
-                Redline marks the clauses that let the other side change what you
-                are owed after you have signed. This agreement has none of them.
-              </p>
-            </aside>
+            {marked.length === 0 && (
+              <aside className="gap-note" aria-label="What Redline found">
+                <p className="gap-statement">No flags on this one.</p>
+                <p className="gap-explain">
+                  Redline marks the clauses that let the other side change what you
+                  are owed after you have signed. This agreement has none of them.
+                </p>
+              </aside>
+            )}
+
+            {rankedGaps.length > 0 && (
+              <div className="gap-notes">
+                <p className="gap-caption">
+                  {rankedGaps.length === 1
+                    ? 'One gap: a term this agreement leaves out. There’s no sentence to quote, because it isn’t in the document.'
+                    : `${rankedGaps.length} gaps: terms this agreement leaves out. There are no sentences to quote, because they aren’t in the document.`}
+                </p>
+                {rankedGaps.map(({ gap, rank }) => {
+                  const isFocus = rank === focusRank;
+                  return (
+                    <aside
+                      key={gap.id}
+                      ref={isFocus ? keepFocused : undefined}
+                      className="gap-note"
+                      data-focus={isFocus}
+                      aria-label={`Gap ${rank}: ${gap.statement}`}
+                    >
+                      <p className="gap-statement">
+                        <span className="gap-rank">{rank}</span>
+                        {gap.statement}
+                      </p>
+                      <p className="gap-explain">{gap.explanation}</p>
+                    </aside>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </article>

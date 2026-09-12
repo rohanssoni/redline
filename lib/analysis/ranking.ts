@@ -15,7 +15,8 @@
  * the reader has the sentence in front of them and can dismiss it in seconds.
  */
 
-import type { ProposedFlag, SeverityBand, VerifiedFlag } from './verified-flag';
+import type { Gap, GapClaim } from './gap';
+import type { Flag, ProposedFlag, SeverityBand, VerifiedFlag } from './verified-flag';
 
 /** At or above this, a flag is worth the reader's attention first. */
 export const HIGH_BAND_FLOOR = 65;
@@ -62,4 +63,77 @@ export function rankFlags(flags: readonly VerifiedFlag[]): VerifiedFlag[] {
   return [...worstPerSentence.values()].sort(
     (a, b) => b.severity - a.severity || a.id.localeCompare(b.id),
   );
+}
+
+/**
+ * Worst first, with one gap per statement: the same absence claimed twice would
+ * read to the reader as two separate holes in the agreement.
+ */
+export function rankGaps(gaps: readonly Gap[]): Gap[] {
+  const worstPerStatement = new Map<string, Gap>();
+  for (const gap of gaps) {
+    const standing = worstPerStatement.get(gap.statement);
+    if (!standing || gap.severity > standing.severity) {
+      worstPerStatement.set(gap.statement, gap);
+    }
+  }
+
+  return [...worstPerStatement.values()].sort(
+    (a, b) => b.severity - a.severity || a.id.localeCompare(b.id),
+  );
+}
+
+/** A flag in the one ranked list the reader reads. */
+export interface RankedFlag {
+  kind: 'flag';
+  rank: number;
+  id: string;
+  severity: number;
+  flag: Flag;
+}
+
+/** A gap in that same list. It has no `sourceSentence` to carry (ADR-0005). */
+export interface RankedGap {
+  kind: 'gap';
+  rank: number;
+  id: string;
+  severity: number;
+  gap: GapClaim;
+}
+
+/** One item in the ranked list, which is either a flag or a gap and never both. */
+export type Finding = RankedFlag | RankedGap;
+
+/**
+ * The single list the reader works down: flags and gaps interleaved, worst
+ * first, numbered from 1 (ADR-0005).
+ *
+ * Severity decides the order and nothing else does, so a severe missing
+ * protection sits above a minor flagged clause. What each item is allowed to
+ * claim travels with its `kind`, not with its position: rank 1 being a gap makes
+ * it the first thing to read, never a citable flag. Ties break on id, so the same
+ * analysis always lists in the same order.
+ */
+export function rankFindings(
+  flags: readonly Flag[],
+  gaps: readonly GapClaim[],
+): Finding[] {
+  const items: Omit<Finding, 'rank'>[] = [
+    ...flags.map((flag) => ({
+      kind: 'flag' as const,
+      id: flag.id,
+      severity: flag.severity,
+      flag,
+    })),
+    ...gaps.map((gap) => ({
+      kind: 'gap' as const,
+      id: gap.id,
+      severity: gap.severity,
+      gap,
+    })),
+  ];
+
+  return items
+    .sort((a, b) => b.severity - a.severity || a.id.localeCompare(b.id))
+    .map((item, index) => ({ ...item, rank: index + 1 }) as Finding);
 }

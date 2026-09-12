@@ -29,7 +29,9 @@ export interface FixtureGap {
   id: string;
   severity: number;
   band: SeverityBand;
+  /** A claim about the whole document. Never a quotation of it. */
   statement: string;
+  explanation: string;
 }
 
 /** A clause planted to check a filtering rule rather than to produce a flag. */

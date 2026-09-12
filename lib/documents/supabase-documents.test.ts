@@ -136,6 +136,53 @@ describe('the documents table, for one reader', () => {
     }
   });
 
+  it('keeps the gaps with the document and reads them back, still ranked and still uncited', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const analysis = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+    });
+    expect(analysis.gaps.length).toBeGreaterThan(0);
+    const { client, queries } = createStubSupabase({
+      rows: [[rowFor(text, analysis)], [rowFor(text, analysis)]],
+    });
+
+    await createSupabaseDocuments(client, OWNER).recordAnalysis('doc-1', analysis);
+    const reopened = await createSupabaseDocuments(client, OWNER).byId('doc-1');
+
+    expect(queries[0].values?.analysis).toEqual(analysis);
+    expect(reopened?.analysis?.gaps.map((gap) => gap.id)).toEqual(
+      analysis.gaps.map((gap) => gap.id),
+    );
+    expect(reopened?.analysis?.gaps.map((gap) => gap.statement)).toEqual(
+      analysis.gaps.map((gap) => gap.statement),
+    );
+    for (const gap of reopened?.analysis?.gaps ?? []) {
+      expect(Object.keys(gap)).not.toContain('sourceSentence');
+      expect(reopened?.analysis?.flags.map((flag) => flag.id)).not.toContain(gap.id);
+    }
+  });
+
+  it('drops a stored gap that someone gave a source sentence', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const analysis = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+    });
+    const tampered = {
+      ...analysis,
+      gaps: [
+        { ...analysis.gaps[0], sourceSentence: sidecar.flags[0].sourceSentence },
+        analysis.gaps[1],
+      ],
+    };
+    const { client } = createStubSupabase({ rows: [[rowFor(text, tampered)]] });
+
+    const reopened = await createSupabaseDocuments(client, OWNER).byId('doc-1');
+
+    expect(reopened?.analysis?.gaps.map((gap) => gap.id)).toEqual([
+      analysis.gaps[1].id,
+    ]);
+  });
+
   it('drops a stored flag whose sentence is not in the document it was stored with', async () => {
     const { text, sidecar } = loadAdhesionFixture();
     const analysis = await analyzeDocument(text, sidecar.redLines, {

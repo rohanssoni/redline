@@ -4,7 +4,7 @@ import {
   type ModelClient,
   type StructuredRequest,
 } from '../../lib/model/client';
-import type { FixtureFlag, FixtureSidecar } from '../fixtures';
+import type { FixtureFlag, FixtureGap, FixtureSidecar } from '../fixtures';
 
 /**
  * The model client the suite runs against. It reaches nothing: no network, no
@@ -105,6 +105,23 @@ export function proposedFlagsFor(sidecar: FixtureSidecar): unknown[] {
 }
 
 /**
+ * What a model listing the missing terms for this fixture would send back.
+ *
+ * The band is left off, exactly as it is for flags: the model rates what the
+ * absence costs, and the code under test decides what band that severity falls
+ * in. No entry carries a source sentence, because the gap schema has no property
+ * for one.
+ */
+export function proposedGapsFor(sidecar: FixtureSidecar): unknown[] {
+  return sidecar.gaps.map((gap: FixtureGap) => ({
+    id: gap.id,
+    statement: gap.statement,
+    severity: gap.severity,
+    explanation: gap.explanation,
+  }));
+}
+
+/**
  * A stub that answers from a fixture sidecar, so a test asserts against the
  * document it loaded rather than against wording invented in the test file.
  */
@@ -112,5 +129,6 @@ export function stubModelClientFor(sidecar: FixtureSidecar): StubModelClient {
   return createStubModelClient({
     document_summary: { summary: sidecar.summary },
     document_flags: { flags: proposedFlagsFor(sidecar) },
+    document_gaps: { gaps: proposedGapsFor(sidecar) },
   });
 }

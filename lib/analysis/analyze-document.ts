@@ -6,7 +6,8 @@ import {
   readableCharacterCount,
 } from '../document-text';
 import { AnalysisError, type AnalysisDeps, type AnalysisResult } from './types';
-import { bandFor, dangerousOnly, rankFlags } from './ranking';
+import { bandFor, dangerousOnly, rankFlags, rankGaps } from './ranking';
+import { verifyGaps, type GapClaim } from './gap';
 import { verifyFlags, type ProposedFlag } from './verified-flag';
 
 /**
@@ -190,12 +191,105 @@ export function flagsRequest(text: string): StructuredRequest {
 }
 
 /**
- * Reads one document: a plain-English summary, and the clauses that could cost
- * the reader ranked by what each one costs.
+ * What the model is asked for in the gap stage.
+ *
+ * There is no `sourceSentence` property, and `additionalProperties: false` means
+ * a reply carrying one is refused rather than trimmed. That is ADR-0005 stated at
+ * the boundary: a gap cannot even be described to the model as something with a
+ * sentence attached.
+ */
+export const gapsSchema: ObjectSchema = {
+  type: 'object',
+  properties: {
+    gaps: {
+      type: 'array',
+      description:
+        'Every term this agreement should contain for the reader’s protection and does not.',
+      items: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+            description:
+              'A short lowercase name for the missing term, words joined by hyphens, such as no-late-payment-term.',
+            minLength: 2,
+          },
+          statement: {
+            type: 'string',
+            description:
+              'One sentence about the whole agreement, saying what it does not contain, such as "This agreement contains no late-payment term." Never a quotation.',
+            minLength: 20,
+          },
+          severity: {
+            type: 'integer',
+            description:
+              'What this absence costs the reader if it bites, 0 to 100. Not how often agreements leave it out.',
+            minimum: 0,
+            maximum: 100,
+          },
+          explanation: {
+            type: 'string',
+            description:
+              'Two or three sentences, addressed to the reader as "you", saying what the reader is exposed to because the agreement is silent here.',
+            minLength: 40,
+          },
+        },
+        required: ['id', 'statement', 'severity', 'explanation'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['gaps'],
+  additionalProperties: false,
+};
+
+interface GapsOutput {
+  gaps: Array<Omit<GapClaim, 'band'>>;
+}
+
+const GAPS_SYSTEM_PROMPT = [
+  'You read an agreement on behalf of the person being asked to sign it, and list the terms it should contain for their protection and does not.',
+  '',
+  'What to list:',
+  '- A term belongs in the list when the agreement is silent about it and that silence leaves the reader exposed: no deadline for payment, no ceiling on what the reader can be made to pay, no limit on revisions, no right to end the agreement.',
+  '- Check the whole agreement before you say a term is absent. A term written somewhere other than where you expected it is present.',
+  '- Do not list a clause that is in the agreement and is one-sided. Another stage handles what the document says; this one handles what it does not say.',
+  '',
+  'Writing:',
+  '- Write each one as a single sentence about the whole agreement, starting "This agreement".',
+  '- Do not quote the agreement, and do not repeat its wording. There is no sentence to quote, because the term is not there.',
+  '- Address the reader as "you" in the explanation and name the other side the way the document does.',
+  '- Say only what follows from the agreement being silent. Do not say what a court would do, what the law requires, or what the term should say instead.',
+  '- Write plainly. Do not hedge.',
+  '',
+  'Severity is what the absence costs the reader if it bites, not how often agreements leave the term out.',
+].join('\n');
+
+/** The prompt for the gap stage. Exported so a test can read what was sent. */
+export function gapsRequest(text: string): StructuredRequest {
+  return {
+    name: 'document_gaps',
+    schema: gapsSchema,
+    messages: [
+      { role: 'system', content: GAPS_SYSTEM_PROMPT },
+      {
+        role: 'user',
+        content: `List the terms the agreement below should contain and does not.\n\n---\n${text}\n---`,
+      },
+    ],
+  };
+}
+
+/**
+ * Reads one document: a plain-English summary, the clauses that could cost the
+ * reader, and the terms the agreement leaves out, each ranked by what it costs.
  *
  * Nothing reaches `flags` without its source sentence having been found in
  * `documentText` first, because `verifyFlags` is the only thing that makes the
- * type `flags` holds (ADR-0001). Gaps arrive with their own stage (ADR-0005).
+ * type `flags` holds (ADR-0001). Gaps come back from their own stage and through
+ * their own gate, `verifyGaps`, and the type they arrive as has no field a source
+ * sentence could occupy (ADR-0005). The two lists stay separate here and are
+ * interleaved by severity where the reader reads them.
  */
 export async function analyzeDocument(
   text: string,
@@ -221,6 +315,7 @@ export async function analyzeDocument(
   const proposed = await deps.model.complete<FlagsOutput>(
     flagsRequest(documentText),
   );
+  const absent = await deps.model.complete<GapsOutput>(gapsRequest(documentText));
 
   // Plausibility first, so an unusual-but-symmetric clause is gone before
   // anything is ranked (ADR-0004); verification last, so what survives is
@@ -235,10 +330,23 @@ export async function analyzeDocument(
     );
   }
 
+  const { gaps, dropped: droppedGaps } = verifyGaps(
+    withGapIds(absent.gaps),
+    documentText,
+  );
+  for (const drop of droppedGaps) {
+    console.warn(
+      'A gap was dropped because %s: %s (%s)',
+      drop.reason,
+      drop.id,
+      drop.claimed,
+    );
+  }
+
   return {
     summary: summary.trim(),
     flags: rankFlags(flags),
-    gaps: [],
+    gaps: rankGaps(gaps),
   };
 }
 
@@ -247,9 +355,35 @@ export async function analyzeDocument(
  * so two readings of one clause can never collide in the list or in a key.
  */
 function withIds(proposed: FlagsOutput['flags']): ProposedFlag[] {
+  const naming = names('flag');
+  return proposed.map((flag) => ({
+    ...flag,
+    id: naming(flag.id),
+    band: bandFor(flag.severity),
+  }));
+}
+
+/**
+ * The same for gaps, in their own namespace: a flag and a gap sharing a name
+ * would be two different claims under one id in the ranked list.
+ */
+function withGapIds(proposed: GapsOutput['gaps']): GapClaim[] {
+  const naming = names('gap');
+  return proposed.map((gap) => ({
+    ...gap,
+    id: naming(gap.id),
+    band: bandFor(gap.severity),
+  }));
+}
+
+/** Hands out ids, tidying what the model chose and refusing to repeat one. */
+function names(kind: string): (proposed: string) => string {
   const taken = new Set<string>();
-  return proposed.map((flag, index) => {
-    const base = flag.id.trim().toLowerCase().replace(/\s+/g, '-') || `flag-${index + 1}`;
+  let counted = 0;
+
+  return (proposed: string) => {
+    counted += 1;
+    const base = proposed.trim().toLowerCase().replace(/\s+/g, '-') || `${kind}-${counted}`;
     let id = base;
     let suffix = 2;
     while (taken.has(id)) {
@@ -257,6 +391,6 @@ function withIds(proposed: FlagsOutput['flags']): ProposedFlag[] {
       suffix += 1;
     }
     taken.add(id);
-    return { ...flag, id, band: bandFor(flag.severity) };
-  });
+    return id;
+  };
 }

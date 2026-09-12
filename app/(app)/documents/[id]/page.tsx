@@ -46,9 +46,7 @@ export default async function DocumentPage({
 
         {analysis && (
           <p className="note sheet-foot">
-            {analysis.flags.length === 0
-              ? 'No clause here lets the other side change your terms on its own. The whole agreement is below.'
-              : `${flagCount(analysis.flags.length)} Each one quotes the sentence it comes from, so you can check it yourself.`}
+            {whatRedlineFound(analysis.flags.length, analysis.gaps.length)}
           </p>
         )}
       </section>
@@ -58,6 +56,7 @@ export default async function DocumentPage({
           name={document.name}
           text={document.text}
           flags={analysis.flags}
+          gaps={analysis.gaps}
         />
       ) : (
         <section className="doc-page" aria-label="The text of your agreement">
@@ -71,10 +70,33 @@ export default async function DocumentPage({
   );
 }
 
+/**
+ * What the read turned up, in words a reader would use. Flags and gaps are
+ * counted separately here because they are different claims: a flag quotes a
+ * sentence and a gap says a sentence is missing (ADR-0005). They are ranked
+ * together below, on the page itself.
+ */
+function whatRedlineFound(flags: number, gaps: number): string {
+  if (flags === 0 && gaps === 0) {
+    return 'No clause here lets the other side change your terms on its own, and Redline found no gaps. The whole agreement is below.';
+  }
+  if (flags === 0) {
+    return `No clause here lets the other side change your terms on its own. ${gapCount(gaps)}`;
+  }
+  const found = `${flagCount(flags)} Each one quotes the sentence it comes from, so you can check it yourself.`;
+  return gaps === 0 ? found : `${found} ${gapCount(gaps)}`;
+}
+
 /** How many flags there are, in words a reader would use. */
 function flagCount(count: number): string {
   if (count === 1) return 'One clause here could cost you.';
   return `${count} clauses here could cost you, worst first.`;
+}
+
+/** The same for gaps, which have no sentence to quote. */
+function gapCount(count: number): string {
+  if (count === 1) return 'One gap is in the list below.';
+  return `${count} gaps are in the list below.`;
 }
 
 function paragraphs(text: string): string[] {

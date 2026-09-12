@@ -98,13 +98,15 @@
       "id": "no-late-payment-term",
       "severity": 70,
       "band": "high",
-      "statement": "This agreement contains no late-payment term."
+      "statement": "This agreement contains no late-payment term.",
+      "explanation": "Nothing here says when the money has to reach you, or what happens if it doesn't. If Halverson pays months late, there is no date it broke and no interest you can charge."
     },
     {
       "id": "no-liability-cap",
       "severity": 64,
       "band": "medium",
-      "statement": "This agreement puts no ceiling on what the reader can be made to pay."
+      "statement": "This agreement puts no ceiling on what the reader can be made to pay.",
+      "explanation": "Nothing here caps what you can be made to pay. On a $14,000 job, a single claim could cost you more than the fee, and there is no number that stops it."
     }
   ],
   "decoys": {

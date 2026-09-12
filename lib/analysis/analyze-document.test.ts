@@ -5,9 +5,10 @@ import {
   proposedFlagsFor,
   stubModelClientFor,
 } from '../../tests/support/stub-model-client';
+import type { ArraySchema, ObjectSchema } from '../model/json-schema';
 import { ModelOutputError } from '../model/client';
 import { analyzeDocument } from './analyze-document';
-import { bandFor } from './ranking';
+import { bandFor, rankFindings } from './ranking';
 import { AnalysisError } from './types';
 
 describe('analyzeDocument, summary stage', () => {
@@ -53,21 +54,12 @@ describe('analyzeDocument, summary stage', () => {
     }
   });
 
-  it('carries no gaps yet: a missing term has no sentence to quote', async () => {
-    const { text, sidecar } = loadAdhesionFixture();
-
-    const result = await analyzeDocument(text, sidecar.redLines, {
-      model: stubModelClientFor(sidecar),
-    });
-
-    expect(result.gaps).toEqual([]);
-  });
-
   it('refuses a reply that is not the shape the schema asked for', async () => {
     const { text, sidecar } = loadCleanFixture();
     const model = createStubModelClient({
       document_summary: { summary: 42, severity: 'high' },
       document_flags: { flags: [] },
+      document_gaps: { gaps: [] },
     });
 
     await expect(
@@ -79,6 +71,7 @@ describe('analyzeDocument, summary stage', () => {
     const model = createStubModelClient({
       document_summary: { summary: 'x' },
       document_flags: { flags: [] },
+      document_gaps: { gaps: [] },
     });
 
     await expect(analyzeDocument('   \n\n  \f ', [], { model })).rejects.toBeInstanceOf(
@@ -231,6 +224,7 @@ describe('analyzeDocument, flag stage', () => {
     expect(model.calls.map((call) => call.name)).toEqual([
       'document_summary',
       'document_flags',
+      'document_gaps',
     ]);
     const request = model.calls[1];
     expect(request.schema.required).toContain('flags');
@@ -255,6 +249,164 @@ describe('analyzeDocument, flag stage', () => {
     const { text, sidecar } = loadAdhesionFixture();
     const model = stubModelClientFor(sidecar);
     model.fail('document_flags', 'OpenRouter is unreachable');
+
+    await expect(analyzeDocument(text, [], { model })).rejects.toThrow(/unreachable/);
+  });
+});
+
+describe('analyzeDocument, gap stage', () => {
+  it('returns the terms the agreement leaves out, each as a whole-document claim', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    expect(sidecar.gaps.length).toBeGreaterThan(0);
+
+    const result = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+    });
+
+    expect(result.gaps.map((gap) => gap.id)).toEqual(
+      [...sidecar.gaps]
+        .sort((a, b) => b.severity - a.severity)
+        .map((gap) => gap.id),
+    );
+    for (const gap of result.gaps) {
+      expect(gap.statement.trim().length).toBeGreaterThan(0);
+      expect(gap.explanation.trim().length).toBeGreaterThan(0);
+      expect(gap.band).toBe(bandFor(gap.severity));
+    }
+  });
+
+  it('sends the document to the gap stage as structured output with no place for a quote', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const model = stubModelClientFor(sidecar);
+
+    await analyzeDocument(text, sidecar.redLines, { model });
+
+    const request = model.calls[2];
+    expect(request.name).toBe('document_gaps');
+    expect(request.schema.required).toContain('gaps');
+    expect(request.schema.additionalProperties).toBe(false);
+
+    const item = (request.schema.properties.gaps as ArraySchema).items as ObjectSchema;
+    expect(Object.keys(item.properties)).not.toContain('sourceSentence');
+    expect(item.additionalProperties).toBe(false);
+    expect(request.messages.map((message) => message.content).join('\n')).toContain(
+      sidecar.flags[0].sourceSentence,
+    );
+  });
+
+  it('never gives a gap a source sentence, and never puts one in flags[]', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+
+    const result = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+    });
+
+    const gapIds = sidecar.gaps.map((gap) => gap.id);
+    expect(gapIds.length).toBeGreaterThan(0);
+    for (const gap of result.gaps) {
+      expect(gap).not.toHaveProperty('sourceSentence');
+      expect(Object.keys(gap)).not.toContain('sourceSentence');
+    }
+    for (const id of gapIds) {
+      expect(result.flags.map((flag) => flag.id)).not.toContain(id);
+    }
+    for (const statement of sidecar.gaps.map((gap) => gap.statement)) {
+      expect(result.flags.map((flag) => flag.sourceSentence)).not.toContain(
+        statement,
+      );
+    }
+  });
+
+  it('keeps a gap a gap when it is the worst thing in the document', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const worstFlag = Math.max(...sidecar.flags.map((flag) => flag.severity));
+    const model = stubModelClientFor(sidecar);
+    model.reply('document_gaps', {
+      gaps: [
+        {
+          id: 'no-late-payment-term',
+          statement: sidecar.gaps[0].statement,
+          severity: 100,
+          explanation: sidecar.gaps[0].explanation,
+        },
+      ],
+    });
+
+    const result = await analyzeDocument(text, sidecar.redLines, { model });
+
+    const findings = rankFindings(result.flags, result.gaps);
+    expect(findings[0].kind).toBe('gap');
+    expect(findings[0].severity).toBeGreaterThan(worstFlag);
+    expect(result.gaps[0]).not.toHaveProperty('sourceSentence');
+    expect(result.flags.map((flag) => flag.id)).not.toContain(
+      'no-late-payment-term',
+    );
+    for (const flag of result.flags) {
+      expect(text).toContain(flag.sourceSentence);
+    }
+  });
+
+  it('interleaves flags and gaps in one list, worst first', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+
+    const result = await analyzeDocument(text, sidecar.redLines, {
+      model: stubModelClientFor(sidecar),
+    });
+
+    const findings = rankFindings(result.flags, result.gaps);
+    const severities = findings.map((finding) => finding.severity);
+    expect(severities).toEqual([...severities].sort((a, b) => b - a));
+    expect(findings.map((finding) => finding.rank)).toEqual(
+      findings.map((_, index) => index + 1),
+    );
+    // Not grouped: the ranked list has to actually mix the two kinds here, or
+    // the ordering claim is untested.
+    const kinds = findings.map((finding) => finding.kind);
+    expect(kinds).toContain('flag');
+    expect(kinds).toContain('gap');
+    expect(kinds.lastIndexOf('flag')).toBeGreaterThan(kinds.indexOf('gap'));
+  });
+
+  it('drops a gap that quotes the agreement instead of saying what is absent', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const model = stubModelClientFor(sidecar);
+    model.reply('document_gaps', {
+      gaps: [
+        {
+          id: 'quoting-gap',
+          statement: sidecar.flags[0].sourceSentence,
+          severity: 90,
+          explanation: sidecar.gaps[0].explanation,
+        },
+        {
+          id: 'real-gap',
+          statement: sidecar.gaps[0].statement,
+          severity: 70,
+          explanation: sidecar.gaps[0].explanation,
+        },
+      ],
+    });
+
+    const result = await analyzeDocument(text, sidecar.redLines, { model });
+
+    expect(result.gaps.map((gap) => gap.id)).toEqual(['real-gap']);
+  });
+
+  it('finds nothing missing in an agreement that covers its terms', async () => {
+    const { text, sidecar } = loadCleanFixture();
+
+    const result = await analyzeDocument(text, [], {
+      model: stubModelClientFor(sidecar),
+    });
+
+    expect(result.gaps).toEqual([]);
+    expect(result.flags).toEqual([]);
+  });
+
+  it('lets a failed gap call surface rather than returning a document with no gaps', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const model = stubModelClientFor(sidecar);
+    model.fail('document_gaps', 'OpenRouter is unreachable');
 
     await expect(analyzeDocument(text, [], { model })).rejects.toThrow(/unreachable/);
   });
