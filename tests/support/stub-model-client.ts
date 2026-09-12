@@ -202,6 +202,27 @@ export function proposedRedLineMatchesFor(
 }
 
 /**
+ * What the judge of a red line match sends back when it agrees (ADR-0018).
+ *
+ * Agreement is the default because it is the ordinary case, and because a test
+ * about disagreement should have to ask for one: a suite where the judge
+ * disagreed everywhere would prove nothing about the run it was watching. The
+ * reasoning is built from the sentence it was asked about, so a judge that was
+ * handed the wrong match would be visible in what it says.
+ */
+export function agreeingJudgmentFor(request: StructuredRequest): unknown {
+  const asked = request.messages
+    .filter((message) => message.role === 'user')
+    .map((message) => message.content)
+    .join('\n');
+  const sentence = asked.split('\n').at(-1) ?? '';
+  return {
+    fits: true,
+    reasoning: `Signing this costs the reader the thing they said they would keep: ${sentence}`,
+  };
+}
+
+/**
  * A stub that answers from a fixture sidecar, so a test asserts against the
  * document it loaded rather than against wording invented in the test file.
  */
@@ -213,5 +234,6 @@ export function stubModelClientFor(sidecar: FixtureSidecar): StubModelClient {
     red_line_matches: (request: StructuredRequest) => ({
       matches: proposedRedLineMatchesFor(sidecar, request),
     }),
+    red_line_match_judgment: agreeingJudgmentFor,
   });
 }

@@ -1,4 +1,5 @@
 import type { ModelClient } from '../model/client';
+import type { JudgeLogGateway } from '../judge/store';
 import type { CleanRead } from './clean-read';
 import type { Gap } from './gap';
 import type { RedLineMatch } from './red-line-override';
@@ -69,6 +70,13 @@ export interface AnalysisResult {
 /** Everything `analyzeDocument` reaches outside itself for. */
 export interface AnalysisDeps {
   model: ModelClient;
+  /**
+   * Where the judge's review of each red line match is kept for audit
+   * (ADR-0018). Optional, and deliberately so: a run with nowhere to log still
+   * produces every flag it would otherwise, because the flag is the guarantee
+   * and the judge is a signal about the matcher (ADR-0019).
+   */
+  judgeLog?: JudgeLogGateway;
 }
 
 /** Raised when a document cannot be analysed, with a reason a reader can read. */

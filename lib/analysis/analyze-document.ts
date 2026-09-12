@@ -11,6 +11,7 @@ import { aboveThreshold, bandFor, dangerousOnly, rankGaps } from './ranking';
 import { settleWording } from './hedging';
 import { verifyGaps, type GapClaim } from './gap';
 import { applyRedLineOverride } from './red-line-override';
+import { reviewRedLineMatches } from './red-line-judge';
 import { verifyFlags, type Flag, type ProposedFlag } from './verified-flag';
 
 /**
@@ -472,6 +473,12 @@ export function redLineMatchesRequest(
  * (ADR-0013), which is why it is verified by the same function rather than a
  * gentler one. The summary never sees the red lines: it says what the document
  * says, and whose priorities were brought to it changes nothing about that.
+ *
+ * Each of those matches is then reviewed by a judge of its own — a second model
+ * call (ADR-0018) — which runs after everything the reader sees has been decided
+ * and writes to a log, never to the result. What the judge says is a signal about
+ * the matcher for a later audit, and a reader whose red line was caught sees the
+ * same flag whether it agreed, disagreed or never answered (ADR-0019).
  */
 export async function analyzeDocument(
   text: string,
@@ -553,6 +560,17 @@ export async function analyzeDocument(
     [...flagCheck.flags, ...redLineCheck.flags],
     redLineBySentence,
   );
+
+  // After the override, and nothing below this line reads what it returns. The
+  // judge is a second model's opinion of the matcher (ADR-0018), so it arrives
+  // once the flags are already settled and is written to a log the reader has no
+  // path to (ADR-0019). Awaited rather than left running, so a run that finished
+  // has a complete log behind it, and it cannot throw, so a judge that is down
+  // costs the reader nothing.
+  await reviewRedLineMatches(redLineMatches, {
+    model: deps.model,
+    judgeLog: deps.judgeLog,
+  });
 
   const gapCheck = verifyGaps(withGapIds(absent.gaps), documentText);
   const { gaps, dropped: droppedGaps } = gapCheck;

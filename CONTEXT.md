@@ -9,6 +9,14 @@ actually says. This glossary fixes the words we use for the things in that job.
 A term the reader has decided in advance they will not accept. Authored by the reader, persists across documents, and drives the analysis.
 _Avoid_: preference, rule, requirement
 
+**Red line match**:
+A flag a red line put in front of the reader, paired with the red line it breaks. Kept beside the flags, never inside them: the reader is shown an ordinary flag with an ordinary source sentence. In code it is `RedLineMatch`.
+_Avoid_: red line hit, trigger, violation record
+
+**Judge**:
+A second, independent model call that reads one red line match and says whether the sentence really breaks that red line. What it says is written to the judge log and read later by whoever audits the matching. It changes nothing the reader sees, including when it disagrees or never answers.
+_Avoid_: validator, checker, verifier, grader
+
 **Flag**:
 A clause Redline identifies as capable of harming the reader. Always bound to a source sentence.
 _Avoid_: issue, warning, finding, risk

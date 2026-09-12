@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { readDocument } from '@/lib/analysis/read-document';
 import { AnalysisError } from '@/lib/analysis/types';
 import { createSupabaseDocuments } from '@/lib/documents/supabase-documents';
+import { createSupabaseJudgeLog } from '@/lib/judge/supabase-judge-log';
 import { createSupabaseRedLines } from '@/lib/red-lines/supabase-red-lines';
 import { createOpenRouterClient } from '@/lib/model/openrouter';
 import { SIGN_IN_UNAVAILABLE } from '@/lib/supabase/config';
@@ -36,6 +37,9 @@ export async function POST(
         documents: createSupabaseDocuments(reader.supabase, reader.user.id),
         redLines: createSupabaseRedLines(reader.supabase, reader.user.id),
         model: createOpenRouterClient(),
+        // Written during the run and read by nobody until someone audits the
+        // matcher (ADR-0018). The response below carries no part of it.
+        judgeLog: createSupabaseJudgeLog(reader.supabase, reader.user.id),
       },
       id,
     );

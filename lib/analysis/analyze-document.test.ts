@@ -1,10 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { loadAdhesionFixture, loadCleanFixture } from '../../tests/fixtures';
+import { createStubJudgeLog } from '../../tests/support/stub-judge-log';
 import {
   createStubModelClient,
   proposedFlagsFor,
   stubModelClientFor,
 } from '../../tests/support/stub-model-client';
+import { JUDGE_CALL_NAME } from './red-line-judge';
 import type { ArraySchema, ObjectSchema } from '../model/json-schema';
 import { ModelCallError, ModelOutputError } from '../model/client';
 import { analyzeDocument } from './analyze-document';
@@ -226,6 +228,9 @@ describe('analyzeDocument, flag stage', () => {
       'document_flags',
       'document_gaps',
       'red_line_matches',
+      // The judge reads the one match this fixture's red lines catch, after
+      // everything the reader sees has already been decided (ADR-0018).
+      'red_line_match_judgment',
     ]);
     const request = model.calls[1];
     expect(request.schema.required).toContain('flags');
@@ -915,6 +920,159 @@ describe('analyzeDocument, the red line override', () => {
     expect(result.flags.map((flag) => flag.sourceSentence)).not.toContain(
       caught.sourceSentence,
     );
+  });
+});
+
+describe('analyzeDocument, the judge on red line matches', () => {
+  /** The reasoning a judge that disagreed with this fixture's match would give. */
+  const DISAGREED =
+    'The sentence restricts where the work may be shown, which is a different thing from the payment term the reader ruled out.';
+
+  /** A run of the fixture with the red line that catches its planted clause. */
+  async function run(options: {
+    judge?: 'agrees' | 'disagrees' | 'throws';
+    judgeLog?: ReturnType<typeof createStubJudgeLog>;
+  } = {}) {
+    const { text, sidecar } = loadAdhesionFixture();
+    const caught = sidecar.decoys.redLineOnly;
+    expect(caught).toBeDefined();
+    const model = stubModelClientFor(sidecar);
+    if (options.judge === 'disagrees') {
+      model.reply(JUDGE_CALL_NAME, { fits: false, reasoning: DISAGREED });
+    }
+    if (options.judge === 'throws') {
+      model.fail(JUDGE_CALL_NAME, 'OpenRouter is unreachable');
+    }
+
+    const result = await analyzeDocument(text, sidecar.redLines, {
+      model,
+      judgeLog: options.judgeLog,
+    });
+    return { result, model, caught: caught!, text };
+  }
+
+  it('reviews each red-line-triggered flag exactly once', async () => {
+    const { result, model } = await run();
+
+    expect(result.redLineMatches.length).toBeGreaterThan(0);
+    expect(
+      model.calls.filter((call) => call.name === JUDGE_CALL_NAME),
+    ).toHaveLength(result.redLineMatches.length);
+
+    const asked = model.calls
+      .filter((call) => call.name === JUDGE_CALL_NAME)
+      .map((call) => call.messages.map((message) => message.content).join('\n'));
+    for (const match of result.redLineMatches) {
+      expect(
+        asked.some(
+          (sent) =>
+            sent.includes(match.redLine) && sent.includes(match.sourceSentence),
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it('asks the judge nothing about the flags no red line caught', async () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const model = stubModelClientFor(sidecar);
+
+    const result = await analyzeDocument(text, [], { model });
+
+    expect(result.flags.length).toBeGreaterThan(0);
+    expect(result.redLineMatches).toEqual([]);
+    expect(model.calls.map((call) => call.name)).not.toContain(JUDGE_CALL_NAME);
+  });
+
+  it('shows the reader the same thing when the judge disagrees as when it agrees', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const agreed = await run({ judge: 'agrees' });
+    const disagreed = await run({ judge: 'disagrees' });
+    warn.mockRestore();
+
+    // Field for field, the whole result: not the flag's presence, not its
+    // wording, not its rank, not a marker on it (ADR-0019).
+    expect(disagreed.result).toEqual(agreed.result);
+    expect(disagreed.result.flags.map((flag) => flag.id)).toContain(
+      disagreed.result.redLineMatches[0].flagId,
+    );
+  });
+
+  it('shows the reader the same thing when the judge call throws', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const agreed = await run({ judge: 'agrees' });
+    const failed = await run({ judge: 'throws' });
+    warn.mockRestore();
+
+    expect(failed.result).toEqual(agreed.result);
+    expect(
+      failed.result.flags.map((flag) => flag.sourceSentence),
+    ).toContain(failed.caught.sourceSentence);
+  });
+
+  it('writes the disagreement to the log with the red line, the sentence and the reasoning', async () => {
+    const judgeLog = createStubJudgeLog();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const { result, caught } = await run({ judge: 'disagrees', judgeLog });
+    warn.mockRestore();
+
+    expect(judgeLog.written).toEqual([
+      {
+        redLine: caught.redLine,
+        sourceSentence: caught.sourceSentence,
+        fits: false,
+        reasoning: DISAGREED,
+      },
+    ]);
+    expect(await judgeLog.rate()).toMatchObject({
+      reviewed: 1,
+      agreed: 0,
+      disagreed: 1,
+      disagreementRate: 1,
+    });
+    // And the flag it disagreed with is still on the page.
+    expect(result.flags.map((flag) => flag.sourceSentence)).toContain(
+      caught.sourceSentence,
+    );
+  });
+
+  it('finishes the read when the log refuses the write', async () => {
+    const judgeLog = createStubJudgeLog();
+    judgeLog.fail('new row violates row-level security policy');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const withLog = await run({ judge: 'disagrees', judgeLog });
+    const withoutLog = await run({ judge: 'agrees' });
+    warn.mockRestore();
+
+    expect(withLog.result).toEqual(withoutLog.result);
+  });
+
+  it('puts no part of the verdict in what the reader is given', async () => {
+    const judgeLog = createStubJudgeLog();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { result } = await run({ judge: 'disagrees', judgeLog });
+    warn.mockRestore();
+
+    // The absence is the requirement, so it is asserted rather than assumed:
+    // nothing anywhere in the result says a second model looked at this.
+    const everything = JSON.stringify(result);
+    expect(everything).not.toContain(DISAGREED);
+    expect(everything).not.toContain('"fits"');
+    for (const word of ['judge', 'verdict', 'disagree', 'reviewed']) {
+      expect(everything.toLowerCase()).not.toContain(word);
+    }
+    expect(result).not.toHaveProperty('judgeReviews');
+    for (const match of result.redLineMatches) {
+      expect(Object.keys(match).sort()).toEqual([
+        'flagId',
+        'redLine',
+        'sourceSentence',
+      ]);
+    }
+    for (const flag of result.flags) {
+      expect(Object.keys(flag)).not.toContain('judge');
+    }
   });
 });
 

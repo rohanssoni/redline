@@ -1,5 +1,6 @@
 import type { ModelClient } from '../model/client';
 import type { DocumentsGateway, StoredDocument } from '../documents/store';
+import type { JudgeLogGateway } from '../judge/store';
 import { redLineTexts, type RedLinesGateway } from '../red-lines/store';
 import { analyzeDocument } from './analyze-document';
 
@@ -7,6 +8,12 @@ export interface ReadDocumentDeps {
   documents: DocumentsGateway;
   redLines: RedLinesGateway;
   model: ModelClient;
+  /**
+   * Where the judge's review of each red line match is kept (ADR-0018). It is
+   * handed straight through, and nothing that comes back from the read reflects
+   * it: the log is the only place the judge's opinion goes (ADR-0019).
+   */
+  judgeLog?: JudgeLogGateway;
   /**
    * The read itself, which is `analyzeDocument` everywhere in the product. It
    * is named here because the red lines this function fetches are handed
@@ -39,6 +46,7 @@ export async function readDocument(
   const analyse = deps.analyze ?? analyzeDocument;
   const analysis = await analyse(document.text, redLineTexts(redLines), {
     model: deps.model,
+    judgeLog: deps.judgeLog,
   });
 
   return deps.documents.recordAnalysis(document.id, analysis);
