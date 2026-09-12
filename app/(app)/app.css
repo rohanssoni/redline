@@ -556,3 +556,77 @@
     padding: 6px 18px 6px var(--gutter);
   }
 }
+
+/* The library: one line per document, in the same hand as the red lines list.
+   The change bar in the gutter rests in grey here too. Nothing on this screen
+   is in focus, and nothing on it has been re-read. */
+
+.library-empty {
+  max-width: 62ch;
+}
+
+.library {
+  margin-top: 22px;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+  max-width: 62ch;
+}
+
+.library-row {
+  padding: 14px 18px 14px 18px;
+  border-left: 3px solid var(--rest-line);
+  background: var(--comment);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 18px;
+}
+
+.library-row:focus-within {
+  border-left-color: var(--ink);
+}
+
+.library-row-body {
+  flex: 1 1 22ch;
+  display: grid;
+  gap: 4px;
+}
+
+.library-name {
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  text-underline-offset: 0.25em;
+}
+
+.library-name:hover {
+  text-decoration: underline;
+}
+
+.library-when {
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.library-confirm {
+  flex: 1 1 100%;
+  display: grid;
+  gap: 4px;
+  font-size: 0.9375rem;
+}
+
+.library-confirm .state-actions {
+  margin-top: 4px;
+}
+
+.library-row .state {
+  flex: 1 1 100%;
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .library-row {
+    align-items: flex-start;
+  }
+}

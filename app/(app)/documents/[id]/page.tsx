@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { openFromLibrary, readableDate } from '@/lib/documents/library';
 import { createSupabaseDocuments } from '@/lib/documents/supabase-documents';
 import type { StoredDocument } from '@/lib/documents/store';
 import { currentReader } from '@/lib/supabase/server';
@@ -10,10 +11,20 @@ import { QuestionBox } from './question-box';
 
 export const metadata: Metadata = { title: 'Document — Redline' };
 
+/**
+ * The stored document, read back as it was kept. A document that already holds
+ * an analysis is shown from the column: nothing on this path calls the model,
+ * and `LibraryDeps` is what makes that structural rather than a habit. Only a
+ * document with no analysis yet starts a read, and the reader's browser asks
+ * for that one explicitly through `AnalysisRunner`.
+ */
 async function loadDocument(id: string): Promise<StoredDocument | null> {
   const reader = await currentReader();
   if (!reader) return null;
-  return createSupabaseDocuments(reader.supabase, reader.user.id).byId(id);
+  return openFromLibrary(
+    { documents: createSupabaseDocuments(reader.supabase, reader.user.id) },
+    id,
+  );
 }
 
 export default async function DocumentPage({
@@ -123,12 +134,4 @@ function paragraphs(text: string): string[] {
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
-}
-
-function readableDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
 }

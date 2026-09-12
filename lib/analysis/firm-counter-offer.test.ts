@@ -72,6 +72,9 @@ function storedLibrary(initial: DocumentRow) {
       rows.set(id, written);
       return toStoredDocument(json(written));
     },
+    async remove(id) {
+      return rows.delete(id);
+    },
   };
 
   return { documents, rows };

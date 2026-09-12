@@ -83,5 +83,30 @@ export function createSupabaseDocuments(
       }
       return toStoredDocument(data as DocumentRow);
     },
+
+    /**
+     * Deletes and asks for the row back, so a delete that matched nothing —
+     * someone else's document, or one already gone — is told apart from one
+     * that did the work.
+     *
+     * The row is everything Redline held: the extracted text and the analysis
+     * are columns of it, and there is no file anywhere to delete alongside
+     * (`CLAUDE.md`, settled). So this is the deletion, not a flag that hides
+     * the document from a list while the text stays in the table.
+     */
+    async remove(id): Promise<boolean> {
+      const { data, error } = await table()
+        .delete()
+        .eq('id', id)
+        .eq('owner_id', ownerId)
+        .select('id')
+        .maybeSingle();
+      if (error) {
+        throw new DocumentStoreError(
+          `The document could not be deleted: ${error.message}`,
+        );
+      }
+      return data !== null;
+    },
   };
 }

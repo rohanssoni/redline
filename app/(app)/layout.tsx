@@ -53,6 +53,7 @@ function Header({ email }: { email?: string }) {
       </Link>
       <nav className="shell-nav-links">
         <Link href="/documents/new">New document</Link>
+        <Link href="/documents">Library</Link>
         <Link href="/red-lines">Red lines</Link>
       </nav>
       {email ? (

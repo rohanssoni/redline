@@ -60,6 +60,13 @@ export interface DocumentsGateway {
   byId(id: string): Promise<StoredDocument | null>;
   list(): Promise<DocumentListing[]>;
   recordAnalysis(id: string, analysis: AnalysisResult): Promise<StoredDocument>;
+  /**
+   * Deletes the row, text and analysis together, and says whether there was one
+   * to delete. There is nothing else to delete: the row is the whole of what
+   * Redline kept, so this takes the document out of the product rather than
+   * hiding it from a list.
+   */
+  remove(id: string): Promise<boolean>;
 }
 
 /**
