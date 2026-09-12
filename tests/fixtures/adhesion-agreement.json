@@ -1,0 +1,135 @@
+{
+  "name": "Halverson Brands adhesion agreement",
+  "textFile": "adhesion-agreement.txt",
+  "summary": "This is a fixed-fee brand identity engagement: the reader designs an identity system for Halverson Brands for $14,000, invoiced in three installments against Exhibit A. Almost every term that decides what the reader is paid, and for what, sits with the client: the client can rewrite the scope without changing the fee, decides on its own whether the work is acceptable with no deadline for deciding, and can walk away without paying for work it has not accepted. The reader takes on unlimited indemnity, assigns anything they create during the term whether or not it relates to this job, and agrees not to work for anyone competing with the client for three years. The agreement says nothing about what happens if the client pays late and puts no ceiling on what the reader can be made to pay out. Nothing here says whether any of it is enforceable where the reader lives - it is what the document says, not what a court would do with it.",
+  "cleanRead": false,
+  "flags": [
+    {
+      "id": "uncapped-indemnity",
+      "clauseType": "uncapped indemnity",
+      "sourceSentence": "Contractor shall indemnify, defend, and hold harmless Client and its officers, employees, and affiliates against any and all claims, damages, losses, and expenses of any kind arising out of or related to the Services, without limitation as to amount.",
+      "severity": 95,
+      "band": "high",
+      "explanation": "You cover the client's legal costs and losses for anything touching this work, with no ceiling on the amount. A single claim can cost more than the whole $14,000 fee, and the agreement gives you nothing to stop it at.",
+      "textualAmbiguity": false,
+      "harmConfidence": "full",
+      "plausible": true
+    },
+    {
+      "id": "acceptance-at-sole-discretion",
+      "clauseType": "payment at the client's sole discretion",
+      "sourceSentence": "Payment becomes due only after Client, in its sole discretion, accepts the deliverables as satisfactory, and no time limit applies to Client's review.",
+      "severity": 92,
+      "band": "high",
+      "explanation": "Nothing is owed to you until the client decides it likes the work, and the client has no deadline to decide. You can deliver everything, be told nothing, and have no date you can point to when you chase the money.",
+      "textualAmbiguity": false,
+      "harmConfidence": "full",
+      "plausible": true
+    },
+    {
+      "id": "unilateral-scope-change",
+      "clauseType": "unilateral scope change",
+      "sourceSentence": "Client may modify, add to, or otherwise revise the Services and the deliverables described in Exhibit A at any time upon written notice to Contractor, and the Fee shall remain unchanged.",
+      "severity": 88,
+      "band": "high",
+      "explanation": "The client can add work whenever it wants and pay you the same $14,000 for it. Your hourly rate falls every time they send a notice, and you have already signed.",
+      "textualAmbiguity": false,
+      "harmConfidence": "full",
+      "plausible": true
+    },
+    {
+      "id": "ip-assignment-beyond-engagement",
+      "clauseType": "IP assignment reaching beyond the engagement",
+      "sourceSentence": "Contractor assigns to Client all right, title, and interest in every work of authorship, invention, and improvement conceived by Contractor during the term of this Agreement, whether or not related to the Services and whether or not created using Client's materials or time.",
+      "severity": 81,
+      "band": "high",
+      "explanation": "Everything you make while this engagement runs belongs to the client, including work for other clients and work of your own on your own time. Side projects and other paid jobs started during the term are covered by the words used here.",
+      "textualAmbiguity": false,
+      "harmConfidence": "full",
+      "plausible": true
+    },
+    {
+      "id": "termination-for-convenience-no-payment",
+      "clauseType": "termination for convenience with no payment for work done",
+      "sourceSentence": "Client may terminate this Agreement at any time and for any reason upon written notice, and Client shall have no obligation to pay for Services performed but not yet accepted as of the date of termination.",
+      "severity": 76,
+      "band": "high",
+      "explanation": "The client can end this on any day it likes and owes you nothing for work it has not already accepted. Combined with an acceptance step that has no deadline, weeks of finished work can leave with them unpaid.",
+      "textualAmbiguity": false,
+      "harmConfidence": "full",
+      "plausible": true
+    },
+    {
+      "id": "overbroad-non-compete",
+      "clauseType": "overbroad non-compete",
+      "sourceSentence": "For a period of three years after this Agreement ends, Contractor shall not provide services of any kind to any person or entity that competes with Client in any market in which Client operates or plans to operate.",
+      "severity": 69,
+      "band": "high",
+      "explanation": "For three years after this job ends you cannot take work from anyone competing with the client, in any market it says it plans to enter. On its own words that reaches most of the clients you would design for next.",
+      "textualAmbiguity": false,
+      "harmConfidence": "partial",
+      "plausible": true
+    },
+    {
+      "id": "ambiguous-standards-update-right",
+      "clauseType": "unilateral standard change",
+      "sourceSentence": "Contractor shall perform the Services in accordance with Client's written brand guidelines and industry standards that Client may update from time to time.",
+      "severity": 58,
+      "band": "medium",
+      "explanation": "Read one way, the client can only update its own brand guidelines and the industry standards are fixed outside the contract. Read the other way, the update right covers both, which lets the client change what counts as acceptable work after you have priced the job. Reread the sentence and you can see which reading the wording leaves open.",
+      "textualAmbiguity": true,
+      "harmConfidence": "partial",
+      "plausible": true
+    },
+    {
+      "id": "no-portfolio-use",
+      "clauseType": "publicity and portfolio restriction",
+      "sourceSentence": "Neither party shall issue any public statement, portfolio entry, or case study describing the Services without the other party's prior written consent.",
+      "severity": 41,
+      "band": "medium",
+      "explanation": "You cannot put this work in your portfolio or write it up unless the client agrees in writing first. The restriction reads as even-handed, but only one side of it sells future work.",
+      "textualAmbiguity": false,
+      "harmConfidence": "full",
+      "plausible": false
+    }
+  ],
+  "gaps": [
+    {
+      "id": "no-late-payment-term",
+      "severity": 70,
+      "band": "high",
+      "statement": "This agreement contains no late-payment term."
+    },
+    {
+      "id": "no-liability-cap",
+      "severity": 64,
+      "band": "medium",
+      "statement": "This agreement puts no ceiling on what the reader can be made to pay."
+    }
+  ],
+  "decoys": {
+    "symmetricUnusual": {
+      "sourceSentence": "This Agreement shall be governed by the laws of the State of North Dakota, and each party consents to the exclusive jurisdiction of the state courts sitting in Cass County, North Dakota.",
+      "why": "An odd choice of forum for a Chicago client and a contractor who is probably somewhere else, but it binds both sides identically and changes nobody's economics. ADR-0004 drops it rather than ranking it low."
+    },
+    "textuallyAmbiguous": {
+      "sourceSentence": "Contractor shall perform the Services in accordance with Client's written brand guidelines and industry standards that Client may update from time to time.",
+      "why": "The relative clause 'that Client may update from time to time' can attach to 'industry standards' alone or to the whole list. The two readings differ in whether the client can move the acceptance bar after the fee is fixed, and a reader can see both by rereading the sentence, so this is the one place hedged wording is allowed under ADR-0010.",
+      "readingA": "Only the industry standards are subject to the client's updates; the brand guidelines are whatever was written down when the agreement was signed.",
+      "readingB": "The client may update both the brand guidelines and the industry standards the work is measured against, at any time, after the fee has been agreed."
+    },
+    "nonTextualLowConfidence": {
+      "sourceSentence": "For a period of three years after this Agreement ends, Contractor shall not provide services of any kind to any person or entity that competes with Client in any market in which Client operates or plans to operate.",
+      "why": "The sentence itself is not ambiguous at all: it says plainly what it forbids and for how long. What is uncertain is whether a court would enforce a three-year, all-markets restriction against an independent contractor, which is uncertainty about the outside world and not about the wording. ADR-0010 therefore requires plain wording here, never a hedge."
+    },
+    "redLineOnly": {
+      "sourceSentence": "Neither party shall issue any public statement, portfolio entry, or case study describing the Services without the other party's prior written consent.",
+      "why": "Symmetric on its face, low consequence in money, and drafted the way most publicity clauses are, so the plausibility filter of ADR-0004 and the confidence threshold of ADR-0006 would otherwise drop it. It flags only because the reader wrote a red line that this clause violates, which is ADR-0013.",
+      "redLine": "I need to be able to show what I make to people who might hire me next."
+    }
+  },
+  "redLines": [
+    "I need to be able to show what I make to people who might hire me next.",
+    "I will not take equity, credit, or exposure in place of money."
+  ]
+}

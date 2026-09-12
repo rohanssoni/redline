@@ -1,0 +1,53 @@
+TECHNICAL WRITING SERVICES AGREEMENT
+
+This Technical Writing Services Agreement (this "Agreement") is made on June 12, 2026 (the "Effective Date") between Pemberton Instruments, Inc., an Oregon corporation with offices at 1120 SE Ankeny Street, Portland, Oregon ("Company"), and the independent writer named on the signature page ("Writer"). Company and Writer are each a "party" and together the "parties."
+
+1. THE WORK
+
+Company engages Writer to rewrite the developer documentation for Company's flow-sensor API, consisting of a getting-started guide, eight endpoint reference pages, and two migration notes (the "Work"). The Work, its acceptance criteria, and its schedule are set out in Statement of Work No. 1, attached and incorporated into this Agreement. Any change to the Work, the schedule, or the fee takes effect only when both parties sign a written change order describing the change and its price. Writer performs the Work as an independent contractor, decides how and when the Work is done, and may work for other clients during the term.
+
+2. FEE AND PAYMENT
+
+Company will pay Writer a fixed fee of $9,600 for the Work, invoiced as $3,200 on signing, $3,200 on delivery of the getting-started guide, and $3,200 on delivery of the final page. Company will pay each undisputed invoice within fifteen days of receiving it. An invoice not paid within fifteen days accrues a late payment charge of 1.5% per month on the unpaid balance until it is paid. If Company disputes part of an invoice, Company will pay the undisputed part on time and will tell Writer in writing what is disputed and why within five business days of receiving the invoice.
+
+3. REVIEW AND ACCEPTANCE
+
+Company will review each deliverable and either accept it or send Writer written comments within seven business days of delivery. A deliverable Company does not respond to within seven business days is accepted. Writer will make two rounds of revisions to each deliverable at no extra charge, each round addressing the comments Company sent for that deliverable. Revisions beyond those two rounds, or revisions responding to a change in the Work, are billed at $95 per hour under a signed change order.
+
+3A. EXPENSES
+
+Company will reimburse Writer for expenses Company approves in writing before Writer incurs them, at cost and with receipts, within the same fifteen-day payment window that applies to fees.
+
+4. TERM AND TERMINATION
+
+This Agreement begins on the Effective Date and continues until the Work is delivered and accepted or until it is terminated under this Section. Either party may terminate this Agreement for convenience on fourteen days' written notice to the other party. Either party may terminate immediately if the other party commits a material breach that remains uncured fifteen days after written notice describing it. On any termination, Company will pay Writer for all Work performed up to the termination date, including work in progress, within fifteen days of Writer's final invoice.
+
+5. INTELLECTUAL PROPERTY
+
+On Company's payment in full for a deliverable, Writer assigns to Company all copyright in that deliverable as delivered, and in nothing else. Writer keeps ownership of the writing methods, checklists, templates, and style materials Writer brings to the engagement or develops independently of the Work, and grants Company a perpetual, non-exclusive licence to use those materials as they appear inside a delivered deliverable. Nothing in this Agreement assigns to Company any work Writer creates outside the Work. Writer may describe the engagement and show excerpts of published documentation in Writer's portfolio once Company has published the documentation.
+
+6. CONFIDENTIALITY
+
+Each party will keep the other party's confidential information in confidence, use it only to perform this Agreement, and protect it with at least the care it uses for its own confidential information. Confidential information does not include information that is or becomes public without the receiving party's fault, that the receiving party already held without a duty of confidence, or that the receiving party develops independently. Either party may disclose confidential information where a law or a court requires it, after giving the other party notice where it is lawful to do so. These duties continue for two years after this Agreement ends.
+
+7. WARRANTY
+
+Writer warrants that the Work is Writer's original writing, that Writer has the right to assign it, and that to Writer's knowledge it does not infringe a third party's copyright. Company warrants that it has the right to give Writer the source material and product access the Work requires. Except as stated in this Section, neither party makes any other warranty about the Work.
+
+8. INDEMNITY AND LIABILITY
+
+Each party will defend and indemnify the other against third-party claims arising from that party's breach of its warranties in Section 7, provided the indemnified party gives prompt written notice of the claim and reasonable cooperation in defending it. Each party's total liability under this Agreement, whatever the cause of action, is limited to the total fees payable under this Agreement. Neither party is liable to the other for lost profits or for indirect, incidental, or consequential damages. These limits do not apply to a party's breach of Section 6 or to its indemnity duties under this Section.
+
+9. INDEPENDENT CONTRACTOR STATUS
+
+Writer is an independent contractor and is not an employee, agent, or partner of Company. Writer is responsible for Writer's own taxes, insurance, equipment, and working hours, and Company will report payments on IRS Form 1099 where the law requires it. Neither party may bind the other or hold itself out as having authority to do so. This Agreement is non-exclusive, and neither party is restricted from working with any other person, including a competitor of the other party.
+
+10. NOTICES
+
+Notices under this Agreement must be in writing and sent by email to the addresses on the signature page, with a copy by overnight courier for a notice of breach or termination. A notice is effective on the business day it is received. Either party may change its address for notices by giving the other party written notice of the new address.
+
+11. GENERAL
+
+This Agreement is governed by the laws of the State of Oregon, and the state and federal courts sitting in Multnomah County, Oregon have jurisdiction over any dispute, with each party bearing its own costs. Before filing anything, the parties will spend fifteen days trying to resolve the dispute between the people who signed this Agreement. Neither party may assign this Agreement without the other party's written consent, except to a successor of its business on written notice. This Agreement and Statement of Work No. 1 are the entire agreement between the parties about the Work and may be amended only by a writing both parties sign. If a provision is held unenforceable, the rest stays in effect. This Agreement may be signed in counterparts, including electronically, each of which is an original.
+
+SIGNATURE PAGE FOLLOWS

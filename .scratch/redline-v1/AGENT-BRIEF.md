@@ -95,3 +95,23 @@ reach outside the process. Everything between them is exercised for real.
 
 `npm test` (Vitest, `vitest run`). Typecheck: `npx tsc --noEmit`.
 Build: `npm run build`. All three must pass before you report done.
+
+## Reading the adhesion sidecar correctly
+
+`tests/fixtures/adhesion-agreement.json` lists **every** planted clause in
+`flags[]`, including ones that must not reach the reader under some conditions.
+Read the per-flag metadata, not just the array:
+
+- `plausible: false` — the red-line-only clause. With **no** red lines supplied it
+  must be dropped by the plausibility filter and must NOT appear in output. With
+  its red line supplied it must appear (ADR-0013).
+- `textualAmbiguity: true` — the only flag that may carry hedged wording (ADR-0010).
+  Exactly one flag has it.
+- `harmConfidence: "partial"` — still flagged (ADR-0006), and plainly worded
+  unless `textualAmbiguity` is also true.
+- `decoys.symmetricUnusual` is deliberately absent from `flags[]`. A run that
+  produces a flag for that sentence is wrong (ADR-0004).
+
+So "the expected flags for a run with no red lines" is
+`flags.filter(f => f.plausible !== false)`, and with the red line supplied it is
+all of them.

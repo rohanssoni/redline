@@ -1,0 +1,13 @@
+{
+  "name": "Pemberton Instruments clean agreement",
+  "textFile": "clean-agreement.txt",
+  "summary": "This is a fixed-fee writing engagement: the reader rewrites Pemberton Instruments' API documentation for $9,600, invoiced in three parts against a signed statement of work. The money terms are dated and specific - fifteen days to pay, a stated charge if payment runs past that, a seven-day review window after which a deliverable counts as accepted, and two rounds of revisions included before hourly billing starts. Either side can end the agreement on fourteen days' notice, and the client pays for everything done up to that day, including work in progress. Copyright passes only on payment and only for the delivered pages, the reader keeps their own templates and methods, and liability is capped at the fees and applies to both sides equally. Scope, schedule, and fee change only when both parties sign a change order.",
+  "cleanRead": true,
+  "flags": [],
+  "gaps": [],
+  "decoys": {},
+  "redLines": [
+    "I will not hand over the rights to my work before the money is in my account.",
+    "I will not agree to unlimited revisions for a fixed fee."
+  ]
+}
