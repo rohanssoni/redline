@@ -3,6 +3,7 @@ import type { DocumentsGateway, StoredDocument } from '../documents/store';
 import type { JudgeLogGateway } from '../judge/store';
 import { redLineTexts, type RedLinesGateway } from '../red-lines/store';
 import { analyzeDocument } from './analyze-document';
+import { draftSoftCounterOffers } from './counter-offer';
 
 export interface ReadDocumentDeps {
   documents: DocumentsGateway;
@@ -49,5 +50,16 @@ export async function readDocument(
     judgeLog: deps.judgeLog,
   });
 
-  return deps.documents.recordAnalysis(document.id, analysis);
+  // One soft draft per flag, and only for flags: what is handed over is
+  // `analysis.flags`, and a gap has no way into that list or into the call
+  // (ADR-0014). Firm is not drafted here, or anywhere, until a reader asks for
+  // it on one clause (ADR-0012).
+  const counterOffers = await draftSoftCounterOffers(analysis.flags, {
+    model: deps.model,
+  });
+
+  return deps.documents.recordAnalysis(document.id, {
+    ...analysis,
+    counterOffers,
+  });
 }

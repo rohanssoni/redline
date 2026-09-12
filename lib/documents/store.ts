@@ -5,6 +5,10 @@ import {
   applyRedLineOverride,
   type RedLineMatch,
 } from '../analysis/red-line-override';
+import {
+  verifyCounterOffers,
+  type CounterOfferClaim,
+} from '../analysis/counter-offer';
 import { verifyGaps, type GapClaim } from '../analysis/gap';
 import { verifyFlags, type Flag } from '../analysis/verified-flag';
 
@@ -159,7 +163,39 @@ export function toAnalysisResult(
     // document full of flags would come from (ADR-0008).
     cleanRead: cleanReadFor({ summary, flagCheck, gapCheck, shownFlags: flags }),
     redLineMatches,
+    // Checked again against the flags that just came back through the citation
+    // gate, never read off the column as written. A row is jsonb, so a stored
+    // draft could otherwise name a flag this document no longer has, quote a
+    // sentence the flag does not, or name a gap — and a gap with drafted clause
+    // language stapled to it is the one thing ADR-0014 exists to prevent.
+    counterOffers: verifyCounterOffers(
+      storedCounterOffers(record),
+      flags,
+    ).counterOffers,
   };
+}
+
+/** The counter-offers a row holds, ignoring anything that is not one. */
+function storedCounterOffers(record: Record<string, unknown>): CounterOfferClaim[] {
+  if (!Array.isArray(record.counterOffers)) return [];
+  return (record.counterOffers as unknown[]).filter(isStoredCounterOffer);
+}
+
+/**
+ * Whether a stored row's counter-offer has the fields one needs to be shown. It
+ * is read as a `CounterOfferClaim`, not a `CounterOffer`: a row has been nowhere
+ * near the flag it names, and `verifyCounterOffers` is what puts the two
+ * together.
+ */
+function isStoredCounterOffer(value: unknown): value is CounterOfferClaim {
+  if (typeof value !== 'object' || value === null) return false;
+  const counterOffer = value as Record<string, unknown>;
+  return (
+    typeof counterOffer.flagId === 'string' &&
+    typeof counterOffer.sourceSentence === 'string' &&
+    typeof counterOffer.text === 'string' &&
+    (counterOffer.stance === 'soft' || counterOffer.stance === 'firm')
+  );
 }
 
 /** The match records a row holds, ignoring anything that is not one. */

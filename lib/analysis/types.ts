@@ -1,6 +1,7 @@
 import type { ModelClient } from '../model/client';
 import type { JudgeLogGateway } from '../judge/store';
 import type { CleanRead } from './clean-read';
+import type { CounterOffer } from './counter-offer';
 import type { Gap } from './gap';
 import type { RedLineMatch } from './red-line-override';
 import type { VerifiedFlag } from './verified-flag';
@@ -25,6 +26,17 @@ export type { Gap, GapClaim } from './gap';
 
 /** Which flags a red line put in front of the reader (ADR-0013). Internal. */
 export type { RedLineMatch } from './red-line-override';
+
+/**
+ * Replacement language for one flagged clause, in the stance the reader chose
+ * (ADR-0009). A gap has none and can have none (ADR-0014).
+ */
+export type {
+  ClauseToRewrite,
+  CounterOffer,
+  CounterOfferClaim,
+  Stance,
+} from './counter-offer';
 
 /** Everything `analyzeDocument` produces for one document. */
 export interface AnalysisResult {
@@ -65,6 +77,22 @@ export interface AnalysisResult {
    * came back through the source sentence check (ADR-0001).
    */
   redLineMatches: RedLineMatch[];
+  /**
+   * The soft counter-offer drafted for each flag, keyed to the flag by id
+   * (ADR-0009). The type is `CounterOffer`, not `CounterOfferClaim`: only
+   * `draftCounterOffer` and `verifyCounterOffers` produce one, and both of them
+   * check the draft against the source sentence of the flag it belongs to, so a
+   * draft that rewrote some other clause cannot arrive here.
+   *
+   * Never every flag by construction. A flag whose draft failed or came back
+   * about the wrong sentence is in `flags` with nothing in here naming it, and
+   * an analysis nobody has drafted for — a visitor's one try, which gets the
+   * summary and the flags and no counter-offers — carries none at all.
+   *
+   * There is no entry here for a gap, and no way to write one: `flagId` names a
+   * flag, and nothing in the drafting path will take a gap (ADR-0014).
+   */
+  counterOffers: CounterOffer[];
 }
 
 /** Everything `analyzeDocument` reaches outside itself for. */

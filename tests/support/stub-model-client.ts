@@ -223,6 +223,26 @@ export function agreeingJudgmentFor(request: StructuredRequest): unknown {
 }
 
 /**
+ * What a model drafting a counter-offer sends back: the sentence it was asked
+ * about, copied back, and replacement wording built from that same sentence.
+ *
+ * The sentence is taken out of the request rather than out of the sidecar, so a
+ * draft that arrived about the wrong clause would be visible in what comes back,
+ * and a test that wants a strayed draft asks for one explicitly.
+ */
+export function counterOfferFor(request: StructuredRequest): unknown {
+  const asked = request.messages
+    .filter((message) => message.role === 'user')
+    .map((message) => message.content)
+    .join('\n');
+  const sentence = asked.split('\n').at(-1) ?? '';
+  return {
+    rewrites: sentence,
+    replacement: `The parties agree that this applies only as set out in writing and with the other party’s consent: ${sentence}`,
+  };
+}
+
+/**
  * A stub that answers from a fixture sidecar, so a test asserts against the
  * document it loaded rather than against wording invented in the test file.
  */
@@ -235,5 +255,6 @@ export function stubModelClientFor(sidecar: FixtureSidecar): StubModelClient {
       matches: proposedRedLineMatchesFor(sidecar, request),
     }),
     red_line_match_judgment: agreeingJudgmentFor,
+    counter_offer: counterOfferFor,
   });
 }

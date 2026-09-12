@@ -493,6 +493,33 @@ p {
   color: var(--ink-soft);
 }
 
+/* The counter-offer, inside a flag's comment */
+
+.counter-offer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rest);
+  max-width: 62ch;
+}
+
+.counter-offer-label {
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.counter-offer-text {
+  margin-top: 6px;
+  font-family: var(--font-doc);
+  font-size: 0.9375rem;
+  color: var(--ink);
+}
+
+.counter-offer-actions {
+  margin-top: 8px;
+}
+
 /* Page foot: the gap and the whole-agreement toggle */
 
 .page-foot {

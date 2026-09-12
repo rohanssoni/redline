@@ -602,6 +602,12 @@ export async function analyzeDocument(
     gaps: rankGaps(aboveThreshold(gaps)),
     cleanRead,
     redLineMatches,
+    // Nothing is drafted here. Reading a document and drafting replacement
+    // language for a clause are separate pieces of work: `draftCounterOffer` is
+    // its own seam, called once per flag by `readDocument` for a signed-in
+    // reader, and a visitor's one anonymous try gets the summary and the flags
+    // with no drafting call behind them at all.
+    counterOffers: [],
   };
 }
 

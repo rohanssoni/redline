@@ -65,6 +65,7 @@ export default async function DocumentPage({
           text={document.text}
           flags={analysis.flags}
           gaps={analysis.gaps}
+          counterOffers={analysis.counterOffers}
         />
       ) : (
         <section className="doc-page" aria-label="The text of your agreement">

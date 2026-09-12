@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { markUpDocument, textLines } from '@/lib/analysis/marked-document';
 import { rankFindings } from '@/lib/analysis/ranking';
-import type { Flag, GapClaim } from '@/lib/analysis/types';
+import type { CounterOfferClaim, Flag, GapClaim } from '@/lib/analysis/types';
+import { CounterOfferNote } from './counter-offer-note';
 
 const FOLD_MS = 280;
 
@@ -23,13 +24,24 @@ export function DocumentReview({
   text,
   flags,
   gaps,
+  counterOffers,
 }: {
   name: string;
   text: string;
   flags: Flag[];
   gaps: GapClaim[];
+  /** One per flag that has one, keyed by flag id. Never one for a gap. */
+  counterOffers: CounterOfferClaim[];
 }) {
   const findings = useMemo(() => rankFindings(flags, gaps), [flags, gaps]);
+
+  // Keyed by flag id, which is the only thing a counter-offer names. There is no
+  // lookup here a gap could answer: the gaps are in their own list, under their
+  // own ids, and nothing below asks this map about one (ADR-0014).
+  const drafts = useMemo(
+    () => new Map(counterOffers.map((counterOffer) => [counterOffer.flagId, counterOffer])),
+    [counterOffers],
+  );
 
   const flagRanks = useMemo(
     () =>
@@ -176,6 +188,12 @@ export function DocumentReview({
                         plainly worded and gets nothing here. */}
                     {flag.ambiguity && (
                       <p className="comment-hedge">{flag.ambiguity.hedge}</p>
+                    )}
+                    {/* Under the reading, beside the sentence it replaces. A
+                        flag whose draft came back about some other clause has
+                        nothing here, and the flag itself is unchanged. */}
+                    {drafts.has(flag.id) && (
+                      <CounterOfferNote counterOffer={drafts.get(flag.id)!} />
                     )}
                   </div>
                 </div>
