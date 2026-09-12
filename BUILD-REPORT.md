@@ -37,7 +37,7 @@ _(filled in at the end of the run)_
 | 16 | Counter-offers sent | **done** |
 | 18 | Paste text | **done** |
 | 19 | No-account try | **done** |
-| 20 | Keep a no-account analysis | in progress |
+| 20 | Keep a no-account analysis | **done** |
 
 ---
 
