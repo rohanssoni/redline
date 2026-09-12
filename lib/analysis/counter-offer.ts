@@ -18,9 +18,12 @@
  *    dropped outright rather than shown next to the wrong sentence.
  *
  * Only the soft stance exists after an analysis. The firm one is drafted on
- * demand, for one flag, when a reader asks for it (ADR-0009, ADR-0012), so
- * `draftCounterOffer` takes `'soft'` here and nothing in this module writes a
- * firm draft or stores one.
+ * demand, for one flag, when a reader asks for it (ADR-0009, ADR-0012):
+ * `draftSoftCounterOffers` is the only thing this module runs over a whole read,
+ * and it asks for soft and nothing else. A firm draft is made one at a time, by
+ * `firmCounterOffer`, and it goes through the same anchoring check on the way —
+ * a firm draft that wandered into another clause is dropped exactly as a soft
+ * one is.
  */
 
 import type { ModelClient, StructuredRequest } from '../model/client';
@@ -109,7 +112,7 @@ interface CounterOfferOutput {
   replacement: string;
 }
 
-const SOFT_SYSTEM_PROMPT = [
+const DRAFTING_RULES = [
   'You rewrite one sentence of an agreement on behalf of the person being asked to sign it, so they have something to send back to the other side.',
   '',
   'What you are rewriting:',
@@ -122,25 +125,45 @@ const SOFT_SYSTEM_PROMPT = [
   '- Do not argue with terms that are not in the sentence, and do not mention other clauses.',
   '- Do not add a covering note, a greeting, a justification or a "happy to discuss". The reader writes their own message; you write the clause.',
   '- Do not say what a court would do or what the law requires.',
-  '',
-  'The stance is soft. That means:',
-  '- Ask for the smallest change that takes the harm out of the sentence, and leave the rest of it as the other side wrote it.',
-  '- Where the other side has a real interest, keep it and bound it — a cap, a notice period, a right to decline — rather than striking it out.',
-  '- Write it so someone can say yes without going back to their lawyer.',
-  '',
-  'Copy the sentence you were given into rewrites, character for character, so it can be checked against the agreement.',
 ].join('\n');
+
+/**
+ * What each stance asks for, and the only thing that differs between the two
+ * prompts. Firm asks for more than soft does; it is not licence to rewrite more
+ * of the agreement, so every rule above still holds for it.
+ */
+const STANCE_RULES: Record<Stance, string[]> = {
+  soft: [
+    'The stance is soft. That means:',
+    '- Ask for the smallest change that takes the harm out of the sentence, and leave the rest of it as the other side wrote it.',
+    '- Where the other side has a real interest, keep it and bound it — a cap, a notice period, a right to decline — rather than striking it out.',
+    '- Write it so someone can say yes without going back to their lawyer.',
+  ],
+  firm: [
+    'The stance is firm. The reader has standing on this one clause and is willing to spend it. That means:',
+    '- Ask for the version that leaves the reader whole, not the version that is easiest to agree to.',
+    '- Where the sentence lets the other side act alone, require the reader’s agreement, or drop the power altogether.',
+    '- Keep it a clause the other side could still sign. It is a firm ask, not a walk-out: no ultimatums, no deadlines, no threats, nothing about what happens if they refuse.',
+  ],
+};
+
+/** What the model is told, for the one stance it is drafting in. */
+function systemPromptFor(stance: Stance): string {
+  return [DRAFTING_RULES, '', ...STANCE_RULES[stance], '',
+    'Copy the sentence you were given into rewrites, character for character, so it can be checked against the agreement.',
+  ].join('\n');
+}
 
 /** The prompt for one flag. Exported so a test can read what was sent. */
 export function counterOfferRequest(
   flag: ClauseToRewrite,
-  stance: 'soft',
+  stance: Stance,
 ): StructuredRequest {
   return {
     name: COUNTER_OFFER_CALL_NAME,
     schema: counterOfferSchema,
     messages: [
-      { role: 'system', content: SOFT_SYSTEM_PROMPT },
+      { role: 'system', content: systemPromptFor(stance) },
       {
         role: 'user',
         content: [
@@ -160,7 +183,11 @@ export interface CounterOfferDeps {
 }
 
 /**
- * Drafts the replacement language for one flagged clause.
+ * Drafts the replacement language for one flagged clause, in one stance.
+ *
+ * The stance changes what is asked for and nothing else. Both go through the
+ * same anchoring check below, because a firm draft that rewrote a different
+ * clause is exactly as wrong as a soft one that did (ADR-0001).
  *
  * Returns `null` when what came back cannot be shown against this flag: a draft
  * that rewrote a different sentence, or one with nothing in it. A refused draft
@@ -173,7 +200,7 @@ export interface CounterOfferDeps {
  */
 export async function draftCounterOffer(
   flag: ClauseToRewrite,
-  stance: 'soft',
+  stance: Stance,
   deps: CounterOfferDeps,
 ): Promise<CounterOffer | null> {
   const draft = await deps.model.complete<CounterOfferOutput>(
@@ -248,13 +275,17 @@ export async function draftSoftCounterOffers(
  * The counter-offers a stored row holds, checked again against the flags that
  * came back through `verifyFlags` on the way out of the store.
  *
- * The analysis column is jsonb, so a row is whatever was written into it. Three
- * things are refused here, and each of them is something the column is the only
- * possible source of: a draft naming no flag in this analysis, a draft whose
- * sentence is not that flag's own sentence, and a firm draft, which is never
- * persisted because it is only ever drafted when a reader asks for it
- * (ADR-0012). A row naming a gap fails the first of those, because a gap is
- * never in `flags`.
+ * The analysis column is jsonb, so a row is whatever was written into it. What
+ * is refused here is what only the column could produce: a draft naming no flag
+ * in this analysis, a draft whose sentence is not that flag's own sentence, a
+ * second draft of a stance the flag already has, and a draft with nothing in it.
+ * A row naming a gap fails the first of those, because a gap is never in
+ * `flags`.
+ *
+ * A firm draft is kept. It is written to the row only after a reader asked for
+ * it on one clause and it passed the same anchoring check as the soft one
+ * (ADR-0012), and keeping it is what stops the next view of the document paying
+ * for that draft again.
  */
 export function verifyCounterOffers(
   claimed: readonly CounterOfferClaim[],
@@ -272,16 +303,24 @@ export function verifyCounterOffers(
       continue;
     }
 
-    seen.add(claim.flagId);
+    seen.add(stanceKey(claim));
     counterOffers.push({
       flagId: claim.flagId,
-      stance: 'soft',
+      stance: claim.stance,
       sourceSentence: sentences.get(claim.flagId) as string,
       text: claim.text.trim(),
     } as CounterOffer);
   }
 
   return { counterOffers, dropped };
+}
+
+/**
+ * One flag, one stance: what a draft is filed under, so a row holding two firm
+ * drafts of the same clause shows the reader one of them rather than both.
+ */
+function stanceKey(claim: CounterOfferClaim): string {
+  return `${claim.flagId}:${claim.stance}`;
 }
 
 /** Why this stored counter-offer cannot be shown, or `null` when it can. */
@@ -294,11 +333,11 @@ function refusalFor(
   if (sentence === undefined) {
     return 'it names no flag in this analysis';
   }
-  if (seen.has(claim.flagId)) {
-    return 'the flag already has a counter-offer';
+  if (claim.stance !== 'soft' && claim.stance !== 'firm') {
+    return 'it is in no stance a reader can choose';
   }
-  if (claim.stance !== 'soft') {
-    return 'a firm counter-offer was stored, and firm is only ever drafted when a reader asks for it';
+  if (seen.has(stanceKey(claim))) {
+    return `the flag already has a ${claim.stance} counter-offer`;
   }
   if (claim.sourceSentence !== sentence) {
     return 'it rewrites a sentence other than the one its flag quotes';

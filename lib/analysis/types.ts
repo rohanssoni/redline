@@ -78,8 +78,13 @@ export interface AnalysisResult {
    */
   redLineMatches: RedLineMatch[];
   /**
-   * The soft counter-offer drafted for each flag, keyed to the flag by id
-   * (ADR-0009). The type is `CounterOffer`, not `CounterOfferClaim`: only
+   * The counter-offers drafted for this document's flags, keyed to a flag by id
+   * and carrying the stance each was drafted in (ADR-0009). A read produces the
+   * soft one for each flag and nothing else; a firm one is in here only once a
+   * reader asked for that clause in firm, and it stays so the next view does not
+   * pay for it again (ADR-0012).
+   *
+   * The type is `CounterOffer`, not `CounterOfferClaim`: only
    * `draftCounterOffer` and `verifyCounterOffers` produce one, and both of them
    * check the draft against the source sentence of the flag it belongs to, so a
    * draft that rewrote some other clause cannot arrive here.

@@ -26,8 +26,8 @@ _(filled in at the end of the run)_
 | 5 | Hedged wording only for ambiguity | **done** |
 | 6 | Clean read | **done** |
 | 7 | Zero-flag rate tracking | not started |
-| 8 | Soft counter-offer | in progress |
-| 9 | Firm on demand | not started |
+| 8 | Soft counter-offer | **done** |
+| 9 | Firm on demand | in progress |
 | 10 | Editable red line list | **done** |
 | 11 | Red line always flags | **done** |
 | 12 | LLM judge on matches | **done** |
@@ -78,12 +78,22 @@ their own screen or in a panel beside the result (#10), and what the account men
 holds. Each ticket brief tells the agent to decide, build, and record the choice
 with its reason rather than stall on it.
 
-### The run was interrupted once, mid-ticket
-On 2026-09-11 the session hit its usage limit while #6 was being built. The agent
-died having written one partial file (`lib/analysis/analysis-error.ts`), which was
-deleted rather than salvaged — a half-written file from a dead agent is a worse
-starting point than a clean restart, and the suite was confirmed green (140 tests)
-before #6 was dispatched again. Nothing was committed in that state.
+### The run was interrupted twice by usage limits
+Both interruptions were infrastructure, not the build. Each was handled by looking
+at what the dead agent had actually left behind rather than applying one rule.
+
+- **#6, 2026-09-11.** The agent died having written one partial file
+  (`lib/analysis/analysis-error.ts`). It was deleted and #6 restarted clean: a
+  single half-written file is a worse starting point than nothing. The suite was
+  confirmed green (140 tests) before redispatching.
+- **#9, 2026-09-12.** The agent died part-way through wiring the UI, with the seam
+  and its tests finished — 267 tests passing, up from 255, and exactly two
+  typecheck errors, both in the UI layer. That work was *kept* and a second agent
+  was briefed to finish it rather than restart, since the state was verifiably
+  coherent below the UI and discarding twelve passing tests to re-derive them
+  would have bought nothing.
+
+Nothing was committed in either broken state.
 
 _(more decisions appended as the run proceeds)_
 

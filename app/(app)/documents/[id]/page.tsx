@@ -61,6 +61,7 @@ export default async function DocumentPage({
 
       {analysis && !analysis.cleanRead ? (
         <DocumentReview
+          documentId={document.id}
           name={document.name}
           text={document.text}
           flags={analysis.flags}

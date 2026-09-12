@@ -245,7 +245,7 @@ describe('counter-offers read back out of a stored row', () => {
     );
   });
 
-  it('drops a stored draft that names no flag, quotes the wrong sentence, or is firm', async () => {
+  it('drops a stored draft that names no flag or quotes the wrong sentence', async () => {
     const { analysis } = await readAdhesion();
     const flag = analysis.flags[0];
     const gap = analysis.gaps[0];
@@ -267,7 +267,7 @@ describe('counter-offers read back out of a stored row', () => {
         {
           flagId: flag.id,
           stance: 'firm',
-          sourceSentence: flag.sourceSentence,
+          sourceSentence: analysis.flags[1].sourceSentence,
           text: 'This clause is struck.',
         },
       ],
@@ -281,7 +281,40 @@ describe('counter-offers read back out of a stored row', () => {
       flag.id,
     ]);
     expect(dropped[0].reason).toContain('names no flag');
-    expect(dropped[2].reason).toContain('firm');
+    expect(dropped[2].reason).toContain('rewrites a sentence other than');
+  });
+
+  it('keeps the firm draft a reader asked for, beside the soft one', async () => {
+    const { analysis } = await readAdhesion();
+    const flag = analysis.flags[0];
+
+    const { counterOffers, dropped } = verifyCounterOffers(
+      [
+        {
+          flagId: flag.id,
+          stance: 'soft',
+          sourceSentence: flag.sourceSentence,
+          text: 'The parties agree that this applies only with written consent.',
+        },
+        {
+          flagId: flag.id,
+          stance: 'firm',
+          sourceSentence: flag.sourceSentence,
+          text: 'This clause applies only where the reader has agreed to it in writing.',
+        },
+        {
+          flagId: flag.id,
+          stance: 'firm',
+          sourceSentence: flag.sourceSentence,
+          text: 'A second firm draft of the same clause.',
+        },
+      ],
+      analysis.flags,
+    );
+
+    expect(counterOffers.map((each) => each.stance)).toEqual(['soft', 'firm']);
+    expect(dropped).toHaveLength(1);
+    expect(dropped[0].reason).toContain('already has a firm counter-offer');
   });
 });
 

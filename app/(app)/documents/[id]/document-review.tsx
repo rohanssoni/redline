@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { markUpDocument, textLines } from '@/lib/analysis/marked-document';
 import { rankFindings } from '@/lib/analysis/ranking';
 import type { CounterOfferClaim, Flag, GapClaim } from '@/lib/analysis/types';
-import { CounterOfferNote } from './counter-offer-note';
+import { requestFirmCounterOffer } from './actions';
+import { CounterOfferNote, type FirmDraft } from './counter-offer-note';
 
 const FOLD_MS = 280;
 
@@ -20,17 +21,24 @@ const FOLD_MS = 280;
  * sentence could be put in.
  */
 export function DocumentReview({
+  documentId,
   name,
   text,
   flags,
   gaps,
   counterOffers,
 }: {
+  /** Which document a firm redraft is asked for against. */
+  documentId: string;
   name: string;
   text: string;
   flags: Flag[];
   gaps: GapClaim[];
-  /** One per flag that has one, keyed by flag id. Never one for a gap. */
+  /**
+   * The drafts this document has: the soft one for each flag, and a firm one
+   * for any flag a reader has already asked about (ADR-0012). Never one for a
+   * gap.
+   */
   counterOffers: CounterOfferClaim[];
 }) {
   const findings = useMemo(() => rankFindings(flags, gaps), [flags, gaps]);
@@ -39,8 +47,39 @@ export function DocumentReview({
   // lookup here a gap could answer: the gaps are in their own list, under their
   // own ids, and nothing below asks this map about one (ADR-0014).
   const drafts = useMemo(
-    () => new Map(counterOffers.map((counterOffer) => [counterOffer.flagId, counterOffer])),
+    () =>
+      new Map(
+        counterOffers
+          .filter((counterOffer) => counterOffer.stance === 'soft')
+          .map((counterOffer) => [counterOffer.flagId, counterOffer]),
+      ),
     [counterOffers],
+  );
+
+  // A firm draft is here only for a flag some reader already switched, and it is
+  // what keeps that switch free the second time (ADR-0012).
+  const firmDrafts = useMemo(
+    () =>
+      new Map(
+        counterOffers
+          .filter((counterOffer) => counterOffer.stance === 'firm')
+          .map((counterOffer) => [counterOffer.flagId, counterOffer]),
+      ),
+    [counterOffers],
+  );
+
+  /**
+   * Asks for one flag's firm wording, and only when a reader has asked for it:
+   * this is called from the stance switch inside that flag's note, never from a
+   * render, an effect or a hover (ADR-0012). Nothing here loops over the flags.
+   *
+   * The action writes the draft into the document before it answers, so the map
+   * above holds it on the next view and this is not called for that flag again.
+   */
+  const draftFirm = useCallback(
+    (flagId: string): Promise<FirmDraft> =>
+      requestFirmCounterOffer(documentId, flagId),
+    [documentId],
   );
 
   const flagRanks = useMemo(
@@ -193,7 +232,11 @@ export function DocumentReview({
                         flag whose draft came back about some other clause has
                         nothing here, and the flag itself is unchanged. */}
                     {drafts.has(flag.id) && (
-                      <CounterOfferNote counterOffer={drafts.get(flag.id)!} />
+                      <CounterOfferNote
+                        soft={drafts.get(flag.id)!}
+                        firm={firmDrafts.get(flag.id)}
+                        onDraftFirm={() => draftFirm(flag.id)}
+                      />
                     )}
                   </div>
                 </div>

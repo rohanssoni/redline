@@ -509,6 +509,54 @@ p {
   color: var(--ink-soft);
 }
 
+/* Soft or firm, for this flag alone. It takes the crimson the way the rest of
+   the markup does: on a rule under the stance the reader is reading. */
+
+.stance-switch {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.stance-option {
+  padding: 2px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color 0.16s var(--ease-out);
+}
+
+.stance-option:hover {
+  color: var(--ink);
+}
+
+.stance-option[aria-pressed="true"] {
+  font-weight: 700;
+  color: var(--ink);
+  border-bottom-color: var(--markup);
+}
+
+/* While the firmer version is being written. The soft wording below it is
+   untouched and stays readable, so only the switch goes quiet. */
+.stance-option:disabled {
+  color: var(--ink-muted);
+  cursor: progress;
+}
+
+.stance-state {
+  margin-top: 8px;
+  max-width: 62ch;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.stance-state[data-tone="refused"] {
+  color: var(--markup);
+}
+
 .counter-offer-text {
   margin-top: 6px;
   font-family: var(--font-doc);

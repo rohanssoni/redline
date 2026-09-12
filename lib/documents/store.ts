@@ -168,6 +168,10 @@ export function toAnalysisResult(
     // draft could otherwise name a flag this document no longer has, quote a
     // sentence the flag does not, or name a gap — and a gap with drafted clause
     // language stapled to it is the one thing ADR-0014 exists to prevent.
+    //
+    // Both stances come back out. A firm draft is in the column because a reader
+    // asked for that clause in firm and it was kept there on purpose, and reading
+    // it out again is what stops the next view redrafting it (ADR-0012).
     counterOffers: verifyCounterOffers(
       storedCounterOffers(record),
       flags,
