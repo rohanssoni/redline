@@ -35,8 +35,8 @@ _(filled in at the end of the run)_
 | 14 | Library | **done** |
 | 15 | Dismiss a flag | **done** |
 | 16 | Counter-offers sent | **done** |
-| 18 | Paste text | in progress |
-| 19 | No-account try | not started |
+| 18 | Paste text | **done** |
+| 19 | No-account try | in progress |
 | 20 | Keep a no-account analysis | not started |
 
 ---
