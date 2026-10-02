@@ -44,7 +44,7 @@ export interface TryAllowance {
  * connection.
  *
  * A request that arrives with no address at all is counted in one shared bucket.
- * That is deliberate: those callers share three tries a day between them, which
+ * That is deliberate: those callers share five tries a day between them, which
  * is the conservative end of the mistake, rather than each being unlimited.
  */
 export function callerKey(address: string | null): string {

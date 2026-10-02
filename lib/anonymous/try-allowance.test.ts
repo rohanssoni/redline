@@ -23,11 +23,11 @@ function usedTries(count: number): unknown[] {
 }
 
 describe('the daily rule itself', () => {
-  it('allows three tries and no fourth', () => {
-    expect(ANONYMOUS_TRIES_PER_DAY).toBe(3);
+  it('allows five tries and no sixth', () => {
+    expect(ANONYMOUS_TRIES_PER_DAY).toBe(5);
     expect(withinDailyLimit(0)).toBe(true);
-    expect(withinDailyLimit(2)).toBe(true);
-    expect(withinDailyLimit(3)).toBe(false);
+    expect(withinDailyLimit(4)).toBe(true);
+    expect(withinDailyLimit(5)).toBe(false);
     expect(withinDailyLimit(9)).toBe(false);
   });
 
