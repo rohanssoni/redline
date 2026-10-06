@@ -675,6 +675,29 @@ describe('analyzeDocument, the severity scale', () => {
   });
 });
 
+describe('analyzeDocument, the plausibility answers', () => {
+  // `dangerousOnly` drops a flag unless both answers come back the right way, so
+  // they decide whether the reader sees the clause at all (ADR-0004). Left to the
+  // schema's field descriptions, a live model read the same lease three times,
+  // proposed the same seven or eight clauses each time, and answered
+  // changesYourEconomicsUnilaterally false for all of them in two of the reads:
+  // a fee fixed at signing was "not a change after signing". Those reads came
+  // back with no flags at all.
+  it('tells the flag stage what both answers mean in its instructions', () => {
+    const { text } = loadAdhesionFixture();
+    const instructions = flagsRequest(text)
+      .messages.filter((message) => message.role === 'system')
+      .map((message) => message.content)
+      .join('\n');
+
+    expect(instructions).toContain('changesYourEconomicsUnilaterally');
+    expect(instructions).toContain('bindsBothSidesEqually');
+    // ADR-0004's own examples are fixed terms, not later changes, so a cost the
+    // clause fixes at signing has to be named as passing.
+    expect(instructions).toMatch(/fixes in advance/);
+  });
+});
+
 describe('analyzeDocument, the clean read', () => {
   it('returns a clean read for an agreement with nothing in it above the threshold', async () => {
     const { text, sidecar } = loadCleanFixture();

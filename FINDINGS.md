@@ -356,7 +356,8 @@ not told.
 Also seen on the uploaded lease below (`counterOffers` empty with 7 flags), so it
 holds for uploads as well as pastes.
 
-### 7. The same lease gets 7, 0 or 2 flags depending on the read
+### 7. The same lease gets 7, 0 or 2 flags depending on the read (fixed)
+**Fixed** on `fix-critical-findings`: the flag prompt now spells out the two plausibility answers, including that a cost the clause fixes in advance counts, so the model stops marking every clause in a read as harmless and having the filter drop them all.
 
 Steps, from https://redline-mauve.vercel.app/:
 
