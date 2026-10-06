@@ -234,6 +234,26 @@ describe('createOpenRouterClient', () => {
     expect(waits).toEqual([5000, 5000]);
   });
 
+  it('says why, when the rate limit outlasts the retries', async () => {
+    const { fetchImpl } = sequenceFetch([
+      { status: 429, payload: rateLimited(5) },
+      { status: 429, payload: rateLimited(5) },
+      { status: 429, payload: rateLimited(5) },
+    ]);
+
+    const failure = await createOpenRouterClient({
+      fetchImpl,
+      sleep: recordingSleep([]),
+    })
+      .complete(request)
+      .catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(ModelCallError);
+    expect((failure as ModelCallError).status).toBe(429);
+    expect((failure as ModelCallError).message).toMatch(/Fireworks/);
+    expect((failure as ModelCallError).message).toMatch(/rate-limited upstream/);
+  });
+
   it('waits no longer than ten seconds, whatever the rate limit asks', async () => {
     const { fetchImpl } = sequenceFetch([
       { status: 429, payload: rateLimited(120) },

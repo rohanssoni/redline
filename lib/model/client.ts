@@ -35,8 +35,12 @@ export class ModelOutputError extends Error {
 
 /** Raised when the model could not be reached or answered with an error. */
 export class ModelCallError extends Error {
-  constructor(message: string) {
+  /** The HTTP status the model service answered with, when it answered. */
+  readonly status?: number;
+
+  constructor(message: string, status?: number) {
     super(message);
+    this.status = status;
     this.name = 'ModelCallError';
   }
 }

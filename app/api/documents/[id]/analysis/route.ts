@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { readDocument } from '@/lib/analysis/read-document';
-import { AnalysisError } from '@/lib/analysis/types';
 import { createSupabaseDocuments } from '@/lib/documents/supabase-documents';
 import { createSupabaseJudgeLog } from '@/lib/judge/supabase-judge-log';
 import { createSupabaseRedLines } from '@/lib/red-lines/supabase-red-lines';
 import { createOpenRouterClient } from '@/lib/model/openrouter';
+import { readFailure } from '@/lib/model/read-failure';
 import { SIGN_IN_UNAVAILABLE } from '@/lib/supabase/config';
 import { currentReader } from '@/lib/supabase/server';
 import { createSupabaseZeroFlagLog } from '@/lib/zero-flag/supabase-zero-flag-log';
@@ -58,14 +58,15 @@ export async function POST(
     return NextResponse.json({ analysis: saved.analysis });
   } catch (error) {
     console.error('The analysis of document %s did not finish', id, error);
+    const failure = readFailure(error, { saved: true });
     return NextResponse.json(
+      { error: failure.message },
       {
-        error:
-          error instanceof AnalysisError
-            ? error.message
-            : 'The read didn’t finish. Your document is saved, so you can start it again.',
+        status: failure.status,
+        headers: failure.retryAfterSeconds
+          ? { 'Retry-After': String(failure.retryAfterSeconds) }
+          : undefined,
       },
-      { status: 502 },
     );
   }
 }

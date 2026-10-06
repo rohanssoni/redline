@@ -40,7 +40,23 @@ export interface OpenRouterOptions {
 
 interface ChatCompletionReply {
   choices?: Array<{ message?: { content?: unknown } }>;
-  error?: { message?: string; metadata?: { retry_after_seconds?: unknown } };
+  error?: {
+    message?: string;
+    metadata?: { retry_after_seconds?: unknown; provider_name?: unknown; raw?: unknown };
+  };
+}
+
+/**
+ * What OpenRouter said, for the log. Its message for a provider's refusal is
+ * only "Provider returned error"; the reason is in the metadata.
+ */
+function refusalDetail(body: ChatCompletionReply | null, status: number): string {
+  const message = body?.error?.message ?? 'no message';
+  const metadata = body?.error?.metadata;
+  const from =
+    typeof metadata?.provider_name === 'string' ? `${metadata.provider_name}: ` : '';
+  const why = typeof metadata?.raw === 'string' ? ` (${from}${metadata.raw})` : '';
+  return `${message}${why} [HTTP ${status}]`;
 }
 
 /**
@@ -122,8 +138,10 @@ export function createOpenRouterClient(
       }
 
       if (!response.ok) {
-        const detail = body?.error?.message ?? `HTTP ${response.status}`;
-        throw new ModelCallError(`OpenRouter refused ${request.name}: ${detail}`);
+        throw new ModelCallError(
+          `OpenRouter refused ${request.name}: ${refusalDetail(body, response.status)}`,
+          response.status,
+        );
       }
 
       const content = body?.choices?.[0]?.message?.content;
