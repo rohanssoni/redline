@@ -114,3 +114,6 @@ secrets.yml
 
 .vercel
 .env*
+
+# TypeScript build cache, rewritten on every build
+*.tsbuildinfo
