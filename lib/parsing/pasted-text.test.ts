@@ -88,6 +88,13 @@ describe('readPaste', () => {
     expect(paste.refused).toMatch(/not enough text/i);
   });
 
+  it('refuses a short paste as text, not as a screenshot', () => {
+    const paste = readPaste({ name: '', text: 'Pay me soon please.' });
+
+    expect(paste.refused).toMatch(/not enough text/i);
+    expect(paste.refused).not.toMatch(/screenshot/i);
+  });
+
   it('refuses a pasted image before anything is stored, however much text came with it', async () => {
     const { text } = loadAdhesionFixture();
     const sent = vi.fn();

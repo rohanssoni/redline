@@ -173,6 +173,8 @@ describe('the limits, both settled before anything is sent to a model', () => {
     expect(outcome.read).toBeUndefined();
     expect(outcome.status).toBe(413);
     expect(outcome.refused).toContain('50,000');
+    // The route can't tell a paste from an upload, so the wording fits both.
+    expect(outcome.refused).not.toMatch(/file/i);
     // And it costs the visitor nothing: the length is a fact about the argument,
     // so it is settled before a try is claimed.
     expect(allowance.claims).toBe(0);

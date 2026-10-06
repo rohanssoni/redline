@@ -48,7 +48,7 @@ export function unreadableReason(text: string, source: TextSource): string | nul
   }
 
   if (source === 'pasted') {
-    return 'There is not enough text here to read. Paste the wording of the agreement itself rather than a screenshot of it.';
+    return 'There is not enough text here to read. Paste the whole agreement, from its title to the signatures.';
   }
   return 'There is almost no text in this file, which usually means its pages are scans or photographs. Redline reads words, so there is nothing here for it to read. A file saved out of a word processor will work.';
 }
