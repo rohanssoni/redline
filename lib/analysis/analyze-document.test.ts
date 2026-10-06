@@ -15,6 +15,7 @@ import {
   flagsRequest,
   gapsRequest,
   redLineMatchesRequest,
+  summaryRequest,
 } from './analyze-document';
 import { SEVERITY_THRESHOLD, bandFor, rankFindings } from './ranking';
 import { AnalysisError } from './types';
@@ -96,6 +97,70 @@ describe('analyzeDocument, summary stage', () => {
     await expect(analyzeDocument(text, [], { model })).rejects.toThrow(
       /unreachable/,
     );
+  });
+});
+
+describe('analyzeDocument, text that is not an agreement', () => {
+  const recipe = [
+    'Grandma’s Banana Bread',
+    'Heat the oven to 175 degrees and butter a loaf tin. Mash three very ripe bananas in a bowl, then stir in a third of a cup of melted butter.',
+    'Mix in a teaspoon of baking soda, a pinch of salt, three quarters of a cup of sugar, one beaten egg and a teaspoon of vanilla, then fold in a cup and a half of flour.',
+    'Pour the batter into the tin and bake for an hour, until a skewer comes out clean. Let it cool before slicing.',
+  ].join('\n\n');
+
+  // What a model with nothing to flag sends back for a recipe: a summary saying
+  // so, and empty lists from the stages after it, if they are ever asked.
+  function recipeModel() {
+    return createStubModelClient({
+      document_summary: {
+        summary:
+          'The text you provided is not an agreement. It is a recipe for banana bread, with the ingredients and the steps to bake it.',
+        readsAsAnAgreement: false,
+      },
+      document_flags: { flags: [] },
+      document_gaps: { gaps: [] },
+    });
+  }
+
+  it('refuses it rather than calling it a clean read', async () => {
+    await expect(
+      analyzeDocument(recipe, [], { model: recipeModel() }),
+    ).rejects.toThrow(
+      new AnalysisError(
+        'This doesn’t look like an agreement, so Redline didn’t read it. Redline reads the agreement a client sends a freelancer. Paste or upload that agreement instead.',
+      ),
+    );
+  });
+
+  it('asks for nothing after the summary, and counts no finished read', async () => {
+    const model = recipeModel();
+    const zeroFlagLog = createStubZeroFlagLog();
+
+    await expect(
+      analyzeDocument(recipe, ['No unpaid revisions'], { model, zeroFlagLog }),
+    ).rejects.toBeInstanceOf(AnalysisError);
+
+    expect(model.calls.map((call) => call.name)).toEqual(['document_summary']);
+    expect(zeroFlagLog.written).toHaveLength(0);
+  });
+
+  it('asks the summary stage whether the text is an agreement at all', () => {
+    const request = summaryRequest(recipe);
+
+    expect(request.schema.required).toContain('readsAsAnAgreement');
+    expect(request.schema.properties.readsAsAnAgreement).toMatchObject({
+      type: 'boolean',
+    });
+  });
+
+  it('still reads an agreement the summary stage recognises as one', async () => {
+    const { text, sidecar } = loadCleanFixture();
+
+    const result = await analyzeDocument(text, [], {
+      model: stubModelClientFor(sidecar),
+    });
+
+    expect(result.cleanRead).not.toBeNull();
   });
 });
 
