@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createStubSupabase } from '../../tests/support/stub-supabase';
 import {
   ANONYMOUS_TRIES_TABLE,
@@ -23,12 +23,12 @@ function usedTries(count: number): unknown[] {
 }
 
 describe('the daily rule itself', () => {
-  it('allows five tries and no sixth', () => {
-    expect(ANONYMOUS_TRIES_PER_DAY).toBe(5);
+  it('allows fifteen tries and no sixteenth', () => {
+    expect(ANONYMOUS_TRIES_PER_DAY).toBe(15);
     expect(withinDailyLimit(0)).toBe(true);
-    expect(withinDailyLimit(4)).toBe(true);
-    expect(withinDailyLimit(5)).toBe(false);
-    expect(withinDailyLimit(9)).toBe(false);
+    expect(withinDailyLimit(14)).toBe(true);
+    expect(withinDailyLimit(15)).toBe(false);
+    expect(withinDailyLimit(19)).toBe(false);
   });
 
   it('counts by UTC day, so the count turns over at one moment for everybody', () => {
@@ -65,22 +65,27 @@ describe('the caller a try is counted against', () => {
   });
 });
 
-describe('claiming a try against the count', () => {
-  it('counts today’s rows for this caller and records the new one', async () => {
+describe('checking a try against the count, and recording it', () => {
+  it('counts today’s rows for this caller, and records the new one only when asked', async () => {
     const supabase = createStubSupabase({ rows: [usedTries(1), [{ id: 'new' }]] });
-
-    const outcome = await createSupabaseTryAllowance(supabase.client, {
+    const allowance = createSupabaseTryAllowance(supabase.client, {
       key: KEY,
       now: NOW,
-    }).claim();
+    });
+
+    const outcome = await allowance.check();
 
     expect(outcome.allowed).toBe(true);
+    expect(supabase.queries).toHaveLength(1);
     expect(supabase.queries[0].table).toBe(ANONYMOUS_TRIES_TABLE);
     expect(supabase.queries[0].operation).toBe('select');
     expect(supabase.queries[0].filters).toEqual([
       ['caller_key', KEY],
       ['day', '2026-03-04'],
     ]);
+
+    await allowance.record();
+
     expect(supabase.queries[1].operation).toBe('insert');
     expect(supabase.queries[1].values).toEqual({
       caller_key: KEY,
@@ -96,10 +101,26 @@ describe('claiming a try against the count', () => {
     const outcome = await createSupabaseTryAllowance(supabase.client, {
       key: KEY,
       now: NOW,
-    }).claim();
+    }).check();
 
     expect(outcome).toEqual({ allowed: false, reason: DAILY_LIMIT_REASON });
     expect(supabase.queries).toHaveLength(1);
+  });
+
+  it('tells a refused visitor the day’s limit without calling the refused try a read', async () => {
+    const supabase = createStubSupabase({
+      rows: [usedTries(ANONYMOUS_TRIES_PER_DAY)],
+    });
+
+    const outcome = await createSupabaseTryAllowance(supabase.client, {
+      key: KEY,
+      now: NOW,
+    }).check();
+
+    // The refused try was never read, so naming it as the day's last read is wrong.
+    const reason = outcome.allowed ? '' : outcome.reason;
+    expect(reason).toContain(`${ANONYMOUS_TRIES_PER_DAY} reads a day`);
+    expect(reason).not.toMatch(/That’s the \w+ read/);
   });
 
   it('fails closed when the count cannot be read', async () => {
@@ -108,12 +129,24 @@ describe('claiming a try against the count', () => {
     const outcome = await createSupabaseTryAllowance(supabase.client, {
       key: KEY,
       now: NOW,
-    }).claim();
+    }).check();
 
     expect(outcome).toEqual({
       allowed: false,
       reason: LIMIT_UNAVAILABLE_REASON,
     });
+  });
+
+  it('logs a try it could not record rather than throwing, because the read is already paid for', async () => {
+    const supabase = createStubSupabase({ error: 'the database is down' });
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(
+      createSupabaseTryAllowance(supabase.client, { key: KEY, now: NOW }).record(),
+    ).resolves.toBeUndefined();
+
+    expect(logged).toHaveBeenCalledOnce();
+    logged.mockRestore();
   });
 });
 
@@ -126,7 +159,7 @@ describe('who the limit is for', () => {
       signedIn: true,
       address: '198.51.100.4',
       now: NOW,
-    }).claim();
+    }).check();
 
     expect(outcome.allowed).toBe(true);
     expect(supabase.queries).toEqual([]);
@@ -140,7 +173,7 @@ describe('who the limit is for', () => {
       signedIn: false,
       address: '198.51.100.4',
       now: NOW,
-    }).claim();
+    }).check();
 
     expect(outcome.allowed).toBe(true);
     expect(supabase.queries[0].filters).toEqual([
@@ -155,7 +188,7 @@ describe('who the limit is for', () => {
       signedIn: false,
       address: '198.51.100.4',
       now: NOW,
-    }).claim();
+    }).check();
 
     expect(outcome.allowed).toBe(true);
   });

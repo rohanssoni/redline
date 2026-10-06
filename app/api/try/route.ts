@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { allowanceFor, callerAddress } from '@/lib/anonymous/try-allowance';
 import { tryDocument } from '@/lib/anonymous/try-document';
-import { AnalysisError } from '@/lib/analysis/types';
 import { createOpenRouterClient } from '@/lib/model/openrouter';
+import { readFailure } from '@/lib/model/read-failure';
 import { currentReader, serverSupabase } from '@/lib/supabase/server';
 
 /**
@@ -20,7 +20,8 @@ import { currentReader, serverSupabase } from '@/lib/supabase/server';
  * What this route does reach Supabase for is the count of tries this caller has
  * had today, and `allowanceFor` is the whole of that decision: a signed-in
  * reader is not metered, a copy with no project configured has no count to keep,
- * and everybody else is counted before a model is called.
+ * and everybody else is checked before a model is called and counted once the
+ * read comes back.
  */
 export async function POST(request: Request) {
   const contentType = request.headers.get('content-type') ?? '';
@@ -83,14 +84,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ read: outcome.read, text: outcome.text });
   } catch (error) {
     console.error('A try without an account did not finish', error);
+    const failure = readFailure(error, { saved: false });
     return NextResponse.json(
+      { error: failure.message },
       {
-        error:
-          error instanceof AnalysisError
-            ? error.message
-            : 'The read didn’t finish. Nothing was saved, so you can start it again.',
+        status: failure.status,
+        headers: failure.retryAfterSeconds
+          ? { 'Retry-After': String(failure.retryAfterSeconds) }
+          : undefined,
       },
-      { status: 502 },
     );
   }
 }

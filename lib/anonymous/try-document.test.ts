@@ -3,6 +3,7 @@ import { loadAdhesionFixture, loadCleanFixture } from '../../tests/fixtures';
 import { createStubSupabase } from '../../tests/support/stub-supabase';
 import { stubModelClientFor } from '../../tests/support/stub-model-client';
 import { containsSourceSentence } from '../analysis/source-sentence';
+import type { ModelClient } from '../model/client';
 import {
   allowanceFor,
   createSupabaseTryAllowance,
@@ -25,10 +26,11 @@ function countingAllowance(outcome: AllowanceOutcome): TryAllowance & {
 } {
   const allowance = {
     claims: 0,
-    async claim(): Promise<AllowanceOutcome> {
+    async check(): Promise<AllowanceOutcome> {
       allowance.claims += 1;
       return outcome;
     },
+    async record(): Promise<void> {},
   };
   return allowance;
 }
@@ -159,6 +161,37 @@ describe('what an anonymous try writes down', () => {
   });
 });
 
+describe('a try that does not finish', () => {
+  it('is not counted, so starting it again does not cost another read', async () => {
+    const { text } = loadAdhesionFixture();
+    const supabase = createStubSupabase({ rows: [[], [{ id: 'try-1' }]] });
+    const failing: ModelClient = {
+      async complete() {
+        throw new Error('The provider is rate-limiting this model.');
+      },
+    };
+
+    await expect(
+      tryDocument(
+        {
+          model: failing,
+          allowance: allowanceFor({
+            supabase: supabase.client,
+            signedIn: false,
+            address: '203.0.113.7',
+            now: NOW,
+          }),
+        },
+        text,
+      ),
+    ).rejects.toThrow();
+
+    expect(supabase.queries.every((query) => query.operation === 'select')).toBe(
+      true,
+    );
+  });
+});
+
 describe('the limits, both settled before anything is sent to a model', () => {
   it('turns down a document over the maximum length without calling the model', async () => {
     const { sidecar } = loadAdhesionFixture();
@@ -173,6 +206,8 @@ describe('the limits, both settled before anything is sent to a model', () => {
     expect(outcome.read).toBeUndefined();
     expect(outcome.status).toBe(413);
     expect(outcome.refused).toContain('50,000');
+    // The route can't tell a paste from an upload, so the wording fits both.
+    expect(outcome.refused).not.toMatch(/file/i);
     // And it costs the visitor nothing: the length is a fact about the argument,
     // so it is settled before a try is claimed.
     expect(allowance.claims).toBe(0);

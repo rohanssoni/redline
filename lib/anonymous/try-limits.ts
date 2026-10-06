@@ -9,10 +9,12 @@
  *
  * The numbers were chosen for this build and recorded on issue #19:
  *
- * - **Five tries per caller per UTC day.** A freelancer who hits a bad parse can
- *   try again and still read a second agreement before signing up, and an
- *   address that wants more than that is asking for more than a trial. Raised
- *   from three on 2026-10-02.
+ * - **Fifteen tries per caller per UTC day, for now.** Raised from five on
+ *   2026-10-06 so the findings of the adversarial pass can be checked on live
+ *   and preview deployments, which share one count per connection. Due to come
+ *   down to three once those fixes are in. Five was chosen so a freelancer who
+ *   hits a bad parse can try again and still read a second agreement before
+ *   signing up.
  * - **50,000 characters.** A client agreement runs roughly 1,000 to 4,000 words,
  *   so this clears a long one several times over while capping what a single
  *   anonymous request can cost. Nothing is inferred from the shape of the file:
@@ -21,7 +23,7 @@
  */
 
 /** Tries one caller gets in a calendar day, UTC. */
-export const ANONYMOUS_TRIES_PER_DAY = 5;
+export const ANONYMOUS_TRIES_PER_DAY = 15;
 
 /** The longest extracted text a try without an account will read. */
 export const MAXIMUM_DOCUMENT_CHARACTERS = 50_000;
@@ -44,17 +46,17 @@ export function withinDailyLimit(triesToday: number): boolean {
 
 /** What a visitor who has used the day's tries reads. */
 export const DAILY_LIMIT_REASON =
-  'That’s the fifth read from this connection today, and five a day is what ' +
-  'Redline gives without an account. The count starts again at midnight UTC. ' +
+  `Redline gives ${ANONYMOUS_TRIES_PER_DAY} reads a day without an account, and this ` +
+  'connection has used all of them. The count starts again at midnight UTC. ' +
   'An account lifts it.';
 
 /** What a visitor whose document is longer than the cap reads. */
 export function tooLongReason(characters: number): string {
   return (
-    `This one runs to about ${characters.toLocaleString('en-GB')} characters, and a ` +
+    `This one runs to about ${characters.toLocaleString('en-GB')} characters. A ` +
     `read without an account stops at ${MAXIMUM_DOCUMENT_CHARACTERS.toLocaleString('en-GB')}, ` +
-    'which is longer than most client agreements get. There’s nothing wrong with ' +
-    'the file. It’s more than one free read covers.'
+    'which is longer than most client agreements get, so this is more than one ' +
+    'free read covers.'
   );
 }
 

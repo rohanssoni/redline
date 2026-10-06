@@ -218,19 +218,23 @@ export function TryPanel() {
         <div className="try-state" data-tone="refused" role="alert">
           <p className="try-state-title">Redline didn’t read that one</p>
           <p>{step.reason}</p>
-          <div className="try-state-actions">
-            <button
-              className="link-button"
-              type="button"
-              onClick={() => {
-                setStep({ at: 'waiting' });
-                if (input.current) input.current.value = '';
-                input.current?.click();
-              }}
-            >
-              Choose another file
-            </button>
-          </div>
+          {/* A visitor who pasted fixes it in the box below, and "Upload a file
+              instead" is already there. */}
+          {!pasting && (
+            <div className="try-state-actions">
+              <button
+                className="link-button"
+                type="button"
+                onClick={() => {
+                  setStep({ at: 'waiting' });
+                  if (input.current) input.current.value = '';
+                  input.current?.click();
+                }}
+              >
+                Choose another file
+              </button>
+            </div>
+          )}
         </div>
       )}
 
