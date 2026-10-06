@@ -111,3 +111,6 @@ secrets.yml
 
 # migrations are source, not a database dump
 !supabase/migrations/*.sql
+
+.vercel
+.env*
