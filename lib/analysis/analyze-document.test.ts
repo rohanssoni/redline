@@ -10,7 +10,7 @@ import {
 import { JUDGE_CALL_NAME } from './red-line-judge';
 import type { ArraySchema, ObjectSchema } from '../model/json-schema';
 import { ModelCallError, ModelOutputError } from '../model/client';
-import { analyzeDocument } from './analyze-document';
+import { analyzeDocument, flagsRequest, gapsRequest } from './analyze-document';
 import { SEVERITY_THRESHOLD, bandFor, rankFindings } from './ranking';
 import { AnalysisError } from './types';
 
@@ -568,6 +568,26 @@ describe('analyzeDocument, gap stage', () => {
     model.fail('document_gaps', 'OpenRouter is unreachable');
 
     await expect(analyzeDocument(text, [], { model })).rejects.toThrow(/unreachable/);
+  });
+});
+
+describe('analyzeDocument, the severity scale', () => {
+  // The threshold is a number on a 0 to 100 scale, so the model has to be told
+  // that scale in what it reads as instructions. Left to the schema's field
+  // descriptions, a live model scored on 1 to 10, everything fell under the
+  // threshold, and a one-sided agreement came back as a clean read.
+  it.each([
+    ['flag', flagsRequest],
+    ['gap', gapsRequest],
+  ])('tells the %s stage the scale and the threshold in its instructions', (_, request) => {
+    const { text } = loadAdhesionFixture();
+    const instructions = request(text)
+      .messages.filter((message) => message.role === 'system')
+      .map((message) => message.content)
+      .join('\n');
+
+    expect(instructions).toContain('0 to 100');
+    expect(instructions).toContain(`below ${SEVERITY_THRESHOLD}`);
   });
 });
 

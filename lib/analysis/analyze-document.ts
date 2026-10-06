@@ -7,7 +7,13 @@ import {
 } from '../document-text';
 import { AnalysisError, type AnalysisDeps, type AnalysisResult } from './types';
 import { cleanReadFor } from './clean-read';
-import { aboveThreshold, bandFor, dangerousOnly, rankGaps } from './ranking';
+import {
+  SEVERITY_THRESHOLD,
+  aboveThreshold,
+  bandFor,
+  dangerousOnly,
+  rankGaps,
+} from './ranking';
 import { settleWording } from './hedging';
 import { verifyGaps, type GapClaim } from './gap';
 import { applyRedLineOverride } from './red-line-override';
@@ -189,6 +195,7 @@ const FLAGS_SYSTEM_PROMPT = [
   '- Do not list a term the agreement is missing. Something absent has no sentence to quote.',
   '',
   'Severity is what the clause costs the reader if it happens, not how often clauses like it turn up. Rate the consequence.',
+  `Severity is a whole number from 0 to 100, not a score out of 10. Anything below ${SEVERITY_THRESHOLD} is never shown to the reader, so keep that for a clause that costs them almost nothing.`,
   '',
   'Two separate things you are asked about each clause, which are not the same question:',
   '- harmConfidence is how sure you are that this clause costs the reader. Partial is fine and changes nothing about how you write.',
@@ -290,6 +297,7 @@ const GAPS_SYSTEM_PROMPT = [
   '- Write plainly. Do not hedge.',
   '',
   'Severity is what the absence costs the reader if it bites, not how often agreements leave the term out.',
+  `Severity is a whole number from 0 to 100, not a score out of 10. Anything below ${SEVERITY_THRESHOLD} is never shown to the reader, so keep that for an absence that costs them almost nothing.`,
 ].join('\n');
 
 /** The prompt for the gap stage. Exported so a test can read what was sent. */
