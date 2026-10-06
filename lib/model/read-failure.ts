@@ -39,3 +39,19 @@ export function readFailure(error: unknown, { saved }: { saved: boolean }): Read
       : 'The read didn’t finish. Nothing was saved, so you can start it again.',
   };
 }
+
+/** What the reader is told when the answering itself didn't finish. */
+export const ASK_FAILED =
+  'That question didn’t get through. Nothing about your document has changed, so try it again.';
+
+/**
+ * What a reader is told when a question to the document throws. As with a
+ * read, a model still turning calls away after the client's retries is the one
+ * failure where waiting helps, so it is the one that says so.
+ */
+export function questionFailure(error: unknown): string {
+  if (error instanceof ModelCallError && error.status === 429) {
+    return 'The model Redline uses was too busy to answer that. Nothing about your document has changed, so wait a minute and ask again.';
+  }
+  return ASK_FAILED;
+}

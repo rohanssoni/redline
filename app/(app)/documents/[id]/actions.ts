@@ -16,6 +16,7 @@ import {
 } from '@/lib/dismissals/set-aside-flag';
 import { createSupabaseFlagDismissals } from '@/lib/dismissals/supabase-flag-dismissals';
 import { createOpenRouterClient } from '@/lib/model/openrouter';
+import { questionFailure } from '@/lib/model/read-failure';
 import { SIGN_IN_UNAVAILABLE } from '@/lib/supabase/config';
 import { currentReader } from '@/lib/supabase/server';
 
@@ -220,10 +221,6 @@ export interface QuestionState {
   reason?: string;
 }
 
-/** What the reader is told when the answering itself didn't finish. */
-const ASK_FAILED =
-  'That question didn’t get through. Nothing about your document has changed, so try it again.';
-
 /**
  * Puts one question to one document the reader owns.
  *
@@ -268,6 +265,6 @@ export async function askAboutDocument(
       documentId,
       error,
     );
-    return { reason: ASK_FAILED };
+    return { reason: questionFailure(error) };
   }
 }

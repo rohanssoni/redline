@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AnalysisError } from '../analysis/types';
 import { ModelCallError, ModelOutputError } from './client';
-import { readFailure } from './read-failure';
+import { ASK_FAILED, questionFailure, readFailure } from './read-failure';
 
 describe('readFailure', () => {
   it('tells a visitor the model was busy, and when to send it again', () => {
@@ -59,5 +59,33 @@ describe('readFailure', () => {
 
     expect(failure.status).toBe(502);
     expect(failure.message).toBe('There is not enough text in this document to read.');
+  });
+});
+
+describe('questionFailure', () => {
+  it('tells a reader the model was too busy to answer, and to wait a minute', () => {
+    expect(
+      questionFailure(
+        new ModelCallError('OpenRouter refused document_answer: busy', 429),
+      ),
+    ).toBe(
+      'The model Redline uses was too busy to answer that. Nothing about your document has changed, so wait a minute and ask again.',
+    );
+  });
+
+  it('keeps the general message for a model error that is not a rate limit', () => {
+    expect(
+      questionFailure(
+        new ModelCallError('OpenRouter refused document_answer: Insufficient credits', 402),
+      ),
+    ).toBe(ASK_FAILED);
+  });
+
+  it('keeps the general message for a reply that could not be trusted', () => {
+    expect(questionFailure(new ModelOutputError('not JSON'))).toBe(ASK_FAILED);
+  });
+
+  it('keeps the general message for a failure outside the model', () => {
+    expect(questionFailure(new Error('the store did not answer'))).toBe(ASK_FAILED);
   });
 });

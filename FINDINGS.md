@@ -421,7 +421,9 @@ Happened twice, on both PDF uploads.
 Severity: misleads a reader, rarely. It only matters when a flagged sentence has a
 hyphenated word split across lines, but then the quote is not the agreement's wording.
 
-### 9. Questions sometimes fail with "That question didn't get through"
+### 9. Questions sometimes fail with "That question didn't get through" (fixed)
+
+**Fixed** on `fix-critical-findings`: the question box now tells the reader the model was too busy to answer and to wait a minute before asking again when the model is still rate-limiting after the client's retries, and keeps the general message for every other failure.
 
 Steps, from https://redline-mauve.vercel.app/:
 
