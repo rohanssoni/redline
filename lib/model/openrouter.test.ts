@@ -35,6 +35,46 @@ function recordingFetch(reply: { status?: number; payload: unknown }) {
   return { sent, fetchImpl };
 }
 
+/** Answers each call with the next reply in the list, recording what was sent. */
+function sequenceFetch(replies: Array<{ status?: number; payload: unknown }>) {
+  const sent: Sent[] = [];
+  const fetchImpl = (async (url: string | URL | Request, init?: RequestInit) => {
+    sent.push({
+      url: String(url),
+      init: init ?? {},
+      body: JSON.parse(String(init?.body ?? '{}')),
+    });
+    const reply = replies[sent.length - 1];
+    return new Response(JSON.stringify(reply.payload), {
+      status: reply.status ?? 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }) as unknown as typeof fetch;
+  return { sent, fetchImpl };
+}
+
+/** What OpenRouter sends when the provider's shared pool is full. */
+function rateLimited(retryAfterSeconds: number) {
+  return {
+    error: {
+      code: 429,
+      message: 'Provider returned error',
+      metadata: {
+        raw: 'The model is temporarily rate-limited upstream.',
+        provider_name: 'Fireworks',
+        retry_after_seconds: retryAfterSeconds,
+      },
+    },
+  };
+}
+
+/** A sleep that returns at once and writes down how long it was asked for. */
+function recordingSleep(waits: number[]) {
+  return async (ms: number) => {
+    waits.push(ms);
+  };
+}
+
 function completion(content: string) {
   return { choices: [{ message: { content } }] };
 }
@@ -145,6 +185,77 @@ describe('createOpenRouterClient', () => {
     await expect(
       createOpenRouterClient({ fetchImpl }).complete(request),
     ).rejects.toThrow(/Insufficient credits/);
+  });
+
+  it('reports an error other than a rate limit after one attempt', async () => {
+    const { sent, fetchImpl } = recordingFetch({
+      status: 402,
+      payload: { error: { message: 'Insufficient credits' } },
+    });
+    const waits: number[] = [];
+
+    await expect(
+      createOpenRouterClient({ fetchImpl, sleep: recordingSleep(waits) }).complete(request),
+    ).rejects.toThrow(/Insufficient credits/);
+    expect(sent).toHaveLength(1);
+    expect(waits).toEqual([]);
+  });
+
+  it('waits as long as the rate limit asks and tries again', async () => {
+    const { sent, fetchImpl } = sequenceFetch([
+      { status: 429, payload: rateLimited(5) },
+      { payload: completion(JSON.stringify({ summary: 'What this agreement says.' })) },
+    ]);
+    const waits: number[] = [];
+
+    const result = await createOpenRouterClient({
+      fetchImpl,
+      sleep: recordingSleep(waits),
+    }).complete<{ summary: string }>(request);
+
+    expect(result.summary).toBe('What this agreement says.');
+    expect(sent).toHaveLength(2);
+    expect(waits).toEqual([5000]);
+  });
+
+  it('gives up after two retries', async () => {
+    const { sent, fetchImpl } = sequenceFetch([
+      { status: 429, payload: rateLimited(5) },
+      { status: 429, payload: rateLimited(5) },
+      { status: 429, payload: rateLimited(5) },
+      { payload: completion(JSON.stringify({ summary: 'Never reached.' })) },
+    ]);
+    const waits: number[] = [];
+
+    await expect(
+      createOpenRouterClient({ fetchImpl, sleep: recordingSleep(waits) }).complete(request),
+    ).rejects.toBeInstanceOf(ModelCallError);
+    expect(sent).toHaveLength(3);
+    expect(waits).toEqual([5000, 5000]);
+  });
+
+  it('waits no longer than ten seconds, whatever the rate limit asks', async () => {
+    const { fetchImpl } = sequenceFetch([
+      { status: 429, payload: rateLimited(120) },
+      { payload: completion(JSON.stringify({ summary: 'What this agreement says.' })) },
+    ]);
+    const waits: number[] = [];
+
+    await createOpenRouterClient({ fetchImpl, sleep: recordingSleep(waits) }).complete(request);
+
+    expect(waits).toEqual([10000]);
+  });
+
+  it('waits five seconds when the rate limit does not say how long', async () => {
+    const { fetchImpl } = sequenceFetch([
+      { status: 429, payload: { error: { message: 'Provider returned error' } } },
+      { payload: completion(JSON.stringify({ summary: 'What this agreement says.' })) },
+    ]);
+    const waits: number[] = [];
+
+    await createOpenRouterClient({ fetchImpl, sleep: recordingSleep(waits) }).complete(request);
+
+    expect(waits).toEqual([5000]);
   });
 
   it('reports a network failure as a call error', async () => {

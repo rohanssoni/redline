@@ -34,18 +34,43 @@ function readEnv(name: string): string {
 export interface OpenRouterOptions {
   /** Injected in tests so the suite never touches the network. */
   fetchImpl?: typeof fetch;
+  /** Injected in tests so a rate-limit retry does not really wait. */
+  sleep?: (ms: number) => Promise<void>;
 }
 
 interface ChatCompletionReply {
   choices?: Array<{ message?: { content?: unknown } }>;
-  error?: { message?: string };
+  error?: { message?: string; metadata?: { retry_after_seconds?: unknown } };
 }
+
+/**
+ * The provider is pinned with no fallback, and its pool for this model is
+ * shared with every other OpenRouter customer, so it turns calls away for a few
+ * seconds at a time when the pool is full. A read is four or more calls in a
+ * row, and one refusal anywhere used to fail the whole read. A 429 is retried
+ * this many times, after the wait it asks for, before it is reported.
+ */
+const RATE_LIMIT_RETRIES = 2;
+/** The wait when a 429 does not say how long to wait. */
+const DEFAULT_RATE_LIMIT_WAIT_MS = 5_000;
+/** The longest single wait, so retries cannot run a read past its time. */
+const LONGEST_RATE_LIMIT_WAIT_MS = 10_000;
+
+function rateLimitWaitMs(body: ChatCompletionReply | null): number {
+  const seconds = Number(body?.error?.metadata?.retry_after_seconds);
+  if (!Number.isFinite(seconds) || seconds <= 0) return DEFAULT_RATE_LIMIT_WAIT_MS;
+  return Math.min(seconds * 1_000, LONGEST_RATE_LIMIT_WAIT_MS);
+}
+
+const realSleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /** The real client: OpenRouter's OpenAI-compatible chat completions endpoint. */
 export function createOpenRouterClient(
   options: OpenRouterOptions = {},
 ): ModelClient {
   const doFetch = options.fetchImpl ?? fetch;
+  const sleep = options.sleep ?? realSleep;
 
   return {
     async complete<T>(request: StructuredRequest): Promise<T> {
@@ -54,41 +79,47 @@ export function createOpenRouterClient(
       const model = readEnv('OPENROUTER_MODEL');
 
       let response: Response;
-      try {
-        response = await doFetch(ENDPOINT, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model,
-            messages: request.messages,
-            provider: {
-              order: ['fireworks'],
-              allow_fallbacks: false,
-              require_parameters: true,
+      let body: ChatCompletionReply | null;
+      for (let attempt = 0; ; attempt += 1) {
+        try {
+          response = await doFetch(ENDPOINT, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
             },
-            reasoning: { effort: 'low' },
-            response_format: {
-              type: 'json_schema',
-              json_schema: {
-                name: request.name,
-                strict: true,
-                schema: request.schema,
+            body: JSON.stringify({
+              model,
+              messages: request.messages,
+              provider: {
+                order: ['fireworks'],
+                allow_fallbacks: false,
+                require_parameters: true,
               },
-            },
-          }),
-        });
-      } catch (cause) {
-        throw new ModelCallError(
-          `Could not reach OpenRouter for ${request.name}: ${messageOf(cause)}`,
-        );
-      }
+              reasoning: { effort: 'low' },
+              response_format: {
+                type: 'json_schema',
+                json_schema: {
+                  name: request.name,
+                  strict: true,
+                  schema: request.schema,
+                },
+              },
+            }),
+          });
+        } catch (cause) {
+          throw new ModelCallError(
+            `Could not reach OpenRouter for ${request.name}: ${messageOf(cause)}`,
+          );
+        }
 
-      const body = (await response.json().catch(() => null)) as
-        | ChatCompletionReply
-        | null;
+        body = (await response.json().catch(() => null)) as
+          | ChatCompletionReply
+          | null;
+
+        if (response.status !== 429 || attempt === RATE_LIMIT_RETRIES) break;
+        await sleep(rateLimitWaitMs(body));
+      }
 
       if (!response.ok) {
         const detail = body?.error?.message ?? `HTTP ${response.status}`;
