@@ -46,8 +46,8 @@ export function withinDailyLimit(triesToday: number): boolean {
 
 /** What a visitor who has used the day's tries reads. */
 export const DAILY_LIMIT_REASON =
-  'That’s the fifteenth read from this connection today, and fifteen a day is what ' +
-  'Redline gives without an account. The count starts again at midnight UTC. ' +
+  `Redline gives ${ANONYMOUS_TRIES_PER_DAY} reads a day without an account, and this ` +
+  'connection has used all of them. The count starts again at midnight UTC. ' +
   'An account lifts it.';
 
 /** What a visitor whose document is longer than the cap reads. */

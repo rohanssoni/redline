@@ -102,6 +102,22 @@ describe('claiming a try against the count', () => {
     expect(supabase.queries).toHaveLength(1);
   });
 
+  it('tells a refused visitor the day’s limit without calling the refused try a read', async () => {
+    const supabase = createStubSupabase({
+      rows: [usedTries(ANONYMOUS_TRIES_PER_DAY)],
+    });
+
+    const outcome = await createSupabaseTryAllowance(supabase.client, {
+      key: KEY,
+      now: NOW,
+    }).claim();
+
+    // The refused try was never read, so naming it as the day's last read is wrong.
+    const reason = outcome.allowed ? '' : outcome.reason;
+    expect(reason).toContain(`${ANONYMOUS_TRIES_PER_DAY} reads a day`);
+    expect(reason).not.toMatch(/That’s the \w+ read/);
+  });
+
   it('fails closed when the count cannot be read', async () => {
     const supabase = createStubSupabase({ error: 'the database is down' });
 
