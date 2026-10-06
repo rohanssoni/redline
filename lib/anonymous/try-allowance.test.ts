@@ -115,7 +115,7 @@ describe('checking a try against the count, and recording it', () => {
     const outcome = await createSupabaseTryAllowance(supabase.client, {
       key: KEY,
       now: NOW,
-    }).claim();
+    }).check();
 
     // The refused try was never read, so naming it as the day's last read is wrong.
     const reason = outcome.allowed ? '' : outcome.reason;
