@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { allowanceFor, callerAddress } from '@/lib/anonymous/try-allowance';
 import { tryDocument } from '@/lib/anonymous/try-document';
-import { AnalysisError } from '@/lib/analysis/types';
 import { createOpenRouterClient } from '@/lib/model/openrouter';
+import { readFailure } from '@/lib/model/read-failure';
 import { currentReader, serverSupabase } from '@/lib/supabase/server';
 
 /**
@@ -83,14 +83,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ read: outcome.read, text: outcome.text });
   } catch (error) {
     console.error('A try without an account did not finish', error);
+    const failure = readFailure(error, { saved: false });
     return NextResponse.json(
+      { error: failure.message },
       {
-        error:
-          error instanceof AnalysisError
-            ? error.message
-            : 'The read didn’t finish. Nothing was saved, so you can start it again.',
+        status: failure.status,
+        headers: failure.retryAfterSeconds
+          ? { 'Retry-After': String(failure.retryAfterSeconds) }
+          : undefined,
       },
-      { status: 502 },
     );
   }
 }
