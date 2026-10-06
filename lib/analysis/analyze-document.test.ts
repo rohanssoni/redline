@@ -10,7 +10,12 @@ import {
 import { JUDGE_CALL_NAME } from './red-line-judge';
 import type { ArraySchema, ObjectSchema } from '../model/json-schema';
 import { ModelCallError, ModelOutputError } from '../model/client';
-import { analyzeDocument, flagsRequest, gapsRequest } from './analyze-document';
+import {
+  analyzeDocument,
+  flagsRequest,
+  gapsRequest,
+  redLineMatchesRequest,
+} from './analyze-document';
 import { SEVERITY_THRESHOLD, bandFor, rankFindings } from './ranking';
 import { AnalysisError } from './types';
 
@@ -588,6 +593,20 @@ describe('analyzeDocument, the severity scale', () => {
 
     expect(instructions).toContain('0 to 100');
     expect(instructions).toContain(`below ${SEVERITY_THRESHOLD}`);
+  });
+
+  // A red line match is shown whatever its severity (ADR-0013), so the scale
+  // only decides where it ranks and which band it shows in. Telling this stage
+  // that a low score is never shown would be telling it something untrue.
+  it('tells the red line stage the scale, and not the threshold it skips', () => {
+    const { text, sidecar } = loadAdhesionFixture();
+    const instructions = redLineMatchesRequest(text, sidecar.redLines)
+      .messages.filter((message) => message.role === 'system')
+      .map((message) => message.content)
+      .join('\n');
+
+    expect(instructions).toContain('0 to 100');
+    expect(instructions).not.toContain(`below ${SEVERITY_THRESHOLD}`);
   });
 });
 

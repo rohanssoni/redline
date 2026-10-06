@@ -438,6 +438,7 @@ const RED_LINE_SYSTEM_PROMPT = [
   'Judging:',
   '- List the clause even when it looks minor, reads as even-handed, or is how most agreements are drafted. The reader has already decided this one matters to them, and that decision is not yours to review.',
   '- Severity is still what the clause costs the reader if it happens, rated the same way you would rate any other clause.',
+  '- Severity is a whole number from 0 to 100, not a score out of 10.',
   '',
   'Writing:',
   '- Address the reader as "you" and the other side by the name the document uses.',
