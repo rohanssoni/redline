@@ -7,7 +7,13 @@ import {
 } from '../document-text';
 import { AnalysisError, type AnalysisDeps, type AnalysisResult } from './types';
 import { cleanReadFor } from './clean-read';
-import { aboveThreshold, bandFor, dangerousOnly, rankGaps } from './ranking';
+import {
+  SEVERITY_THRESHOLD,
+  aboveThreshold,
+  bandFor,
+  dangerousOnly,
+  rankGaps,
+} from './ranking';
 import { settleWording } from './hedging';
 import { verifyGaps, type GapClaim } from './gap';
 import { applyRedLineOverride } from './red-line-override';
@@ -18,6 +24,10 @@ import type { ZeroFlagLogGateway } from '../zero-flag/store';
 /**
  * What the model is asked for in the summary stage. `strict: true` on the
  * request means these are the only keys that can come back.
+ *
+ * `readsAsAnAgreement` is the one place Redline asks whether the text is an
+ * agreement at all. Without it a recipe has no clauses to flag and no terms to
+ * miss, and comes back as a clean read (ADR-0023).
  */
 export const summarySchema: ObjectSchema = {
   type: 'object',
@@ -28,14 +38,26 @@ export const summarySchema: ObjectSchema = {
         'A plain-English summary of the agreement, four to eight sentences, stating only what the document says.',
       minLength: 80,
     },
+    readsAsAnAgreement: {
+      type: 'boolean',
+      description:
+        'False only when the text is plainly not an agreement of any kind, such as a recipe, an article or a letter that sets no terms. True for any agreement, in any language.',
+    },
   },
-  required: ['summary'],
+  required: ['summary', 'readsAsAnAgreement'],
   additionalProperties: false,
 };
 
 interface SummaryOutput {
   summary: string;
+  readsAsAnAgreement: boolean;
 }
+
+/** What a reader whose text is not an agreement is told instead of a read. */
+export const NOT_AN_AGREEMENT_REASON =
+  'This doesn’t look like an agreement, so Redline didn’t read it. ' +
+  'Redline reads the agreement a client sends a freelancer. ' +
+  'Paste or upload that agreement instead.';
 
 const SUMMARY_SYSTEM_PROMPT = [
   'You summarise an agreement for the person being asked to sign it.',
@@ -48,6 +70,10 @@ const SUMMARY_SYSTEM_PROMPT = [
   '- Address the reader as "you" and the other side by the name the document uses.',
   '- Cover what the work is, what the money terms are, how the agreement ends, and what the reader gives up or keeps.',
   '- Four to eight sentences. No lists, no headings, no preamble such as "This document is".',
+  '',
+  'Whether it is an agreement:',
+  '- Set readsAsAnAgreement to true for any agreement: a client contract, a lease, terms of service, an employment contract, a statement of work, in any language, however short or badly formatted.',
+  '- Set it to false only when the text is plainly not an agreement of any kind, such as a recipe, a story, an article or an email that sets no terms. When in doubt, set it to true.',
 ].join('\n');
 
 /** The prompt for one document. Exported so a test can read what was sent. */
@@ -189,6 +215,7 @@ const FLAGS_SYSTEM_PROMPT = [
   '- Do not list a term the agreement is missing. Something absent has no sentence to quote.',
   '',
   'Severity is what the clause costs the reader if it happens, not how often clauses like it turn up. Rate the consequence.',
+  `Severity is a whole number from 0 to 100, not a score out of 10. Anything below ${SEVERITY_THRESHOLD} is never shown to the reader, so keep that for a clause that costs them almost nothing.`,
   '',
   'Two separate things you are asked about each clause, which are not the same question:',
   '- harmConfidence is how sure you are that this clause costs the reader. Partial is fine and changes nothing about how you write.',
@@ -290,6 +317,7 @@ const GAPS_SYSTEM_PROMPT = [
   '- Write plainly. Do not hedge.',
   '',
   'Severity is what the absence costs the reader if it bites, not how often agreements leave the term out.',
+  `Severity is a whole number from 0 to 100, not a score out of 10. Anything below ${SEVERITY_THRESHOLD} is never shown to the reader, so keep that for an absence that costs them almost nothing.`,
 ].join('\n');
 
 /** The prompt for the gap stage. Exported so a test can read what was sent. */
@@ -430,6 +458,7 @@ const RED_LINE_SYSTEM_PROMPT = [
   'Judging:',
   '- List the clause even when it looks minor, reads as even-handed, or is how most agreements are drafted. The reader has already decided this one matters to them, and that decision is not yours to review.',
   '- Severity is still what the clause costs the reader if it happens, rated the same way you would rate any other clause.',
+  '- Severity is a whole number from 0 to 100, not a score out of 10.',
   '',
   'Writing:',
   '- Address the reader as "you" and the other side by the name the document uses.',
@@ -493,9 +522,14 @@ export async function analyzeDocument(
     );
   }
 
-  const { summary } = await deps.model.complete<SummaryOutput>(
-    summaryRequest(documentText),
-  );
+  const { summary, readsAsAnAgreement } =
+    await deps.model.complete<SummaryOutput>(summaryRequest(documentText));
+  // Before any other stage is asked, so a text that is not an agreement costs
+  // one call, and before the read is counted, so it can neither come back as a
+  // clean read nor move the zero-flag rate (ADR-0023).
+  if (!readsAsAnAgreement) {
+    throw new AnalysisError(NOT_AN_AGREEMENT_REASON);
+  }
   const proposed = await deps.model.complete<FlagsOutput>(
     flagsRequest(documentText),
   );

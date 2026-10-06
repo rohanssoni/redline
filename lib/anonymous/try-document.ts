@@ -27,9 +27,13 @@ import { MAXIMUM_DOCUMENT_CHARACTERS, tooLongReason } from './try-limits';
  * **Both limits are settled before the model is reached.** The length is a fact
  * about the argument and costs nothing to check, so it goes first and a document
  * that is too long does not spend one of the day's tries. The allowance is
- * claimed second, and only then does anything reach OpenRouter. There is no path
+ * checked second, and only then does anything reach OpenRouter. There is no path
  * through this function on which a refusal happens after a model call, because
  * the model is only named below both of them.
+ *
+ * **The try is counted only once the read has come back.** A read that throws
+ * leaves the count where it was, so a visitor told to start it again can. What
+ * that costs is set out where the count is kept (`try-allowance.ts`).
  */
 export interface AnonymousTryDeps {
   model: ModelClient;
@@ -89,7 +93,7 @@ export async function tryDocument(
     return { refused: tooLongReason(documentText.length), status: 413 };
   }
 
-  const allowance = await deps.allowance.claim();
+  const allowance = await deps.allowance.check();
   if (!allowance.allowed) {
     return { refused: allowance.reason, status: 429 };
   }
@@ -98,6 +102,7 @@ export async function tryDocument(
   // The empty list is the read a visitor gets: no red lines, because red lines
   // are something a reader keeps, and keeping things needs an account.
   const analysis = await analyzeDocument(documentText, [], { model: deps.model });
+  await deps.allowance.record();
 
   return {
     text: documentText,

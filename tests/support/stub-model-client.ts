@@ -316,7 +316,7 @@ export function documentAnswerFor(
  */
 export function stubModelClientFor(sidecar: FixtureSidecar): StubModelClient {
   return createStubModelClient({
-    document_summary: { summary: sidecar.summary },
+    document_summary: { summary: sidecar.summary, readsAsAnAgreement: true },
     document_flags: { flags: proposedFlagsFor(sidecar) },
     document_gaps: { gaps: proposedGapsFor(sidecar) },
     red_line_matches: (request: StructuredRequest) => ({
