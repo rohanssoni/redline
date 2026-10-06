@@ -9,12 +9,11 @@
  *
  * The numbers were chosen for this build and recorded on issue #19:
  *
- * - **Fifteen tries per caller per UTC day, for now.** Raised from five on
- *   2026-10-06 so the findings of the adversarial pass can be checked on live
- *   and preview deployments, which share one count per connection. Due to come
- *   down to three once those fixes are in. Five was chosen so a freelancer who
- *   hits a bad parse can try again and still read a second agreement before
- *   signing up.
+ * - **Three tries per caller per UTC day.** Set back to three on 2026-10-06,
+ *   once the adversarial pass's findings were fixed. It had been five since
+ *   2026-10-02 and fifteen for a day while those fixes were checked on live and
+ *   preview deployments, which share one count per connection. A read that
+ *   fails is not counted, so three is three reads that came back.
  * - **50,000 characters.** A client agreement runs roughly 1,000 to 4,000 words,
  *   so this clears a long one several times over while capping what a single
  *   anonymous request can cost. Nothing is inferred from the shape of the file:
@@ -23,7 +22,7 @@
  */
 
 /** Tries one caller gets in a calendar day, UTC. */
-export const ANONYMOUS_TRIES_PER_DAY = 15;
+export const ANONYMOUS_TRIES_PER_DAY = 3;
 
 /** The longest extracted text a try without an account will read. */
 export const MAXIMUM_DOCUMENT_CHARACTERS = 50_000;
