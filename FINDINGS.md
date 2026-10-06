@@ -324,7 +324,9 @@ documents. Findings are numbered on from 5.
 
 ## Findings
 
-### 6. No flag gets a drafted counter-offer
+### 6. No flag gets a drafted counter-offer (fixed)
+
+**Fixed** on `fix-critical-findings`: the drafting call's copied-back sentence is now called `originalSentence`, and the prompt says which field holds the copy and which holds the new wording.
 
 Steps, from https://redline-mauve.vercel.app/:
 
