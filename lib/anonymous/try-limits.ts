@@ -53,10 +53,10 @@ export const DAILY_LIMIT_REASON =
 /** What a visitor whose document is longer than the cap reads. */
 export function tooLongReason(characters: number): string {
   return (
-    `This one runs to about ${characters.toLocaleString('en-GB')} characters, and a ` +
+    `This one runs to about ${characters.toLocaleString('en-GB')} characters. A ` +
     `read without an account stops at ${MAXIMUM_DOCUMENT_CHARACTERS.toLocaleString('en-GB')}, ` +
-    'which is longer than most client agreements get. There’s nothing wrong with ' +
-    'the file. It’s more than one free read covers.'
+    'which is longer than most client agreements get, so this is more than one ' +
+    'free read covers.'
   );
 }
 
