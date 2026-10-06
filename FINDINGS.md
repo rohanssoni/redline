@@ -396,7 +396,8 @@ Severity: misleads a reader. Which dangerous clauses a reader is shown depends o
 read, not the document, and one read told the reader nothing in the lease lets the
 other side change their terms.
 
-### 8. A PDF loses a hyphen that falls at the end of a line
+### 8. A PDF loses a hyphen that falls at the end of a line (fixed)
+**Fixed** on `fix-critical-findings`: PDF paragraph rebuilding now keeps a hyphen that ends a line and joins the next line to it without a space, so "lead-" / "based" is stored as "lead-based".
 
 Steps, from https://redline-mauve.vercel.app/:
 
