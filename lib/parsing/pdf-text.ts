@@ -69,9 +69,9 @@ function reflow(lines: string[]): string {
       paragraph = line;
       continue;
     }
-    paragraph = paragraph.endsWith('-')
-      ? paragraph.slice(0, -1) + line
-      : `${paragraph} ${line}`;
+    // A line-end hyphen stays: pdf.js cannot tell "lead-/based" from "custo-/mers",
+    // and dropping it can invent a word the agreement does not contain.
+    paragraph = paragraph.endsWith('-') ? paragraph + line : `${paragraph} ${line}`;
   }
   flush();
 

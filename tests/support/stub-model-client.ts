@@ -242,7 +242,7 @@ export function counterOfferFor(request: StructuredRequest): unknown {
     .join('\n');
   const sentence = asked.split('\n').at(-1) ?? '';
   return {
-    rewrites: sentence,
+    originalSentence: sentence,
     replacement: `The parties agree that this applies only as set out in writing and with the other party’s consent: ${sentence}`,
   };
 }

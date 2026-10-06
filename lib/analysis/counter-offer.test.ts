@@ -10,6 +10,7 @@ import { ModelCallError } from '../model/client';
 import { analyzeDocument } from './analyze-document';
 import {
   COUNTER_OFFER_CALL_NAME,
+  counterOfferRequest,
   draftCounterOffer,
   draftSoftCounterOffers,
   verifyCounterOffers,
@@ -72,7 +73,27 @@ describe('drafting a counter-offer for one flagged clause', () => {
     }
     expect(sent).toContain('soft');
     expect(request.schema.additionalProperties).toBe(false);
-    expect(request.schema.required).toEqual(['rewrites', 'replacement']);
+    expect(request.schema.required).toEqual(['originalSentence', 'replacement']);
+  });
+
+  // The live model read a field called `rewrites` as "your rewrite" and put its new
+  // wording there, so every draft failed the anchoring check and no flag ever got
+  // one. The model follows its instructions, not the schema's field descriptions,
+  // so the instructions have to say which field is the copy and which is the draft.
+  it('names the copied sentence and the new wording apart, in its instructions', async () => {
+    const { analysis } = await readAdhesion();
+
+    for (const stance of ['soft', 'firm'] as const) {
+      const request = counterOfferRequest(analysis.flags[0], stance);
+      const instructions = request.messages
+        .filter((message) => message.role === 'system')
+        .map((message) => message.content)
+        .join('\n');
+
+      expect(request.schema.required).toEqual(['originalSentence', 'replacement']);
+      expect(instructions).toContain('originalSentence');
+      expect(instructions).toContain('replacement');
+    }
   });
 
   it('refuses a draft that rewrote a different clause rather than showing it', async () => {
@@ -82,7 +103,7 @@ describe('drafting a counter-offer for one flagged clause', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const model = createStubModelClient({
       [COUNTER_OFFER_CALL_NAME]: {
-        rewrites: somebodyElses,
+        originalSentence: somebodyElses,
         replacement:
           'The parties agree that this clause applies only with the other party’s written consent.',
       },
@@ -101,7 +122,7 @@ describe('drafting a counter-offer for one flagged clause', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const model = createStubModelClient({
       [COUNTER_OFFER_CALL_NAME]: {
-        rewrites: flag.sourceSentence.slice(0, 40),
+        originalSentence: flag.sourceSentence.slice(0, 40),
         replacement:
           'The parties agree that this clause applies only with the other party’s written consent.',
       },
@@ -116,7 +137,7 @@ describe('drafting a counter-offer for one flagged clause', () => {
     const flag = analysis.flags[0];
     const model = createStubModelClient({
       [COUNTER_OFFER_CALL_NAME]: {
-        rewrites: flag.sourceSentence.replace(/\s+/g, '\n  '),
+        originalSentence: flag.sourceSentence.replace(/\s+/g, '\n  '),
         replacement:
           'The parties agree that this clause applies only with the other party’s written consent.',
       },

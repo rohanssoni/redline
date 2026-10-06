@@ -222,7 +222,7 @@ describe('switching one flag to firm', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const model = createStubModelClient({
       [COUNTER_OFFER_CALL_NAME]: {
-        rewrites: analysis.flags[1].sourceSentence,
+        originalSentence: analysis.flags[1].sourceSentence,
         replacement:
           'This clause is struck, and nothing replaces it in this agreement.',
       },

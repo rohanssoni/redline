@@ -62,14 +62,28 @@ describe('assemblePdfText', () => {
     );
   });
 
-  it('rejoins a word broken by a hyphen at the line end', () => {
+  it('keeps a line-end hyphen and joins the next line without a space', () => {
     const items: PdfTextItem[] = [
       { str: 'Contractor will not solicit any of the Client’s custo-', hasEOL: true },
       { str: 'mers during the term.', hasEOL: true },
     ];
 
     expect(assemblePdfText([items])).toBe(
-      'Contractor will not solicit any of the Client’s customers during the term.',
+      'Contractor will not solicit any of the Client’s custo-mers during the term.',
+    );
+  });
+
+  it('keeps the hyphen of a compound word that falls at the line end', () => {
+    const items: PdfTextItem[] = [
+      {
+        str: 'Lead-based paint. The building was constructed in 1962. Housing built before 1978 may contain lead-',
+        hasEOL: true,
+      },
+      { str: 'based paint.', hasEOL: true },
+    ];
+
+    expect(assemblePdfText([items])).toBe(
+      'Lead-based paint. The building was constructed in 1962. Housing built before 1978 may contain lead-based paint.',
     );
   });
 

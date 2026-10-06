@@ -314,6 +314,274 @@ who never made an account, but not any reader's documents.
   `app/` or `lib/`, so document text and model output always render as plain text.
   There are no hand-written SQL strings.
 
+# Signed-in run, 2026-10-06
+
+Tested 2026-10-06 against https://redline-mauve.vercel.app/ in Chrome, signed in as
+the owner's own account, after the fixes for findings 1 to 5 and A went live. This
+covers what the earlier runs could not reach: red lines, the library, saved
+documents, counter-offers and the question box. The budget was 15 analysed
+documents. Findings are numbered on from 5.
+
+## Findings
+
+### 6. No flag gets a drafted counter-offer (fixed)
+
+**Fixed** on `fix-critical-findings`: the drafting call's copied-back sentence is now called `originalSentence`, and the prompt says which field holds the copy and which holds the new wording.
+
+Steps, from https://redline-mauve.vercel.app/:
+
+1. Sign in, open "New document", click "Paste the text instead".
+2. Paste `tests/fixtures/adhesion-agreement.txt` and click "Read this text".
+3. Wait for the read (about 90 seconds) and open any flag.
+
+What `PRD.md` promises ("3. Drafted counter-offer per flagged clause"): "Every flagged
+clause gets a drafted replacement, anchored to that clause". The no-account result
+page tells a visitor deciding whether to sign up: "Redline drafts wording you can send
+back for each flag." And when asked to draft a missing clause, the question box
+answers: "Where a clause is in the document, you get wording you could send back."
+
+What happened instead: the read showed 10 flags and 5 gaps, every quote word for word,
+and not one drafted counter-offer. Each flag shows its sentence, an explanation and
+"Set this one aside", and nothing else. There is no soft or firm stance to choose and
+no message saying a draft was attempted or failed. The data the page loads for the
+document has `"counterOffers":[]`.
+
+Happened twice: on the adhesion fixture (10 flags) and on the short Northwind
+agreement (5 flags), both with an empty `counterOffers` list.
+
+Severity: misleads a reader. The product promises drafted wording for each flag,
+including as the reason to make an account, and a signed-in reader gets none and is
+not told.
+
+Also seen on the uploaded lease below (`counterOffers` empty with 7 flags), so it
+holds for uploads as well as pastes.
+
+### 7. The same lease gets 7, 0 or 2 flags depending on the read (fixed)
+**Fixed** on `fix-critical-findings`: the flag prompt now spells out the two plausibility answers, including that a cost the clause fixes in advance counts, so the model stops marking every clause in a read as harmless and having the filter drop them all.
+
+Steps, from https://redline-mauve.vercel.app/:
+
+1. Sign in and open "New document".
+2. Upload `mock-documents/california-apartment-lease.docx` and wait for the read.
+3. Open "New document" again and upload `mock-documents/california-apartment-lease.pdf`,
+   the same lease as a PDF. Wait for the read.
+4. Upload the same PDF once more.
+
+What `PRD.md` promises ("2. Flags and gaps"): "a clause that lets the other side
+change the reader's economics unilaterally after the reader is committed is
+dangerous". And the analysis must "State only what the document says"
+(`CLAUDE.md`).
+
+What happened instead: the three reads of one lease disagreed.
+
+- The Word upload got 7 flags, among them the cleaning fee that "will not be returned
+  under any circumstances", the waiver of the right to repair and deduct, the
+  automatic renewal "at the Rent then in effect plus five percent (5%)", and liability
+  for all rent to the end of the term after leaving early.
+- The first PDF upload got no flags and 8 gaps, and said "No clause here lets the other
+  side change your terms on its own." Its own summary, on the same page, says "The
+  lease renews automatically for another twelve months at a five percent rent
+  increase" and that the tenant gives up "any right to repair and deduct".
+- The second PDF upload got 2 flags (the late charge and the landlord's entry notice)
+  and 7 gaps.
+
+The text the two PDF reads worked from was the same, character for character, and it
+matches the Word text apart from one word (finding 8). Every quote in all three reads
+was word for word.
+
+Happened three times, once per read. The earlier runs saw the same drift on the
+fixture, where the uncapped indemnity was a flag at 95 in one read and a gap at 60 in
+another.
+
+Severity: misleads a reader. Which dangerous clauses a reader is shown depends on the
+read, not the document, and one read told the reader nothing in the lease lets the
+other side change their terms.
+
+### 8. A PDF loses a hyphen that falls at the end of a line (fixed)
+**Fixed** on `fix-critical-findings`: PDF paragraph rebuilding now keeps a hyphen that ends a line and joins the next line to it without a space, so "lead-" / "based" is stored as "lead-based".
+
+Steps, from https://redline-mauve.vercel.app/:
+
+1. Sign in, open "New document" and upload
+   `mock-documents/california-apartment-lease.pdf`.
+2. Read "Your document, as Redline read it", section 20.
+
+What `PRD.md` promises ("Getting a document in"): "only the extracted text is sent or
+stored", and that text is "the text every source sentence is verified against". And
+("Assumptions and risks"): "Extraction fidelity is a correctness concern, not a
+convenience … a parser bug surfaces as a citation bug."
+
+What happened instead: the lease says "Housing built before 1978 may contain
+lead-based paint." Redline stored "may contain leadbased paint." The hyphen falls at a
+line break in the PDF and was removed as if it were a word-break hyphen. The rest of
+the 1,122 words, including a second "lead-based" and six other hyphenated words, came
+through unchanged. The Word upload of the same lease kept the hyphen.
+
+A flag on that sentence would quote "leadbased", pass the word-for-word check against
+the stored text, and still not be the sentence in the agreement.
+
+Happened twice, on both PDF uploads.
+
+Severity: misleads a reader, rarely. It only matters when a flagged sentence has a
+hyphenated word split across lines, but then the quote is not the agreement's wording.
+
+### 9. Questions sometimes fail with "That question didn't get through" (fixed)
+
+**Fixed** on `fix-critical-findings`: the question box now tells the reader the model was too busy to answer and to wait a minute before asking again when the model is still rate-limiting after the client's retries, and keeps the general message for every other failure.
+
+Steps, from https://redline-mauve.vercel.app/:
+
+1. Sign in and open a document that has been read.
+2. In "Ask this document", type a question and click "Ask".
+
+What `PRD.md` promises ("4. Question box, answered only from the document"):
+"Answers are constrained to what the uploaded document says. Where the text doesn't
+support an answer, the product says so".
+
+What happened instead: 2 of 10 questions came back after about 20 seconds with "That
+question didn't get through. Nothing about your document has changed, so try it
+again." Asking the same question again worked both times. Unlike a read that fails
+(finding 3), the message does not say the model was busy or how long to wait.
+
+Happened twice: "How long does the non-compete last after the agreement ends?" and
+"What hourly rate will Halverson pay me for extra revisions?", both on the adhesion
+fixture.
+
+Severity: stops a reader, briefly.
+
+### 10. Refreshing during a read starts a second, full read
+
+Steps, from https://redline-mauve.vercel.app/:
+
+1. Sign in, open "New document", paste an agreement and click "Read this text".
+2. While the page says "Reading your agreement", refresh it.
+
+What happened instead: the refreshed page asks for the analysis again. The browser's
+network log shows two `POST /api/documents/<id>/analysis` requests for the one
+document: the first left pending when the page reloaded, the second answered 200. Both
+reads run on the server, so every model call is made twice. Both times the page then
+showed the same flags that were stored, so the reader saw nothing wrong.
+
+Happened twice, on two documents.
+
+Severity: cosmetic for the reader. It doubles the model cost of any read that is
+refreshed, and because two reads of one document can disagree (finding 7), which result
+is kept depends on which read finishes last.
+
+### 11. A document address with a malformed id shows a server error
+
+Steps, from https://redline-mauve.vercel.app/:
+
+1. Sign in, open any document from the library.
+2. Change the id in the address to `not-a-real-id`.
+
+What `PRD.md` promises ("6. Saved library of past documents"): "Past analyses are
+saved and browsable."
+
+What happened instead: HTTP 500 and a bare page reading "This page couldn't load / A
+server error occurred. Reload to try again." with no menu. Reloading can never help,
+since the address is wrong. A well-formed id that names no document gets a proper 404
+page with the menu, which is what this should show.
+
+Happened twice, with `not-a-real-id` and with `e5248544'; select 1--`.
+
+Severity: cosmetic.
+
+### 12. A long document name stretches the page sideways
+
+Steps, from https://redline-mauve.vercel.app/:
+
+1. Sign in, open "New document", click "Paste the text instead".
+2. Paste an agreement, and in "What to call it" type a name of about 2,000 characters
+   with no spaces.
+3. Click "Read this text", then open the library.
+
+What happened instead: the name field has no length limit, the name is saved as typed,
+and it is shown on one unbroken line. The document page grew to 4,783 pixels wide and
+the library to 5,900 pixels, in a 1,920-pixel window, so both scroll sideways.
+
+Happened on both pages. A name of HTML-like text was shown as plain text.
+
+Severity: cosmetic.
+
+### 13. The same red line can be added twice
+
+Steps, from https://redline-mauve.vercel.app/:
+
+1. Sign in and open "Red lines".
+2. Add "I need to be able to show the work I make in my portfolio."
+3. Add the same wording again.
+
+What `PRD.md` promises ("5. Editable red line list"): "The reader authors and edits a
+list of **red lines** — terms decided in advance as unacceptable."
+
+What happened instead: the list holds the same red line twice, with no message. Both
+copies are sent to the model on every read.
+
+Happened twice. A real double-click on "Add to my list" added it only once.
+
+Severity: cosmetic.
+
+## Seen once
+
+### B. A refused non-agreement is offered "Read it again"
+
+Steps, from https://redline-mauve.vercel.app/: sign in, open "New document", paste a
+banana bread recipe and click "Read this text".
+
+What happened: the read was refused correctly, with "This doesn't look like an
+agreement, so Redline didn't read it…" and no clean read. But it sits under the
+heading "Redline didn't get through this one", the wording used for a failed read, with
+a "Read it again" button. Reading a recipe again can only be refused again, and each
+try spends a model call. The recipe also stays in the library.
+
+Not repeated, to save the budget.
+
+Severity if it repeats: cosmetic.
+
+## What held up
+
+- Red lines: an empty entry and spaces only are refused; over 300 characters is
+  refused by the server ("Keep it to 300 characters…") even with the browser's limit
+  removed, for adding and for editing; HTML-like text is stored and shown as plain
+  text; a real double-click adds one; edit, remove and reload all work.
+- Both red lines surfaced in the read: the portfolio one as flag 10 on the fixture, and
+  the 30-day one in the explanation of the payment flag.
+- Every quoted sentence in every read was word for word, exactly once: the fixture (10
+  flags), Northwind (5), the Word lease (7, also checked against the original Word
+  file), both PDF reads, and the Spanish contract (5, quoted in Spanish under an
+  English summary).
+- Upload works for Word and PDF: the file is read in the browser, saved under its file
+  name, and read straight away.
+- The question box answered what the document says (non-compete length, payment days,
+  termination, ownership of sketches); said the agreement sets no hourly rate when
+  asked for one; declined a remedy question ("…it can't tell you what to do about
+  something already underway"); declined to draft a missing late-payment clause; showed
+  an HTML-like question as plain text; and answered a 20,000-character question.
+- A read that the model was too busy for showed finding 3's new message ("The model
+  Redline uses was too busy to take this read. Your document is saved…") with "Read it
+  again", and reading again worked.
+- A recipe pasted while signed in is refused, with no clean read (finding A's fix).
+- The short-paste refusal on the signed-in paste box uses the new wording (finding 5's
+  fix).
+- Setting a flag aside survives a refresh, and "Bring it back" is offered.
+- The library opens each document with its read and no new analysis; back and forward
+  work; a well-formed id that names no document gets a 404 page with the menu.
+- Delete asks on the page ("Delete this for good?…"), not in a browser dialog. After it,
+  the document's address answers 404 and asking for its analysis answers "That
+  document isn't in your library."
+- No browser alert or confirm box appears anywhere in the app.
+
+## Not tested
+
+- Choosing the firm stance and copying a counter-offer. No read produced a
+  counter-offer to try them on (finding 6).
+- Two different documents read at the same time from two tabs. Two reads of one
+  document at once (finding 10) both completed.
+- A scanned PDF, since there is no OCR and the repository has no scanned fixture.
+- The account pages for a second user, to confirm one reader cannot open another's
+  documents in the browser. The security review found the database rules sound.
+
 
 ---
 

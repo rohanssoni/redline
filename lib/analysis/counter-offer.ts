@@ -82,7 +82,7 @@ export interface DroppedCounterOffer {
 }
 
 /**
- * What the model is asked for. `rewrites` exists so the draft can be checked
+ * What the model is asked for. `originalSentence` exists so the draft can be checked
  * against the clause it was asked about: without it there would be nothing to
  * compare, and a draft about the wrong clause would read plausibly enough to
  * reach the reader.
@@ -90,7 +90,7 @@ export interface DroppedCounterOffer {
 export const counterOfferSchema: ObjectSchema = {
   type: 'object',
   properties: {
-    rewrites: {
+    originalSentence: {
       type: 'string',
       description:
         'The sentence you were asked to rewrite, copied back character for character. Never tidied, shortened, joined or repunctuated.',
@@ -103,12 +103,12 @@ export const counterOfferSchema: ObjectSchema = {
       minLength: 30,
     },
   },
-  required: ['rewrites', 'replacement'],
+  required: ['originalSentence', 'replacement'],
   additionalProperties: false,
 };
 
 interface CounterOfferOutput {
-  rewrites: string;
+  originalSentence: string;
   replacement: string;
 }
 
@@ -150,7 +150,9 @@ const STANCE_RULES: Record<Stance, string[]> = {
 /** What the model is told, for the one stance it is drafting in. */
 function systemPromptFor(stance: Stance): string {
   return [DRAFTING_RULES, '', ...STANCE_RULES[stance], '',
-    'Copy the sentence you were given into rewrites, character for character, so it can be checked against the agreement.',
+    'Your reply has two fields, and they hold different things:',
+    '- originalSentence: the sentence you were given, copied unchanged, character for character. It is not your rewrite. It is checked against the agreement, and a reply whose originalSentence differs from the sentence you were given is thrown away.',
+    '- replacement: your new wording for that sentence. This is the only place your rewrite goes.',
   ].join('\n');
 }
 
@@ -220,12 +222,12 @@ export async function draftCounterOffer(
   // `flag.sourceSentence` that the reply quoted, so a draft that echoed a clause
   // from elsewhere, or half of this one, comes back as something other than the
   // sentence it was asked about.
-  const anchor = findSourceSentence(flag.sourceSentence, draft.rewrites);
+  const anchor = findSourceSentence(flag.sourceSentence, draft.originalSentence);
   if (anchor !== flag.sourceSentence) {
     console.warn(
       'A counter-offer was dropped because it rewrote a sentence other than the one it was asked about: %s (%s)',
       flag.id,
-      draft.rewrites,
+      draft.originalSentence,
     );
     return null;
   }
