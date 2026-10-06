@@ -10,7 +10,7 @@ import {
 /**
  * Who is allowed one more try without an account, and the count that decides it.
  *
- * The gateway holds a claim and nothing else. It cannot read a document, write
+ * The gateway holds a count and nothing else. It cannot read a document, write
  * one, or reach anything a reader owns: the only table it names is a tally of
  * how many tries an address has had today, and the only two columns it writes
  * are that address's digest and the day.
@@ -25,11 +25,18 @@ export type AllowanceOutcome =
 
 export interface TryAllowance {
   /**
-   * Takes one try, if there is one to take. Called once per request, before any
-   * model call, and it both counts and records — a caller that asked and was
-   * allowed has used the try whether or not the read then succeeds.
+   * Whether this caller has a try left today. Called once per request, before
+   * any model call, and it records nothing: a read that is then refused or fails
+   * has not used a try.
    */
-  claim(): Promise<AllowanceOutcome>;
+  check(): Promise<AllowanceOutcome>;
+
+  /**
+   * Counts the try, once its read has come back. Never throws: by then the model
+   * has been paid for, and the read goes to the visitor whether or not the row
+   * was written.
+   */
+  record(): Promise<void>;
 }
 
 /**
@@ -82,27 +89,41 @@ export function callerAddress(headers: Headers): string | null {
  */
 export function unmeteredTries(): TryAllowance {
   return {
-    async claim(): Promise<AllowanceOutcome> {
+    async check(): Promise<AllowanceOutcome> {
       return { allowed: true };
     },
+    async record(): Promise<void> {},
   };
 }
 
 /**
  * The daily count, against a configured project.
  *
- * Two queries and no more: how many tries this caller has had today, then the
- * row that records this one. The decision between them is `withinDailyLimit`,
- * which is pure and lives with the number it enforces.
+ * Two queries and no more: how many tries this caller has had today, asked
+ * before the read, then the row that records this one, written after it. The
+ * decision is `withinDailyLimit`, which is pure and lives with the number it
+ * enforces.
  *
- * **It fails closed.** A project that is configured and then refuses the query
- * is a project that cannot tell anyone how much has been spent today, and the
- * limit is the only thing standing between an anonymous route and unmetered
+ * **Only a read that came back is counted.** A visitor whose read fails is told
+ * they can start it again, and that has to be true without it costing another
+ * of the day's tries. Two costs come with that, and both were accepted:
+ *
+ * - A read that fails is free, though the model calls made before it failed
+ *   were not.
+ * - Requests sent in parallel all check against the same count while their
+ *   reads are in flight, so a caller who sends many at once can go past the
+ *   limit by that many.
+ *
+ * **The check fails closed.** A project that is configured and then refuses the
+ * query is a project that cannot tell anyone how much has been spent today, and
+ * the limit is the only thing standing between an anonymous route and unmetered
  * model spend in a product with no payments. So the try is refused and the
  * visitor is told the counter is out, rather than Redline reading documents it
- * cannot count. The same goes for a row that will not insert: a try that was
- * not recorded is a try that can be taken again, and a caller who found that
- * out would have no limit at all.
+ * cannot count.
+ *
+ * **The record does not.** A row that will not insert comes after the read has
+ * been paid for, and withholding a read the model has already produced saves
+ * nothing. The read goes back uncounted and the failure is logged.
  */
 export function createSupabaseTryAllowance(
   supabase: SupabaseClient,
@@ -111,7 +132,7 @@ export function createSupabaseTryAllowance(
   const day = utcDay(caller.now);
 
   return {
-    async claim(): Promise<AllowanceOutcome> {
+    async check(): Promise<AllowanceOutcome> {
       const { data, error } = await supabase
         .from(ANONYMOUS_TRIES_TABLE)
         .select('id')
@@ -131,6 +152,10 @@ export function createSupabaseTryAllowance(
         return { allowed: false, reason: DAILY_LIMIT_REASON };
       }
 
+      return { allowed: true };
+    },
+
+    async record(): Promise<void> {
       const written = await supabase
         .from(ANONYMOUS_TRIES_TABLE)
         .insert({ caller_key: caller.key, day })
@@ -138,14 +163,11 @@ export function createSupabaseTryAllowance(
         .single();
 
       if (written.error) {
-        console.warn(
-          'An anonymous try was refused because it could not be recorded: %s',
+        console.error(
+          'An anonymous read was returned uncounted because its try could not be recorded: %s',
           written.error.message,
         );
-        return { allowed: false, reason: LIMIT_UNAVAILABLE_REASON };
       }
-
-      return { allowed: true };
     },
   };
 }

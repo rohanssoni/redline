@@ -20,7 +20,8 @@ import { currentReader, serverSupabase } from '@/lib/supabase/server';
  * What this route does reach Supabase for is the count of tries this caller has
  * had today, and `allowanceFor` is the whole of that decision: a signed-in
  * reader is not metered, a copy with no project configured has no count to keep,
- * and everybody else is counted before a model is called.
+ * and everybody else is checked before a model is called and counted once the
+ * read comes back.
  */
 export async function POST(request: Request) {
   const contentType = request.headers.get('content-type') ?? '';
