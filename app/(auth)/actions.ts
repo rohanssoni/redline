@@ -1,7 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { signUpProblem } from '@/lib/auth/sign-up-messages';
+import { passwordProblem, signUpProblem } from '@/lib/auth/sign-up-messages';
 import { SIGN_IN_UNAVAILABLE } from '@/lib/supabase/config';
 import { serverSupabase } from '@/lib/supabase/server';
 
@@ -49,9 +49,8 @@ export async function signUp(
   const { email, password } = credentials(formData);
   const gap = missing(email, password);
   if (gap) return { error: gap };
-  if (password.length < 8) {
-    return { error: 'Use a password of at least eight characters.' };
-  }
+  const weak = passwordProblem(password);
+  if (weak) return { error: weak };
 
   const supabase = await serverSupabase();
   if (!supabase) return { error: SIGN_IN_UNAVAILABLE };

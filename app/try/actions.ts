@@ -1,6 +1,6 @@
 'use server';
 
-import { signUpProblem } from '@/lib/auth/sign-up-messages';
+import { passwordProblem, signUpProblem } from '@/lib/auth/sign-up-messages';
 import { SIGN_IN_UNAVAILABLE } from '@/lib/supabase/config';
 import { serverSupabase } from '@/lib/supabase/server';
 
@@ -29,9 +29,8 @@ export async function makeAccountToKeep(
 
   if (email.length === 0) return { error: 'Enter an email address.' };
   if (password.length === 0) return { error: 'Choose a password.' };
-  if (password.length < 8) {
-    return { error: 'Use a password of at least eight characters.' };
-  }
+  const weak = passwordProblem(password);
+  if (weak) return { error: weak };
 
   const supabase = await serverSupabase();
   if (!supabase) return { error: SIGN_IN_UNAVAILABLE };
