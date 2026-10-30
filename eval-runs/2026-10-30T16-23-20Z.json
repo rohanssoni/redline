@@ -1,0 +1,343 @@
+{
+  "startedAt": "2026-10-30T16:23:20.591Z",
+  "model": "z-ai/glm-5.3-flash",
+  "goldSet": "gold set kept outside the repo (corpus and fixtures)",
+  "redLines": [],
+  "inScopeTypes": [
+    "unilateral-modification",
+    "non-compete",
+    "auto-renewal",
+    "limitation-of-liability",
+    "indemnification",
+    "fee-escalators-and-late-fees"
+  ],
+  "outOfScope": {
+    "arbitration-and-class-action-waiver": "Moves no money and no obligation, so it fails the ADR-0004 test PRD.md uses for a flag, and the gold set mostly writes it as mutual (\"You and Cascade agree\"), the symmetric shape PRD.md says to drop."
+  },
+  "clauseTypeRules": [
+    {
+      "type": "arbitration-and-class-action-waiver",
+      "pattern": "arbitrat|class[- ]action|jury|right to sue|court waiver"
+    },
+    {
+      "type": "indemnification",
+      "pattern": "indemn|hold harmless|defend"
+    },
+    {
+      "type": "limitation-of-liability",
+      "pattern": "liabilit|damages cap|recovery cap|cap on (damages|recovery|claims)|limited (recovery|remedies)"
+    },
+    {
+      "type": "non-compete",
+      "pattern": "compet|solicit|restrictive covenant|restraint of trade|exclusiv"
+    },
+    {
+      "type": "auto-renewal",
+      "pattern": "renew|roll[- ]?over|evergreen|automatic (extension|continuation)|term extension"
+    },
+    {
+      "type": "unilateral-modification",
+      "pattern": "amend|modif|terms change|change (to|of) (the )?terms|unilateral (scope|terms|change)|scope change|rewrite|variation"
+    },
+    {
+      "type": "fee-escalators-and-late-fees",
+      "pattern": "fee|pric|\\brates?\\b|interest|\\blate\\b|charge|escalat|surcharge|tuition|dues|penalt|payment"
+    }
+  ],
+  "rates": {
+    "documents": {
+      "total": 9,
+      "scored": 0,
+      "leftOut": [
+        {
+          "id": "adhesion-contract",
+          "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]"
+        },
+        {
+          "id": "clean-document",
+          "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]"
+        },
+        {
+          "id": "saas-subscription",
+          "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]"
+        },
+        {
+          "id": "offer-letter",
+          "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]"
+        },
+        {
+          "id": "storage-unit-rental",
+          "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]"
+        },
+        {
+          "id": "phone-plan-terms",
+          "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]"
+        },
+        {
+          "id": "internship-agreement",
+          "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]"
+        },
+        {
+          "id": "library-volunteer-agreement",
+          "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]"
+        },
+        {
+          "id": "swim-lesson-registration",
+          "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]"
+        }
+      ]
+    },
+    "recall": {
+      "count": 0,
+      "of": 0
+    },
+    "recallWithType": {
+      "count": 0,
+      "of": 0
+    },
+    "recallByType": [
+      {
+        "type": "unilateral-modification",
+        "found": {
+          "count": 0,
+          "of": 0
+        },
+        "withType": {
+          "count": 0,
+          "of": 0
+        }
+      },
+      {
+        "type": "non-compete",
+        "found": {
+          "count": 0,
+          "of": 0
+        },
+        "withType": {
+          "count": 0,
+          "of": 0
+        }
+      },
+      {
+        "type": "auto-renewal",
+        "found": {
+          "count": 0,
+          "of": 0
+        },
+        "withType": {
+          "count": 0,
+          "of": 0
+        }
+      },
+      {
+        "type": "limitation-of-liability",
+        "found": {
+          "count": 0,
+          "of": 0
+        },
+        "withType": {
+          "count": 0,
+          "of": 0
+        }
+      },
+      {
+        "type": "indemnification",
+        "found": {
+          "count": 0,
+          "of": 0
+        },
+        "withType": {
+          "count": 0,
+          "of": 0
+        }
+      },
+      {
+        "type": "fee-escalators-and-late-fees",
+        "found": {
+          "count": 0,
+          "of": 0
+        },
+        "withType": {
+          "count": 0,
+          "of": 0
+        }
+      }
+    ],
+    "recallByCharacters": {
+      "plain": {
+        "count": 0,
+        "of": 0
+      },
+      "special": {
+        "count": 0,
+        "of": 0
+      },
+      "byClass": [
+        {
+          "id": "curly-quote",
+          "label": "curly quote or apostrophe",
+          "found": {
+            "count": 0,
+            "of": 0
+          }
+        },
+        {
+          "id": "non-breaking-space",
+          "label": "non-breaking space",
+          "found": {
+            "count": 0,
+            "of": 0
+          }
+        },
+        {
+          "id": "ligature",
+          "label": "fi or fl ligature",
+          "found": {
+            "count": 0,
+            "of": 0
+          }
+        },
+        {
+          "id": "em-dash",
+          "label": "em dash",
+          "found": {
+            "count": 0,
+            "of": 0
+          }
+        },
+        {
+          "id": "double-space",
+          "label": "two spaces in a row",
+          "found": {
+            "count": 0,
+            "of": 0
+          }
+        }
+      ]
+    },
+    "outOfScope": [
+      {
+        "type": "arbitration-and-class-action-waiver",
+        "reason": "Moves no money and no obligation, so it fails the ADR-0004 test PRD.md uses for a flag, and the gold set mostly writes it as mutual (\"You and Cascade agree\"), the symmetric shape PRD.md says to drop.",
+        "foundAnyway": {
+          "count": 0,
+          "of": 0
+        }
+      }
+    ],
+    "groundedness": {
+      "count": 0,
+      "of": 0
+    },
+    "groundednessInFile": {
+      "count": 0,
+      "of": 0
+    },
+    "shownGroundedness": {
+      "count": 0,
+      "of": 0
+    },
+    "clean": {
+      "documents": {
+        "count": 0,
+        "of": 0
+      },
+      "flags": 0,
+      "cleanReads": {
+        "count": 0,
+        "of": 0
+      },
+      "perDocument": []
+    },
+    "unusualButHarmlessFlagged": {
+      "count": 0,
+      "of": 0
+    }
+  },
+  "documents": [
+    {
+      "id": "adhesion-contract",
+      "outcome": "failed",
+      "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]",
+      "durationMs": 610,
+      "gaps": 0,
+      "cleanRead": false,
+      "notes": []
+    },
+    {
+      "id": "clean-document",
+      "outcome": "failed",
+      "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]",
+      "durationMs": 88,
+      "gaps": 0,
+      "cleanRead": false,
+      "notes": []
+    },
+    {
+      "id": "saas-subscription",
+      "outcome": "failed",
+      "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]",
+      "durationMs": 59,
+      "gaps": 0,
+      "cleanRead": false,
+      "notes": []
+    },
+    {
+      "id": "offer-letter",
+      "outcome": "failed",
+      "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]",
+      "durationMs": 52,
+      "gaps": 0,
+      "cleanRead": false,
+      "notes": []
+    },
+    {
+      "id": "storage-unit-rental",
+      "outcome": "failed",
+      "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]",
+      "durationMs": 51,
+      "gaps": 0,
+      "cleanRead": false,
+      "notes": []
+    },
+    {
+      "id": "phone-plan-terms",
+      "outcome": "failed",
+      "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]",
+      "durationMs": 50,
+      "gaps": 0,
+      "cleanRead": false,
+      "notes": []
+    },
+    {
+      "id": "internship-agreement",
+      "outcome": "failed",
+      "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]",
+      "durationMs": 55,
+      "gaps": 0,
+      "cleanRead": false,
+      "notes": []
+    },
+    {
+      "id": "library-volunteer-agreement",
+      "outcome": "failed",
+      "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]",
+      "durationMs": 51,
+      "gaps": 0,
+      "cleanRead": false,
+      "notes": []
+    },
+    {
+      "id": "swim-lesson-registration",
+      "outcome": "failed",
+      "error": "OpenRouter refused document_summary: API key expired. [HTTP 401]",
+      "durationMs": 68,
+      "gaps": 0,
+      "cleanRead": false,
+      "notes": []
+    }
+  ],
+  "planted": [],
+  "flags": [],
+  "returnedFlags": []
+}

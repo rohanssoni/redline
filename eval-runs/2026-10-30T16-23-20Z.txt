@@ -1,0 +1,71 @@
+Redline eval run, started 2026-10-30T16:23:20.591Z
+Model: z-ai/glm-5.3-flash through OpenRouter, settings from .env.local
+Gold set: eval/gold-set (written by a model, so every figure here is an upper bound)
+
+DOCUMENTS
+---------
+  Scored: 0 of 9
+  Left out because a model call failed: 9
+    - adhesion-contract: OpenRouter refused document_summary: API key expired. [HTTP 401]
+    - clean-document: OpenRouter refused document_summary: API key expired. [HTTP 401]
+    - saas-subscription: OpenRouter refused document_summary: API key expired. [HTTP 401]
+    - offer-letter: OpenRouter refused document_summary: API key expired. [HTTP 401]
+    - storage-unit-rental: OpenRouter refused document_summary: API key expired. [HTTP 401]
+    - phone-plan-terms: OpenRouter refused document_summary: API key expired. [HTTP 401]
+    - internship-agreement: OpenRouter refused document_summary: API key expired. [HTTP 401]
+    - library-volunteer-agreement: OpenRouter refused document_summary: API key expired. [HTTP 401]
+    - swim-lesson-registration: OpenRouter refused document_summary: API key expired. [HTTP 401]
+
+RECALL
+------
+  Planted clauses found:              0/0 (n/a)
+  Found and named the right type:     0/0 (n/a)
+  In scope: unilateral-modification, non-compete, auto-renewal, limitation-of-liability, indemnification, fee-escalators-and-late-fees
+
+  By type                               found            named right
+    unilateral-modification            0/0 (n/a)        0/0 (n/a)
+    non-compete                        0/0 (n/a)        0/0 (n/a)
+    auto-renewal                       0/0 (n/a)        0/0 (n/a)
+    limitation-of-liability            0/0 (n/a)        0/0 (n/a)
+    indemnification                    0/0 (n/a)        0/0 (n/a)
+    fee-escalators-and-late-fees       0/0 (n/a)        0/0 (n/a)
+
+  By the characters in the planted sentence
+    no special character               0/0 (n/a)
+    at least one special character     0/0 (n/a)
+      curly quote or apostrophe        0/0 (n/a)
+      non-breaking space               0/0 (n/a)
+      fi or fl ligature                0/0 (n/a)
+      em dash                          0/0 (n/a)
+      two spaces in a row              0/0 (n/a)
+
+  Out of scope, never counted as a miss
+    arbitration-and-class-action-waiver: found anyway 0/0 (n/a)
+      Moves no money and no obligation, so it fails the ADR-0004 test PRD.md uses for a flag, and the gold set mostly writes it as mutual ("You and Cascade agree"), the symmetric shape PRD.md says to drop.
+
+GROUNDEDNESS
+------------
+  Returned flags quoting the document exactly:  0/0 (n/a)
+  Same, against the file before normalisation:  0/0 (n/a)
+  Shown flags quoting the document exactly:     0/0 (n/a)
+
+CLEAN DOCUMENTS
+---------------
+  Benign documents with no flags shown:  0/0 (n/a)
+  Flags shown on benign documents:       0
+  Benign documents given the clean read: 0/0 (n/a)
+  Unusual-but-harmless sentences flagged: 0/0 (n/a)
+
+PLANTED CLAUSES MISSED
+----------------------
+  None.
+
+EVERY FLAG SHOWN
+----------------
+
+RETURNED FLAGS WHOSE QUOTE IS NOT IN THE DOCUMENT
+-------------------------------------------------
+  None.
+
+WHAT THE PIPELINE LOGGED
+------------------------
