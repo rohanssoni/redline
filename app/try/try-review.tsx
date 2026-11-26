@@ -1,8 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { markUpDocument, textLines } from '@/lib/analysis/marked-document';
-import { rankFindings } from '@/lib/analysis/ranking';
+import { layOutReview, type FindingsOrder } from '@/lib/analysis/findings-list';
+import { textLines } from '@/lib/analysis/marked-document';
+import { FindingsList, LineUpLeader } from '../_review/findings-list';
+import { useLineUp } from '../_review/use-line-up';
 import type { CleanRead, Gap, VerifiedFlag } from '@/lib/analysis/types';
 
 /**
@@ -30,48 +32,19 @@ export function TryReview({
   gaps: Gap[];
   cleanRead: CleanRead | null;
 }) {
-  const findings = useMemo(() => rankFindings(flags, gaps), [flags, gaps]);
+  const [order, setOrder] = useState<FindingsOrder>('document');
+  const layout = useMemo(() => layOutReview(text, flags, gaps, order), [text, flags, gaps, order]);
+  const { pieces, entries, numberOf } = layout;
+  const gapEntries = layout.gaps;
+  const onThePage = pieces.some((piece) => piece.kind === 'flag');
 
-  const flagRanks = useMemo(
-    () =>
-      new Map(
-        findings
-          .filter((finding) => finding.kind === 'flag')
-          .map((finding) => [finding.id, finding.rank]),
-      ),
-    [findings],
-  );
-
-  const { pieces, marked } = useMemo(
-    () =>
-      markUpDocument(text, flags, (flag, index) => flagRanks.get(flag.id) ?? index + 1),
-    [text, flags, flagRanks],
-  );
-
-  // A flag Redline could not place on the page is not offered in the list
-  // either, so the reader is never given a number with nothing behind it.
-  const onThePage = useMemo(
-    () => new Set(marked.map((each) => each.flag.id)),
-    [marked],
-  );
-  const listed = useMemo(
-    () =>
-      findings.filter(
-        (finding) => finding.kind === 'gap' || onThePage.has(finding.id),
-      ),
-    [findings, onThePage],
-  );
-  const rankedGaps = useMemo(
-    () => listed.filter((finding) => finding.kind === 'gap'),
-    [listed],
-  );
-
-  const [focusRank, setFocusRank] = useState<number | null>(
-    listed.length > 0 ? listed[0].rank : null,
-  );
+  // The first entry in document order is picked when the review opens, so the
+  // opening state matches the opening order.
+  const lineUp = useLineUp(entries.length > 0 ? entries[0].finding.rank : null);
+  const { focusRank, hoverRank } = lineUp;
 
   return (
-    <section className="review" aria-labelledby="try-result-heading">
+    <section className="review review-lineup" aria-labelledby="try-result-heading">
       <h2 id="try-result-heading" className="visually-hidden">
         What Redline found in {name}
       </h2>
@@ -98,35 +71,23 @@ export function TryReview({
         </div>
       )}
 
-      {listed.length > 0 && (
-        <div className="rank-index">
-          <p className="rank-index-caption" id="try-index-caption">
-            What Redline found, worst first
-          </p>
-          <ol aria-labelledby="try-index-caption">
-            {listed.map((finding) => (
-              <li key={`${finding.kind}-${finding.id}`}>
-                <button
-                  type="button"
-                  aria-pressed={finding.rank === focusRank}
-                  onClick={() => setFocusRank(finding.rank)}
-                >
-                  <span className="rank-slot">{finding.rank}</span>
-                  <span className="rank-name">
-                    {finding.kind === 'flag'
-                      ? finding.flag.clauseType
-                      : finding.gap.statement}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ol>
-        </div>
+      {entries.length > 0 && (
+        <FindingsList
+          captionId="try-index-caption"
+          entries={entries}
+          order={order}
+          onOrder={setOrder}
+          focusRank={focusRank}
+          onPick={lineUp.pick}
+          onHover={lineUp.setHoverRank}
+          entryRef={lineUp.entryRef}
+        />
       )}
+      <LineUpLeader leader={lineUp.leader} />
 
       <article className="page" aria-label={`${name}, marked up`}>
         <p className="page-band">
-          {marked.length === 0
+          {!onThePage
             ? 'Your document, as Redline read it'
             : 'Your document. Each flag sits under the sentence it came from.'}
         </p>
@@ -143,15 +104,23 @@ export function TryReview({
           const { flag, rank } = piece.marked;
           const isFocus = rank === focusRank;
           return (
-            <div key={flag.id} className="flagged" data-focus={isFocus}>
+            <div
+              key={flag.id}
+              ref={lineUp.targetRef(rank)}
+              className="flagged"
+              data-focus={isFocus}
+              data-hover={rank === hoverRank && !isFocus}
+              onMouseEnter={() => lineUp.setHoverRank(rank)}
+              onMouseLeave={() => lineUp.setHoverRank(null)}
+            >
               <button
                 type="button"
                 className="gutter-rank"
                 aria-pressed={isFocus}
-                aria-label={`Flag ${rank}: ${flag.clauseType}`}
-                onClick={() => setFocusRank(rank)}
+                aria-label={`Flag ${numberOf(rank)}: ${flag.clauseType}`}
+                onClick={() => lineUp.focusFromPage(rank)}
               >
-                {rank}
+                {numberOf(rank)}
               </button>
               <p className="sentence">
                 <mark>{piece.text}</mark>
@@ -174,7 +143,7 @@ export function TryReview({
           );
         })}
 
-        {(flags.length === 0 || rankedGaps.length > 0) && cleanRead === null && (
+        {(flags.length === 0 || gapEntries.length > 0) && cleanRead === null && (
           <div className="page-foot">
             {flags.length === 0 && (
               <aside className="gap-note" aria-label="What Redline found">
@@ -187,25 +156,29 @@ export function TryReview({
               </aside>
             )}
 
-            {rankedGaps.length > 0 && (
+            {gapEntries.length > 0 && (
               <div className="gap-notes">
                 <p className="gap-caption">
-                  {rankedGaps.length === 1
+                  {gapEntries.length === 1
                     ? 'One gap: a term this agreement leaves out. There’s no sentence to quote, because it isn’t in the document.'
-                    : `${rankedGaps.length} gaps: terms this agreement leaves out. There are no sentences to quote, because they aren’t in the document.`}
+                    : `${gapEntries.length} gaps: terms this agreement leaves out. There are no sentences to quote, because they aren’t in the document.`}
                 </p>
-                {rankedGaps.map(({ gap, rank }) => (
+                {gapEntries.map(({ finding, number }) => (
                   <aside
-                    key={gap.id}
+                    key={finding.id}
+                    ref={lineUp.targetRef(finding.rank)}
                     className="gap-note"
-                    data-focus={rank === focusRank}
-                    aria-label={`Gap ${rank}: ${gap.statement}`}
+                    data-focus={finding.rank === focusRank}
+                    data-hover={finding.rank === hoverRank && finding.rank !== focusRank}
+                    onMouseEnter={() => lineUp.setHoverRank(finding.rank)}
+                    onMouseLeave={() => lineUp.setHoverRank(null)}
+                    aria-label={`Gap ${number}: ${finding.gap.statement}`}
                   >
                     <p className="gap-statement">
-                      <span className="gap-rank">{rank}</span>
-                      {gap.statement}
+                      <span className="gap-rank">{number}</span>
+                      {finding.gap.statement}
                     </p>
-                    <p className="gap-explain">{gap.explanation}</p>
+                    <p className="gap-explain">{finding.gap.explanation}</p>
                   </aside>
                 ))}
               </div>

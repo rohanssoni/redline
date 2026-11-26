@@ -142,7 +142,7 @@ function whatRedlineFound(flags: number, gaps: number): string {
 /** How many flags there are, in words a reader would use. */
 function flagCount(count: number): string {
   if (count === 1) return 'One clause here could cost you.';
-  return `${count} clauses here could cost you, worst first.`;
+  return `${count} clauses here could cost you.`;
 }
 
 /** The same for gaps, which have no sentence to quote. */

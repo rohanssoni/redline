@@ -258,6 +258,86 @@ p {
   }
 }
 
+/* Keeping the list and the page in step (ADR-0024). The list opens in
+   document order with a severity band on each flag; the switch above it gives
+   worst first. On a wide screen the list stays beside the page as it scrolls,
+   and a picked or hovered entry is joined to its sentence by a dotted line. */
+
+.rank-order {
+  margin: 2px 0 6px;
+}
+
+.rank-text {
+  display: grid;
+  min-width: 0;
+}
+
+.rank-tag {
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+}
+
+/* High stands out in weight and ink. Crimson stays with the flag in focus
+   (DESIGN.md, the One Focus Rule). */
+.rank-tag[data-band="high"] {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* A gap is a whole-sentence statement; two lines in the list, the rest on hover
+   and in its note at the foot of the page. */
+.rank-index button[data-kind="gap"] .rank-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Crimson while it joins the picked finding to its entry; ink while it only
+   previews a hovered one, so two crimson things are always the same finding. */
+.line-up-leader {
+  position: fixed;
+  height: 0;
+  border-top: 1px dotted var(--markup);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.line-up-leader[data-hover="true"] {
+  border-top-color: var(--ink);
+}
+
+/* A hovered sentence takes an ink change bar and number, without opening its
+   reading. */
+.flagged[data-hover="true"] .sentence::before {
+  background: var(--ink);
+}
+
+.flagged[data-hover="true"] .gutter-rank {
+  color: var(--ink);
+}
+
+@media (min-width: 1280px) {
+  .review-lineup .rank-index {
+    bottom: 0;
+  }
+
+  .rank-index-sticky {
+    position: sticky;
+    /* Below the sticky site header (57px), with the same air as the page. */
+    top: 80px;
+    max-height: calc(100vh - 104px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  /* Room after the page, so the last gap notes can still scroll level with
+     their entries. */
+  .review-lineup {
+    padding-bottom: 60vh;
+  }
+}
+
 /* The page */
 
 .page {
@@ -668,9 +748,14 @@ p {
 }
 
 /* A gap takes the crimson the way a flag does, on its top rule only. It has no
-   change bar and no highlight, because there is no sentence to mark. */
+   change bar and no highlight, because there is no sentence to mark. Hovered,
+   the rule turns ink. */
 .gap-note[data-focus="true"] {
   border-top-color: var(--markup);
+}
+
+.gap-note[data-hover="true"] {
+  border-top-color: var(--ink);
 }
 
 .gap-statement {

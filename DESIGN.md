@@ -348,4 +348,4 @@ Every component is quiet by default and reacts precisely. Keyboard focus on any 
 - **Don't** round anything except the filled action (4px).
 - **Don't** set text in Resting Mark grey; at 2.6:1 on white it is for bars and rules only.
 - **Don't** uppercase or letter-space labels, or add a kicker or eyebrow line above a heading.
-- **Don't** show a gap with a change bar, highlight or leader; it has no source sentence to mark.
+- **Don't** show a gap with a change bar, highlight or comment leader; it has no source sentence to mark. The one line a gap gets is the dotted line that joins a picked gap's note to its entry in the findings list, because lining up needs it (ADR-0024).

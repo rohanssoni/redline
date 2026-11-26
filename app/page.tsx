@@ -19,8 +19,8 @@ export default function Home() {
         <section className="hero" aria-labelledby="hero-heading">
           <h1 id="hero-heading">See which sentences in a client&apos;s agreement could cost you.</h1>
           <p className="lede">
-            Redline ranks the clauses that could hurt you, worst first, and quotes the exact sentence
-            each one comes from. You can check every flag against your own copy.
+            Redline marks the clauses that could hurt you and quotes the exact sentence each one
+            comes from. You can check every flag against your own copy.
           </p>
           <div className="action-row">
             <a className="action" href={TRY_HREF}>
