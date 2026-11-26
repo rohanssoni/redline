@@ -22,13 +22,13 @@ Not open for reinterpretation. If one of these looks wrong, raise it — do not 
 Build these capabilities and stop:
 
 1. Plain-English summary of the document.
-2. Clauses that could hurt the reader, ranked by severity, each showing its exact source sentence.
+2. Clauses that could hurt the reader, each ranked by severity and showing its exact source sentence. The list opens in document order, with a Worst first switch (ADR-0024).
 3. A drafted counter-offer for each flagged clause.
 4. A question box that answers only from the document.
 5. An editable list of the user's own red lines, which drives the analysis.
 6. A saved library of past documents.
 7. Pasted text as an alternative to uploading a file. Upload stays the recommended input.
-8. A landing page that demonstrates flags with their source sentences and offers one action, trying it on a document. That try works once without an account and returns only the summary and ranked flags.
+8. A landing page that demonstrates flags with their source sentences and offers one action, trying it on a document. That try works once without an account and returns only the summary and ranked flags, shown in the same list as item 2 (ADR-0024).
 
 When something looks like the obvious next step and is not on that list, ask before building it.
 
