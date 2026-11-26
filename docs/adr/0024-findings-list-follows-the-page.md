@@ -30,7 +30,7 @@ computed for every read. Only the default order of the list changes.
 ## Considered options
 
 Three ways of keeping the list and the page in step were built and compared on one
-real read of a test agreement (branch `prototype/flag-sync`):
+real read of a test agreement. The prototype is kept at commit [`0cd05ec`](https://github.com/rohanssoni/redline/tree/0cd05ec/app/prototype/flag-sync), under `app/prototype/flag-sync/`:
 
 - **Follow along.** The list stays in the margin. Picking an entry centres its
   sentence on screen, and the entry for the sentence being read is marked as the
