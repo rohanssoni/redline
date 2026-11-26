@@ -258,6 +258,81 @@ p {
   }
 }
 
+/* Keeping the list and the page in step (ADR-0024). The list opens in
+   document order with a severity band on each flag; the switch above it gives
+   worst first. On a wide screen the list stays beside the page as it scrolls,
+   and a picked or hovered entry is joined to its sentence by a dotted line. */
+
+.rank-order {
+  margin: 2px 0 6px;
+}
+
+.rank-text {
+  display: grid;
+  min-width: 0;
+}
+
+.rank-tag {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* High takes the crimson the rest of the markup uses. */
+.rank-tag[data-band="high"] {
+  color: var(--markup);
+}
+
+/* A gap is a whole-sentence statement; two lines in the list, the rest on hover
+   and in its note at the foot of the page. */
+.rank-index button[data-kind="gap"] .rank-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-up-leader {
+  position: fixed;
+  height: 0;
+  border-top: 1px dotted var(--markup);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* A hovered sentence takes the crimson change bar and number, without opening
+   its reading. */
+.flagged[data-hover="true"] .sentence::before {
+  background: var(--markup);
+}
+
+.flagged[data-hover="true"] .gutter-rank {
+  color: var(--markup);
+}
+
+@media (min-width: 1280px) {
+  .review-lineup .rank-index {
+    bottom: 0;
+  }
+
+  .rank-index-sticky {
+    position: sticky;
+    /* Below the sticky site header (57px), with the same air as the page. */
+    top: 80px;
+    max-height: calc(100vh - 104px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  /* Room after the page, so the last gap notes can still scroll level with
+     their entries. */
+  .review-lineup {
+    padding-bottom: 60vh;
+  }
+}
+
 /* The page */
 
 .page {
@@ -667,10 +742,29 @@ p {
   border-top: 2px solid var(--rest-line);
 }
 
-/* A gap takes the crimson the way a flag does, on its top rule only. It has no
-   change bar and no highlight, because there is no sentence to mark. */
+/* A picked gap is marked the way a picked flag is: crimson rule, change bar and
+   number. It has no highlight, because there is no sentence to mark. */
+.gap-note {
+  position: relative;
+}
+
 .gap-note[data-focus="true"] {
   border-top-color: var(--markup);
+}
+
+.gap-note[data-focus="true"]::before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 3px;
+  bottom: 3px;
+  width: 2px;
+  background: var(--markup);
+}
+
+.gap-note[data-focus="true"] .gap-rank {
+  color: var(--markup);
+  font-weight: 800;
 }
 
 .gap-statement {
