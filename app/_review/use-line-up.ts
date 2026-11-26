@@ -12,6 +12,8 @@ export interface Leader {
   top: number;
   left: number;
   width: number;
+  /** True while it previews a hovered finding rather than joining the picked one. */
+  hover: boolean;
 }
 
 /**
@@ -32,7 +34,8 @@ export function useLineUp(initialRank: number | null) {
   const [focusRank, setFocusRank] = useState<number | null>(initialRank);
   const [hoverRank, setHoverRank] = useState<number | null>(null);
   const [leader, setLeader] = useState<Leader | null>(null);
-  const [settled, setSettled] = useState(0);
+  // Bumped after each scroll settles, so the line is redrawn where things ended up.
+  const [, setSettled] = useState(0);
   const entries = useRef(new Map<number, HTMLElement>());
   const targets = useRef(new Map<number, HTMLElement>());
   const timers = useRef<number[]>([]);
@@ -46,81 +49,114 @@ export function useLineUp(initialRank: number | null) {
     [],
   );
 
-  const pick = useCallback((rank: number) => {
-    setFocusRank(rank);
-    timers.current.forEach((timer) => window.clearTimeout(timer));
-    const behavior: ScrollBehavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      ? 'auto'
-      : 'smooth';
+  const behavior = (): ScrollBehavior =>
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
 
-    function align() {
-      const entry = entries.current.get(rank);
-      const target = targets.current.get(rank);
-      if (!target) return;
-      if (entry && window.matchMedia(BESIDE_THE_PAGE).matches) {
+  /** Replaces any scroll still waiting from an earlier pick, so it cannot pull the page back. */
+  const schedule = useCallback((...steps: [() => void, number][]) => {
+    timers.current.forEach((timer) => window.clearTimeout(timer));
+    timers.current.length = 0;
+    for (const [step, ms] of steps) timers.current.push(window.setTimeout(step, ms));
+  }, []);
+
+  /** Where nothing can sit level, keep the target on screen, as a narrow screen does. */
+  const keepInView = useCallback((rank: number) => {
+    const target = targets.current.get(rank);
+    if (!target) return;
+    const top = target.getBoundingClientRect().top;
+    if (top < 72 || top > window.innerHeight * 0.6) {
+      target.scrollIntoView({ block: 'center', behavior: behavior() });
+    }
+    setSettled((n) => n + 1);
+  }, []);
+
+  const pick = useCallback(
+    (rank: number) => {
+      setFocusRank(rank);
+
+      function align() {
+        const entry = entries.current.get(rank);
+        const target = targets.current.get(rank);
+        if (!target) return;
+        if (!entry || !window.matchMedia(BESIDE_THE_PAGE).matches) return keepInView(rank);
         // The entry's first line is the line the target is brought level with.
         const delta = target.getBoundingClientRect().top - entry.getBoundingClientRect().top;
-        if (Math.abs(delta) > 2) window.scrollBy({ top: delta, behavior });
-      } else {
-        const top = target.getBoundingClientRect().top;
-        if (top < 72 || top > window.innerHeight * 0.6) {
-          target.scrollIntoView({ block: 'center', behavior });
-        }
+        if (Math.abs(delta) > 2) window.scrollBy({ top: delta, behavior: behavior() });
+        setSettled((n) => n + 1);
       }
-      setSettled((n) => n + 1);
-    }
 
-    // Once the list and the page have rendered the new pick, and again once the
-    // previous reading has folded shut and moved everything below it.
-    timers.current.length = 0;
-    timers.current.push(window.setTimeout(align, 60), window.setTimeout(align, FOLD_MS + 420));
-  }, []);
+      // Once the list and the page have rendered the new pick, and again once the
+      // previous reading has folded shut and moved everything below it.
+      schedule([align, 60], [align, FOLD_MS + 420]);
+    },
+    [schedule, keepInView],
+  );
 
   // Picking a mark on the page picks its entry. Where the list scrolls on its
-  // own beside the page, the entry is brought into the list's view; the page
-  // itself does not move, because the reader is already looking at the mark.
-  const focusFromPage = useCallback((rank: number) => {
-    setFocusRank(rank);
-    const entry = entries.current.get(rank);
-    const list = entry?.closest<HTMLElement>(".rank-index-sticky");
-    if (!entry || !list || !window.matchMedia(BESIDE_THE_PAGE).matches) return;
-    const e = entry.getBoundingClientRect();
-    const l = list.getBoundingClientRect();
-    if (e.top < l.top) list.scrollTop -= l.top - e.top;
-    else if (e.bottom > l.bottom) list.scrollTop += e.bottom - l.bottom;
-  }, []);
+  // own beside the page, the entry is brought into the list's view. The page
+  // moves only if the reading folding shut above the mark carries it off screen.
+  const focusFromPage = useCallback(
+    (rank: number) => {
+      setFocusRank(rank);
+      schedule([() => keepInView(rank), FOLD_MS + 20]);
+      const entry = entries.current.get(rank);
+      const list = entry?.closest<HTMLElement>('.rank-index-sticky');
+      if (!entry || !list || !window.matchMedia(BESIDE_THE_PAGE).matches) return;
+      const e = entry.getBoundingClientRect();
+      const l = list.getBoundingClientRect();
+      if (e.top < l.top) list.scrollTop -= l.top - e.top;
+      else if (e.bottom > l.bottom) list.scrollTop += e.bottom - l.bottom;
+    },
+    [schedule, keepInView],
+  );
 
   // The line is drawn from the hovered entry if there is one, else the picked one.
   const shown = hoverRank ?? focusRank;
-  useLayoutEffect(() => {
-    function draw() {
-      const entry = shown === null ? undefined : entries.current.get(shown);
-      const target = shown === null ? undefined : targets.current.get(shown);
-      if (!entry || !target || !window.matchMedia(BESIDE_THE_PAGE).matches) {
-        return setLeader(null);
-      }
+  const draw = useRef(() => {});
+  draw.current = () => {
+    const entry = shown === null ? undefined : entries.current.get(shown);
+    const target = shown === null ? undefined : targets.current.get(shown);
+    let next: Leader | null = null;
+    if (entry && target && window.matchMedia(BESIDE_THE_PAGE).matches) {
       const a = entry.getBoundingClientRect();
       const b = target.getBoundingClientRect();
-      if (b.bottom < 0 || b.top > window.innerHeight) return setLeader(null);
       const y = a.top + 13;
-      if (y < b.top - 4 || y > b.bottom + 4) return setLeader(null);
-      setLeader({ top: y, left: a.right + 6, width: Math.max(0, b.left - a.right - 22) });
+      const onScreen = b.bottom >= 0 && b.top <= window.innerHeight;
+      if (onScreen && y >= b.top - 4 && y <= b.bottom + 4) {
+        next = {
+          top: y,
+          left: a.right + 6,
+          width: Math.max(0, b.left - a.right - 22),
+          hover: shown !== focusRank,
+        };
+      }
     }
-    draw();
-    window.addEventListener('scroll', draw, { passive: true });
-    window.addEventListener('resize', draw);
-    return () => {
-      window.removeEventListener('scroll', draw);
-      window.removeEventListener('resize', draw);
-    };
-  }, [shown, settled]);
+    setLeader((was) => (sameLeader(was, next) ? was : next));
+  };
 
+  // After every render, because switching the order moves the entries without
+  // anything else here changing.
+  useLayoutEffect(() => draw.current());
+
+  // Capture, so a scroll inside the list as well as the page's own redraws it.
   useEffect(() => {
+    const redraw = () => draw.current();
+    window.addEventListener('scroll', redraw, { passive: true, capture: true });
+    window.addEventListener('resize', redraw);
     const pending = timers.current;
-    return () => pending.forEach((timer) => window.clearTimeout(timer));
+    return () => {
+      window.removeEventListener('scroll', redraw, { capture: true });
+      window.removeEventListener('resize', redraw);
+      pending.forEach((timer) => window.clearTimeout(timer));
+    };
   }, []);
 
   return { focusRank, hoverRank, setHoverRank, pick, focusFromPage, entryRef, targetRef, leader };
+}
+
+function sameLeader(a: Leader | null, b: Leader | null) {
+  if (a === null || b === null) return a === b;
+  return a.top === b.top && a.left === b.left && a.width === b.width && a.hover === b.hover;
 }
 
 function keep(map: Map<number, HTMLElement>, rank: number, el: HTMLElement | null) {

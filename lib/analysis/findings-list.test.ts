@@ -117,6 +117,20 @@ describe('what is never listed', () => {
   });
 });
 
+describe('a flag and a gap with the same id', () => {
+  // Flag ids and gap ids are named apart, so the same name can come back as both.
+  it.each(['document', 'worst'] as const)('keeps the flag on its sentence and lists both once (%s)', (order) => {
+    const layout = layOutReview(text, [fees, scope, term], [gap('fees', 30)], order);
+
+    expect(layout.entries.map((e) => `${e.finding.kind}-${e.finding.id}`).sort()).toEqual(
+      ['flag-fees', 'flag-scope', 'flag-term', 'gap-fees'],
+    );
+    const feesMark = layout.pieces.find((p) => p.kind === 'flag' && p.marked.flag.id === 'fees');
+    const feesEntry = layout.entries.find((e) => e.finding.kind === 'flag' && e.finding.id === 'fees');
+    expect(feesMark?.kind === 'flag' && layout.numberOf(feesMark.marked.rank)).toBe(feesEntry?.number);
+  });
+});
+
 describe('short lists', () => {
   it('lists nothing for a clean read', () => {
     const layout = layOutReview(text, [], [], 'document');

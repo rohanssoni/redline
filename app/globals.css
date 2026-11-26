@@ -273,16 +273,15 @@ p {
 }
 
 .rank-tag {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 0.8125rem;
   color: var(--ink-muted);
 }
 
-/* High takes the crimson the rest of the markup uses. */
+/* High stands out in weight and ink. Crimson stays with the flag in focus
+   (DESIGN.md, the One Focus Rule). */
 .rank-tag[data-band="high"] {
-  color: var(--markup);
+  font-weight: 700;
+  color: var(--ink);
 }
 
 /* A gap is a whole-sentence statement; two lines in the list, the rest on hover
@@ -294,6 +293,8 @@ p {
   overflow: hidden;
 }
 
+/* Crimson while it joins the picked finding to its entry; ink while it only
+   previews a hovered one, so two crimson things are always the same finding. */
 .line-up-leader {
   position: fixed;
   height: 0;
@@ -302,14 +303,18 @@ p {
   z-index: 2;
 }
 
-/* A hovered sentence takes the crimson change bar and number, without opening
-   its reading. */
+.line-up-leader[data-hover="true"] {
+  border-top-color: var(--ink);
+}
+
+/* A hovered sentence takes an ink change bar and number, without opening its
+   reading. */
 .flagged[data-hover="true"] .sentence::before {
-  background: var(--markup);
+  background: var(--ink);
 }
 
 .flagged[data-hover="true"] .gutter-rank {
-  color: var(--markup);
+  color: var(--ink);
 }
 
 @media (min-width: 1280px) {
@@ -742,31 +747,15 @@ p {
   border-top: 2px solid var(--rest-line);
 }
 
-/* A picked gap is marked the way a picked flag is: crimson rule, change bar and
-   number. It has no highlight, because there is no sentence to mark. */
-.gap-note {
-  position: relative;
-}
-
+/* A gap takes the crimson the way a flag does, on its top rule only. It has no
+   change bar and no highlight, because there is no sentence to mark. Hovered,
+   the rule turns ink. */
 .gap-note[data-focus="true"] {
   border-top-color: var(--markup);
 }
 
-.gap-note[data-focus="true"]::before,
-.gap-note[data-hover="true"]::before {
-  content: "";
-  position: absolute;
-  left: -16px;
-  top: 3px;
-  bottom: 3px;
-  width: 2px;
-  background: var(--markup);
-}
-
-.gap-note[data-hover="true"] .gap-rank,
-.gap-note[data-focus="true"] .gap-rank {
-  color: var(--markup);
-  font-weight: 800;
+.gap-note[data-hover="true"] {
+  border-top-color: var(--ink);
 }
 
 .gap-statement {

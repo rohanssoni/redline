@@ -105,6 +105,7 @@ export function LineUpLeader({ leader }: { leader: Leader | null }) {
   return (
     <div
       className="line-up-leader"
+      data-hover={leader.hover}
       aria-hidden="true"
       style={{ top: leader.top, left: leader.left, width: leader.width }}
     />

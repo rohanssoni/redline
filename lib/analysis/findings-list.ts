@@ -48,7 +48,10 @@ export function layOutReview<F extends Flag, G extends GapClaim>(
   order: FindingsOrder,
 ): ReviewLayout {
   const findings = rankFindings(flags, gaps);
-  const rankOf = new Map(findings.map((finding) => [finding.id, finding.rank]));
+  // Flags only: a gap may share a flag's id, and must never take its mark.
+  const rankOf = new Map(
+    findings.flatMap((finding) => (finding.kind === 'flag' ? [[finding.id, finding.rank] as const] : [])),
+  );
   const { pieces } = markUpDocument(text, flags, (flag, index) => rankOf.get(flag.id) ?? index + 1);
   const byRank = new Map(findings.map((finding) => [finding.rank, finding]));
 
