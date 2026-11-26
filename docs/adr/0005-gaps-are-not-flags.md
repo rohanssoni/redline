@@ -1,6 +1,7 @@
 # Gaps are a separate output type from flags
 
-Status: accepted
+Status: accepted. Amended by ADR-0024: severity governs order only in the Worst first
+list; the default list is in document order.
 
 Redline reports two kinds of finding. A **flag** is a clause in the document that could
 harm the reader, and it always shows its source sentence. A **gap** is a term the

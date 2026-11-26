@@ -17,9 +17,13 @@ _Avoid_: red line hit, trigger, violation record
 A second, independent model call that reads one red line match and says whether the sentence really breaks that red line. What it says is written to the judge log and read later by whoever audits the matching. It changes nothing the reader sees, including when it disagrees or never answers.
 _Avoid_: validator, checker, verifier, grader
 
+**Finding**:
+A flag or a gap: one item in the findings list. Used only where both kinds are meant; where one kind is meant, it is called a flag or a gap.
+_Avoid_: result, item, issue
+
 **Flag**:
 A clause Redline identifies as capable of harming the reader. Always bound to a source sentence.
-_Avoid_: issue, warning, finding, risk
+_Avoid_: issue, warning, risk
 
 **Source sentence**:
 The exact, verbatim sentence in the uploaded document that a flag is derived from.
@@ -44,6 +48,22 @@ _Avoid_: missing clause, omission, absence
 **Severity**:
 What a flag or gap costs the reader if it fires. Not how often it fires.
 _Avoid_: priority, score, risk level
+
+**Severity band**:
+The named range a severity falls in, High, Medium or Low. The reader is shown the band, never the number. In document order it is the only sign of how bad a flag is.
+_Avoid_: level, tier, rating
+
+**Document order**:
+The default order of the findings list: flags in the order their source sentences appear in the document, then gaps. A finding's number is then its place on the page, not its rank.
+_Avoid_: page order, reading order, natural order
+
+**Worst first**:
+The order of the findings list by severity, highest first, with each gap placed by its severity among the flags. The reader switches to it from document order. A finding's number is then its rank.
+_Avoid_: ranked view, severity order, sorted
+
+**Line up**:
+What picking a finding in the list does: the page moves until the finding's place on the page sits level with its list item, joined by a line. A flag's place is its source sentence; a gap's place is the foot of the page.
+_Avoid_: jump to, scroll to, sync, highlight
 
 **Severity threshold**:
 The severity a flag or gap has to reach before the reader is shown it at all. One named constant, `SEVERITY_THRESHOLD`, and the clean read is defined as nothing reaching it.

@@ -56,7 +56,8 @@ required at the summary level — those belong to flags and gaps, not the summar
 
 ### 2. Flags and gaps, ranked by severity, each showing its source
 
-Two output types, both rendered in one severity-ordered list (ADR-0005):
+Two output types, called **findings** together, both rendered in one list beside the
+marked-up document (ADR-0005, amended by ADR-0024):
 
 - **Flag** — a clause capable of harming the reader. Always shows its exact
   **source sentence**, verified verbatim against the stored document text before
@@ -69,7 +70,25 @@ Two output types, both rendered in one severity-ordered list (ADR-0005):
   late-payment term"). Ranks by severity alongside flags but cannot claim a
   citation (ADR-0005).
 
-**Severity** ranks what the item costs the reader if it fires, not how often it
+**Order of the list (ADR-0024).** The list opens in **document order**: flags in the
+order their source sentences appear, then gaps, each numbered by its place on the
+page. Every flag shows its **severity band** (High, Medium or Low), because in this
+order the position no longer says how bad a flag is. A **Worst first** switch puts
+the list in severity order, where gaps sit among flags by severity and the number is
+the rank. The mark on each source sentence carries the same number as the list in
+both orders. Severity is still computed and ranked for every read; only the default
+order changes. Because gaps come after every flag in document order, a High gap sits
+at the foot of the default list.
+
+**Keeping the list and the page in step (ADR-0024).** Picking a finding **lines it
+up**: the page scrolls until the flag's source sentence, or the gap's note at the
+foot of the page, sits level with its entry in the list, and a line joins the two.
+Hovering an entry draws the line without scrolling. Picking a marked sentence on the
+page selects its entry in the list.
+
+Both of these apply to both review screens: the try and a saved document.
+
+**Severity** ranks what the finding costs the reader if it fires, not how often it
 fires (ADR-0004). Use the dangerous-vs-unusual test from ADR-0004: a clause that
 lets the other side change the reader's economics unilaterally after the reader is
 committed is dangerous; a non-standard but symmetric clause is not, and gets
