@@ -1,0 +1,84 @@
+Redline eval run, started 2026-11-26T15:07:01.911Z
+Model: z-ai/glm-5.3-flash through OpenRouter, settings from .env.local
+Gold set: kept outside the repo (written by a model, so every figure here is an upper bound)
+
+DOCUMENTS
+---------
+  Scored: 3 of 3
+  Left out because a model call failed: 0
+
+RECALL
+------
+  Planted clauses found:              4/4 (100.0%)
+  Found and named the right type:     4/4 (100.0%)
+  In scope: unilateral-modification, non-compete, auto-renewal, limitation-of-liability, indemnification, fee-escalators-and-late-fees
+
+  By type                               found            named right
+    unilateral-modification            1/1 (100.0%)     1/1 (100.0%)
+    non-compete                        1/1 (100.0%)     1/1 (100.0%)
+    auto-renewal                       0/0 (n/a)        0/0 (n/a)
+    limitation-of-liability            0/0 (n/a)        0/0 (n/a)
+    indemnification                    1/1 (100.0%)     1/1 (100.0%)
+    fee-escalators-and-late-fees       1/1 (100.0%)     1/1 (100.0%)
+
+  By the characters in the planted sentence
+    no special character               4/4 (100.0%)
+    at least one special character     0/0 (n/a)
+      curly quote or apostrophe        0/0 (n/a)
+      non-breaking space               0/0 (n/a)
+      fi or fl ligature                0/0 (n/a)
+      em dash                          0/0 (n/a)
+      two spaces in a row              0/0 (n/a)
+
+  Out of scope, never counted as a miss
+    arbitration-and-class-action-waiver: found anyway 1/1 (100.0%)
+      Moves no money and no obligation, so it fails the ADR-0004 test PRD.md uses for a flag, and every gold-set instance sends a dispute to arbitration whichever side brings it, the symmetric shape PRD.md says to drop.
+
+GROUNDEDNESS
+------------
+  Returned flags quoting the document exactly:  10/10 (100.0%)
+  Same, against the file before normalisation:  10/10 (100.0%)
+  Shown flags quoting the document exactly:     10/10 (100.0%)
+
+CLEAN DOCUMENTS
+---------------
+  Benign documents with no flags shown:  1/2 (50.0%)
+  Flags shown on benign documents:       2
+  Benign documents given the clean read: 0/2 (0.0%)
+    library-volunteer-agreement: 0 flags, 4 gaps, no clean read (completed)
+    swim-lesson-registration: 2 flags, 4 gaps, no clean read (completed)
+  Unusual-but-harmless sentences flagged: 1/1 (100.0%)
+
+PLANTED CLAUSES MISSED
+----------------------
+  None.
+
+EVERY FLAG SHOWN
+----------------
+  internship-agreement  90 high  Unilateral amendment of the Agreement and Handbook -> unilateral-modification  matches P-02
+    "The Firm may amend the Programme Handbook, the assessment structure, the teaching schedule and the terms of this Agreement at any time by issuing a revised version to the Analyst by email, and the revised version applies from the date of that email."
+  internship-agreement  85 high  Indemnity for breaches and publications -> indemnification  matches P-04
+    "The Analyst will indemnify the Firm and hold it harmless against any claim, loss or expense, including reasonable legal costs, arising out of a breach by the Analyst of Section 4 or Section 5, or out of anything the Analyst publishes about the Firm or a client of the Firm."
+  internship-agreement  75 high  Non-compete with a changeable Restricted List -> non-compete  matches P-03
+    "For six (6) months after the Programme ends, the Analyst will not accept an engagement, whether paid or unpaid and whether as an employee, a contractor or an intern, with any firm on the Restricted List issued to the Analyst in week one of the Programme, and will not approach any client of the Firm whose file the Analyst worked on."
+  internship-agreement  70 high  Arbitration and waiver of jury and class actions -> arbitration-and-class-action-waiver  matches P-05
+    "Any dispute between the Analyst and the Firm arising out of the Programme or out of this Agreement will be resolved by final and binding arbitration on an individual basis, administered under the employment rules of a nationally recognised provider, and the Analyst gives up any right to a jury trial and any right to bring or join a class or collective action."
+  internship-agreement  70 high  Early termination for any reason -> unmapped  matches nothing planted
+    "The Firm may end the Programme early for any reason on one week written notice."
+  internship-agreement  55 medium  Open-ended confidentiality obligation -> unmapped  matches nothing planted
+    "This obligation has no end date."
+  internship-agreement  50 medium  Late charge on housing advance set by the Handbook -> fee-escalators-and-late-fees  matches P-01
+    "any instalment not recovered within ten (10) days of its due date carries the late charge set out in the Programme Handbook until it is repaid in full."
+  internship-agreement  40 medium  Equipment replacement charge -> fee-escalators-and-late-fees  matches nothing planted
+    "An item not returned within five working days is charged at the replacement cost shown in the Programme Handbook."
+  swim-lesson-registration  55 medium  Partial and full forfeiture of the fee when giving up a place -> fee-escalators-and-late-fees  matches nothing planted
+    "A place given up later than that, and before the third lesson, is refunded at half the fee."
+  swim-lesson-registration  22 low  Discretionary carry-over of missed lessons -> unmapped  matches nothing planted
+    "Two or more missed lessons in a row may be carried into the following session at no charge, on the Centre's agreement."
+
+RETURNED FLAGS WHOSE QUOTE IS NOT IN THE DOCUMENT
+-------------------------------------------------
+  None.
+
+WHAT THE PIPELINE LOGGED
+------------------------

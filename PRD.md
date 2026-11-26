@@ -247,6 +247,32 @@ lines, or the library. A CAPTCHA or other third-party bot check on the no-accoun
   their own stated red line is a different signal than dismissing a borderline
   flag the model raised on its own.
 
+## How we measure it
+
+Before there are readers to measure, `npm run eval` reads a gold set of nine
+agreements through the real pipeline and counts three things. The gold set, the
+rules and the clause type mapping are in `eval/README.md`.
+
+- **Recall.** Of the planted clauses whose type this product flags, how many came
+  back as a flag. A planted clause counts as found when a flag quotes a sentence that
+  overlaps the planted one. Whether that flag also named the right type is reported
+  next to it, as a separate number. The gold set plants seven types. This product
+  flags six of them. It leaves out arbitration and class-action waivers, because they
+  move no money and no obligation, so they fail the test in capability 2, and every
+  one in the gold set binds whichever side brings a dispute, which is the symmetric
+  kind of clause capability 2 drops. They are listed as out of scope and never counted as misses.
+- **Groundedness.** Of all the flags the model returned, before any filter, how many
+  quote a sentence that appears in the document character for character. The
+  citation check means a reader never sees one that doesn't, so this measures how
+  often the model gets the quote right, not what the reader sees.
+- **Clean documents.** How many flags come back on the three documents that should
+  come back clean. Any flag there is an over-flag.
+
+**The limit.** A model wrote the gold set, so the clauses are hidden the way a model
+knows how to hide them and phrased the way a model recognises. These numbers are an
+upper bound on how the analysis does on real contracts. They are never a promise to
+a reader, and no figure from them goes in copy a reader sees.
+
 ## Assumptions and risks
 
 - **Willingness to pay is unvalidated.** `research/summary.md` found no first-person

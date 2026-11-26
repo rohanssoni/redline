@@ -1,0 +1,85 @@
+{
+  "run": "2026-10-30T16-48-37Z",
+  "flags": [
+    {
+      "number": 1,
+      "document": "adhesion-contract",
+      "clauseType": "Late notice locks you into a further full term",
+      "severity": 75,
+      "sourceSentence": "Notice delivered after that day takes effect at the end of the term that follows, and the dues for the intervening term remain payable in full.",
+      "paragraph": "Your initial membership term is twelve (12) months, beginning on the Commencement Date shown on your enrolment form. At the end of the initial term, and at the end of each term thereafter, your membership renews automatically for a further twelve (12) month term at the then-current rate. To stop a renewal you must deliver written notice of cancellation to the Member Services desk no later than three (3) days before the renewal date. Notice delivered after that day takes effect at the end of the term that follows, and the dues for the intervening term remain payable in full. A membership that has been suspended, frozen or placed on medical hold continues to renew on its original schedule."
+    },
+    {
+      "number": 2,
+      "document": "adhesion-contract",
+      "clauseType": "Suspension or medical hold does not stop renewal",
+      "severity": 65,
+      "sourceSentence": "A membership that has been suspended, frozen or placed on medical hold continues to renew on its original schedule.",
+      "paragraph": "Your initial membership term is twelve (12) months, beginning on the Commencement Date shown on your enrolment form. At the end of the initial term, and at the end of each term thereafter, your membership renews automatically for a further twelve (12) month term at the then-current rate. To stop a renewal you must deliver written notice of cancellation to the Member Services desk no later than three (3) days before the renewal date. Notice delivered after that day takes effect at the end of the term that follows, and the dues for the intervening term remain payable in full. A membership that has been suspended, frozen or placed on medical hold continues to renew on its original schedule."
+    },
+    {
+      "number": 3,
+      "document": "clean-document",
+      "clauseType": "Loss of fee on early termination by the Plot Holder",
+      "severity": 55,
+      "sourceSentence": "Where the Plot Holder gives notice, no refund is due, and the Plot Holder may harvest whatever is ready before the notice period runs out.",
+      "paragraph": "The Plot Holder may end this Licence at any time by giving the Association thirty days written notice, and the Association may end it on the same thirty days written notice. Where the Association gives notice, it will refund the fee in proportion to the months left in the season. Where the Plot Holder gives notice, no refund is due, and the Plot Holder may harvest whatever is ready before the notice period runs out."
+    },
+    {
+      "number": 4,
+      "document": "internship-agreement",
+      "clauseType": "earlyTermination",
+      "severity": 65,
+      "sourceSentence": "The Firm may end the Programme early for any reason on one week written notice.",
+      "paragraph": "The Programme is a fixed term engagement and carries no offer or promise of further employment. The Firm may end the Programme early for any reason on one week written notice."
+    },
+    {
+      "number": 5,
+      "document": "library-volunteer-agreement",
+      "clauseType": "Confidentiality of borrower records",
+      "severity": 25,
+      "sourceSentence": "The volunteer will treat borrower records as confidential and will not discuss what any named person has borrowed.",
+      "paragraph": "The volunteer will treat borrower records as confidential and will not discuss what any named person has borrowed."
+    },
+    {
+      "number": 6,
+      "document": "offer-letter",
+      "clauseType": "Signing payment clawback",
+      "severity": 55,
+      "sourceSentence": "If you resign or are terminated for cause within twelve (12) months of your start date, the full signing payment becomes repayable within thirty days of your last working day.",
+      "paragraph": "You will receive a one-time signing payment of $15,000 with your first pay cycle. If you resign or are terminated for cause within twelve (12) months of your start date, the full signing payment becomes repayable within thirty days of your last working day."
+    },
+    {
+      "number": 7,
+      "document": "phone-plan-terms",
+      "clauseType": "Balloon instalment balance on cancellation",
+      "severity": 75,
+      "sourceSentence": "Cancelling a promotional plan before the end of its term does not cancel a device instalment plan, and the unpaid instalment balance becomes due in full on your next bill.",
+      "paragraph": "Cancelling a promotional plan before the end of its term does not cancel a device instalment plan, and the unpaid instalment balance becomes due in full on your next bill."
+    },
+    {
+      "number": 8,
+      "document": "saas-subscription",
+      "clauseType": "Service credit as exclusive remedy",
+      "severity": 50,
+      "sourceSentence": "Where availability in a calendar month falls below that figure, your remedy is the service credit set out in the Service Credit Policy and nothing further.",
+      "paragraph": "We aim for availability of 99.5 percent in each calendar month, measured across the editor and the export tools and excluding scheduled maintenance we have announced at least forty-eight hours ahead. Where availability in a calendar month falls below that figure, your remedy is the service credit set out in the Service Credit Policy and nothing further."
+    },
+    {
+      "number": 9,
+      "document": "storage-unit-rental",
+      "clauseType": "Lien and sale of contents",
+      "severity": 95,
+      "sourceSentence": "Where rent or any charge is unpaid, the Operator has a lien on all property stored in the unit and may deny the Occupant access, overlock the unit, and after the notice period the law requires, sell the contents and apply the proceeds to what is owed.",
+      "paragraph": "Where rent or any charge is unpaid, the Operator has a lien on all property stored in the unit and may deny the Occupant access, overlock the unit, and after the notice period the law requires, sell the contents and apply the proceeds to what is owed."
+    },
+    {
+      "number": 10,
+      "document": "swim-lesson-registration",
+      "clauseType": "Refund tiers on giving up a place",
+      "severity": 55,
+      "sourceSentence": "A place given up later than that, and before the third lesson, is refunded at half the fee.",
+      "paragraph": "A place given up more than seven days before the first lesson is refunded in full. A place given up later than that, and before the third lesson, is refunded at half the fee. After the third lesson no refund is made."
+    }
+  ]
+}

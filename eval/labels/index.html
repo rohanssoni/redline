@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Label ten flags</title>
+<style>
+  :root {
+    --ink: #1d1f23;
+    --muted: #5f6670;
+    --line: #dfe2e6;
+    --paper: #ffffff;
+    --wash: #f5f6f8;
+    --mark: #fff1a8;
+    --pass: #1f7a4a;
+    --fail: #b3261e;
+    --focus: #2457c5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--ink);
+    background: var(--wash);
+  }
+  main { max-width: 780px; margin: 0 auto; padding: 24px 20px 64px; }
+  h1 { font-size: 1.35rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 0.95rem; }
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+  details.card { padding: 0; }
+  details summary {
+    cursor: pointer;
+    padding: 14px 22px;
+    font-weight: 600;
+    list-style-position: inside;
+  }
+  details[open] summary { border-bottom: 1px solid var(--line); }
+  .prd { padding: 6px 22px 18px; font-size: 0.95rem; }
+  .prd h2 { font-size: 1.05rem; margin: 18px 0 6px; }
+  .prd p, .prd ul { margin: 0 0 10px; }
+  .prd code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; }
+  .rule {
+    border-left: 4px solid var(--ink);
+    padding: 10px 14px;
+    background: var(--wash);
+    border-radius: 0 6px 6px 0;
+    margin: 0;
+  }
+  .status { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+  .progress { font-weight: 600; }
+  .dots { display: flex; gap: 6px; flex-wrap: wrap; }
+  .dot {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--paper);
+    font: inherit; font-size: 0.85rem; cursor: pointer; color: var(--ink);
+  }
+  .dot.done { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .dot.current { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .done-line {
+    margin-top: 12px; padding: 10px 12px; background: var(--wash);
+    border-radius: 6px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .done-line code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.95rem; user-select: all; }
+  .meta { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; margin: 0 0 16px; }
+  .meta dt { color: var(--muted); }
+  .meta dd { margin: 0; font-weight: 600; }
+  .paragraph { font-size: 1.02rem; margin: 0 0 18px; white-space: pre-wrap; }
+  mark { background: var(--mark); color: inherit; padding: 1px 0; border-radius: 2px; }
+  .choices { display: flex; gap: 10px; margin-bottom: 14px; }
+  .choice {
+    flex: 1; padding: 12px; font: inherit; font-weight: 700; letter-spacing: 0.03em;
+    border-radius: 8px; border: 2px solid var(--line); background: var(--paper); cursor: pointer; color: var(--ink);
+  }
+  .choice[data-value="PASS"][aria-pressed="true"] { background: var(--pass); border-color: var(--pass); color: #fff; }
+  .choice[data-value="FAIL"][aria-pressed="true"] { background: var(--fail); border-color: var(--fail); color: #fff; }
+  label.field { display: block; font-weight: 600; margin-bottom: 6px; }
+  input[type="text"], textarea {
+    width: 100%; font: inherit; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink);
+  }
+  textarea { min-height: 120px; resize: vertical; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .history { color: var(--muted); font-size: 0.9rem; margin-top: 10px; }
+  .nav { display: flex; justify-content: space-between; gap: 10px; }
+  .nav button, .btn {
+    font: inherit; padding: 9px 16px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--paper); cursor: pointer; color: var(--ink);
+  }
+  .nav button:disabled { opacity: 0.4; cursor: default; }
+  .hint { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 10px; }
+  .banner {
+    display: none; background: #fdecea; border: 1px solid #f3b8b2; color: #7a1c15;
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
+    align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between;
+  }
+  .banner.show { display: flex; }
+  .saved { color: var(--muted); font-size: 0.85rem; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Label ten flags</h1>
+  <p class="sub" id="sub">Loading…</p>
+
+  <div class="banner" id="banner" role="alert">
+    <span>The labelling server isn’t answering, so labels aren’t being saved to <code>labels.json</code>. They are still kept in this browser.</span>
+    <button class="btn" type="button" id="copy-labels">Copy my labels</button>
+  </div>
+
+  <details class="card" id="prd-panel">
+    <summary>What this product flags, and the rule</summary>
+    <div class="prd">
+      <div id="prd-sections">Loading PRD.md…</div>
+      <h2>The rule</h2>
+      <p class="rule"><strong>PASS</strong> if the quoted sentence really is the kind of clause the flag names and really costs the reader something. Otherwise <strong>FAIL</strong>.</p>
+    </div>
+  </details>
+
+  <section class="card">
+    <div class="status">
+      <span class="progress" id="progress">0 of 10 labelled</span>
+      <span class="saved" id="saved"></span>
+    </div>
+    <div class="dots" id="dots" style="margin-top:10px"></div>
+    <div class="done-line" id="done-line" hidden>
+      <code id="done-text"></code>
+      <button class="btn" type="button" id="copy-done">Copy</button>
+    </div>
+  </section>
+
+  <section class="card" id="flag-view">
+    <dl class="meta">
+      <dt>Flag</dt><dd id="f-number"></dd>
+      <dt>Document</dt><dd id="f-document"></dd>
+      <dt>Clause type</dt><dd id="f-type"></dd>
+      <dt>Severity</dt><dd id="f-severity"></dd>
+    </dl>
+    <p class="paragraph" id="f-paragraph"></p>
+    <div class="choices" role="group" aria-label="Label">
+      <button class="choice" type="button" data-value="PASS" aria-pressed="false">PASS</button>
+      <button class="choice" type="button" data-value="FAIL" aria-pressed="false">FAIL</button>
+    </div>
+    <label class="field" for="f-note">One sentence on why</label>
+    <input type="text" id="f-note" autocomplete="off">
+    <div class="history" id="f-history"></div>
+  </section>
+
+  <section class="card" id="end-view" hidden>
+    <label class="field" for="reflection">What changed in how I judge</label>
+    <textarea id="reflection"></textarea>
+  </section>
+
+  <div class="nav">
+    <button type="button" id="prev">← Previous</button>
+    <button type="button" id="next">Next →</button>
+  </div>
+  <p class="hint">Use the ← and → keys to move between flags when you aren’t typing.</p>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var STORAGE_KEY = 'redline-flag-labels';
+  var flags = [];
+  var run = '';
+  var state = null;
+  var index = 0;
+  var serverUp = true;
+  var noteTimer = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function now() { return new Date().toISOString(); }
+
+  function emptyState() {
+    var s = { run: run, flags: {}, changesOfMind: 0, reflection: '', updatedAt: now() };
+    flags.forEach(function (f) {
+      s.flags[f.number] = { label: null, note: '', labelledAt: null, history: [] };
+    });
+    return s;
+  }
+
+  /** Fills in anything a saved file is missing, so an older or partial file still loads. */
+  function complete(saved) {
+    var s = emptyState();
+    if (!saved || typeof saved !== 'object') return s;
+    s.changesOfMind = typeof saved.changesOfMind === 'number' ? saved.changesOfMind : 0;
+    s.reflection = typeof saved.reflection === 'string' ? saved.reflection : '';
+    s.updatedAt = typeof saved.updatedAt === 'string' ? saved.updatedAt : s.updatedAt;
+    flags.forEach(function (f) {
+      var entry = saved.flags && saved.flags[f.number];
+      if (entry) {
+        s.flags[f.number] = {
+          label: entry.label === 'PASS' || entry.label === 'FAIL' ? entry.label : null,
+          note: typeof entry.note === 'string' ? entry.note : '',
+          labelledAt: entry.labelledAt || null,
+          history: Array.isArray(entry.history) ? entry.history : []
+        };
+      }
+    });
+    return s;
+  }
+
+  function readLocal() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch (e) { return null; }
+  }
+
+  function writeLocal() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* storage full or blocked */ }
+  }
+
+  function setServerUp(up) {
+    serverUp = up;
+    $('banner').classList.toggle('show', !up);
+  }
+
+  function saveToServer() {
+    return fetch('/labels', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state)
+    }).then(function (res) {
+      if (!res.ok) throw new Error('save refused');
+      setServerUp(true);
+      $('saved').textContent = 'Saved ' + new Date().toLocaleTimeString();
+    }).catch(function () {
+      setServerUp(false);
+      $('saved').textContent = 'Not saved to the server';
+    });
+  }
+
+  function save() {
+    state.updatedAt = now();
+    writeLocal();
+    return saveToServer();
+  }
+
+  function isComplete(entry) { return entry.label !== null && entry.note.trim().length > 0; }
+
+  function timesWord(n) {
+    if (n === 0) return "didn't change my mind";
+    if (n === 1) return 'changed my mind once';
+    if (n === 2) return 'changed my mind twice';
+    return 'changed my mind ' + n + ' times';
+  }
+
+  function doneLine() {
+    var pass = 0, fail = 0;
+    flags.forEach(function (f) {
+      var l = state.flags[f.number].label;
+      if (l === 'PASS') pass += 1;
+      if (l === 'FAIL') fail += 1;
+    });
+    return pass + ' PASS, ' + fail + ' FAIL, ' + timesWord(state.changesOfMind);
+  }
+
+  function renderStatus() {
+    var labelled = 0, finished = 0;
+    var dots = $('dots');
+    dots.textContent = '';
+    flags.forEach(function (f, i) {
+      var entry = state.flags[f.number];
+      if (entry.label) labelled += 1;
+      if (isComplete(entry)) finished += 1;
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'dot' + (entry.label ? ' done' : '') + (i === index ? ' current' : '');
+      b.textContent = String(f.number);
+      b.setAttribute('aria-label', 'Flag ' + f.number + (entry.label ? ', labelled' : ', not labelled'));
+      b.addEventListener('click', function () { go(i); });
+      dots.appendChild(b);
+    });
+    var end = document.createElement('button');
+    end.type = 'button';
+    end.className = 'dot' + (index === flags.length ? ' current' : '');
+    end.textContent = '✓';
+    end.setAttribute('aria-label', 'What changed in how I judge');
+    end.addEventListener('click', function () { go(flags.length); });
+    dots.appendChild(end);
+
+    $('progress').textContent = labelled + ' of ' + flags.length + ' labelled';
+    var all = finished === flags.length;
+    $('done-line').hidden = !all;
+    if (all) $('done-text').textContent = doneLine();
+  }
+
+  function renderFlag() {
+    var onEnd = index === flags.length;
+    $('flag-view').hidden = onEnd;
+    $('end-view').hidden = !onEnd;
+    $('prev').disabled = index === 0;
+    $('next').disabled = onEnd;
+    $('next').textContent = index === flags.length - 1 ? 'Finish →' : 'Next →';
+
+    if (onEnd) {
+      $('reflection').value = state.reflection;
+      return;
+    }
+
+    var f = flags[index];
+    var entry = state.flags[f.number];
+    $('f-number').textContent = f.number + ' of ' + flags.length;
+    $('f-document').textContent = f.document;
+    $('f-type').textContent = f.clauseType;
+    $('f-severity').textContent = String(f.severity);
+
+    var p = $('f-paragraph');
+    p.textContent = '';
+    var at = f.paragraph.indexOf(f.sourceSentence);
+    if (at === -1) {
+      var m = document.createElement('mark');
+      m.textContent = f.sourceSentence;
+      p.appendChild(m);
+    } else {
+      p.appendChild(document.createTextNode(f.paragraph.slice(0, at)));
+      var mark = document.createElement('mark');
+      mark.textContent = f.sourceSentence;
+      p.appendChild(mark);
+      p.appendChild(document.createTextNode(f.paragraph.slice(at + f.sourceSentence.length)));
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll('.choice'), function (b) {
+      b.setAttribute('aria-pressed', String(entry.label === b.getAttribute('data-value')));
+    });
+    $('f-note').value = entry.note;
+
+    var h = $('f-history');
+    h.textContent = entry.history.length
+      ? 'Changed ' + entry.history.length + (entry.history.length === 1 ? ' time' : ' times') +
+        '. Earlier: ' + entry.history.map(function (x) { return x.label; }).join(', then ') + '.'
+      : '';
+  }
+
+  function render() { renderStatus(); renderFlag(); }
+
+  function go(i) {
+    flushNote();
+    index = Math.max(0, Math.min(flags.length, i));
+    render();
+  }
+
+  function setLabel(value) {
+    var f = flags[index];
+    var entry = state.flags[f.number];
+    if (entry.label === value) return;
+    if (entry.label !== null) {
+      entry.history.push({ label: entry.label, note: entry.note, givenAt: entry.labelledAt, changedAt: now() });
+      state.changesOfMind += 1;
+    }
+    entry.label = value;
+    entry.labelledAt = now();
+    save();
+    render();
+  }
+
+  function flushNote() {
+    if (noteTimer === null) return;
+    clearTimeout(noteTimer);
+    noteTimer = null;
+    save();
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).catch(function () { fallbackCopy(text); });
+    }
+    fallbackCopy(text);
+    return Promise.resolve();
+  }
+
+  function fallbackCopy(text) {
+    var t = document.createElement('textarea');
+    t.value = text;
+    t.setAttribute('readonly', '');
+    t.style.position = 'fixed';
+    t.style.top = '-1000px';
+    document.body.appendChild(t);
+    t.select();
+    try { document.execCommand('copy'); } catch (e) { /* nothing more to try */ }
+    document.body.removeChild(t);
+  }
+
+  function flash(button, text) {
+    var was = button.textContent;
+    button.textContent = text;
+    setTimeout(function () { button.textContent = was; }, 1500);
+  }
+
+  // --- A minimal Markdown renderer for the PRD panel. Words are never changed. ---
+
+  function inline(text, into) {
+    var re = /(\*\*[^*]+\*\*|`[^`]+`)/g;
+    var last = 0, m;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last) into.appendChild(document.createTextNode(text.slice(last, m.index)));
+      var token = m[0];
+      var el = document.createElement(token.charAt(0) === '`' ? 'code' : 'strong');
+      el.textContent = token.charAt(0) === '`' ? token.slice(1, -1) : token.slice(2, -2);
+      into.appendChild(el);
+      last = m.index + token.length;
+    }
+    if (last < text.length) into.appendChild(document.createTextNode(text.slice(last)));
+  }
+
+  function renderMarkdown(body, into) {
+    body.split(/\n\s*\n/).forEach(function (block) {
+      var lines = block.split('\n');
+      if (/^\s*- /.test(lines[0])) {
+        var ul = document.createElement('ul');
+        var current = null;
+        lines.forEach(function (line) {
+          if (/^\s*- /.test(line)) {
+            current = line.replace(/^\s*- /, '');
+            var li = document.createElement('li');
+            ul.appendChild(li);
+          } else {
+            current = (current || '') + ' ' + line.trim();
+          }
+          ul.lastChild.textContent = '';
+          inline(current, ul.lastChild);
+        });
+        into.appendChild(ul);
+      } else {
+        var p = document.createElement('p');
+        inline(lines.map(function (l) { return l.trim(); }).join(' '), p);
+        into.appendChild(p);
+      }
+    });
+  }
+
+  function loadPrd() {
+    fetch('/prd.json').then(function (r) { return r.json(); }).then(function (sections) {
+      var box = $('prd-sections');
+      box.textContent = '';
+      sections.forEach(function (s) {
+        var h = document.createElement('h2');
+        h.textContent = s.heading;
+        box.appendChild(h);
+        renderMarkdown(s.body, box);
+      });
+    }).catch(function () {
+      $('prd-sections').textContent = 'PRD.md could not be loaded. Start the server and reload.';
+    });
+  }
+
+  // --- Wiring ---
+
+  Array.prototype.forEach.call(document.querySelectorAll('.choice'), function (b) {
+    b.addEventListener('click', function () { setLabel(b.getAttribute('data-value')); });
+  });
+
+  $('f-note').addEventListener('input', function (e) {
+    state.flags[flags[index].number].note = e.target.value;
+    writeLocal();
+    renderStatus();
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(function () { noteTimer = null; save(); }, 500);
+  });
+  $('f-note').addEventListener('blur', flushNote);
+
+  $('reflection').addEventListener('input', function (e) {
+    state.reflection = e.target.value;
+    writeLocal();
+    clearTimeout(noteTimer);
+    noteTimer = setTimeout(function () { noteTimer = null; save(); }, 500);
+  });
+  $('reflection').addEventListener('blur', flushNote);
+
+  $('prev').addEventListener('click', function () { go(index - 1); });
+  $('next').addEventListener('click', function () { go(index + 1); });
+
+  document.addEventListener('keydown', function (e) {
+    var tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); go(index - 1); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); go(index + 1); }
+  });
+
+  $('copy-labels').addEventListener('click', function () {
+    var b = this;
+    copyText(JSON.stringify(state, null, 2)).then(function () { flash(b, 'Copied'); });
+  });
+  $('copy-done').addEventListener('click', function () {
+    var b = this;
+    copyText(doneLine()).then(function () { flash(b, 'Copied'); });
+  });
+
+  window.addEventListener('beforeunload', function () {
+    if (noteTimer !== null) { clearTimeout(noteTimer); state.updatedAt = now(); writeLocal(); }
+  });
+
+  // Checks the server every few seconds. When it comes back, what the browser kept is sent.
+  setInterval(function () {
+    fetch('/health', { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('down');
+      var wasDown = !serverUp;
+      setServerUp(true);
+      if (wasDown) saveToServer();
+    }).catch(function () { setServerUp(false); });
+  }, 4000);
+
+  // --- Start ---
+
+  fetch('/flags.json').then(function (r) { return r.json(); }).then(function (data) {
+    flags = data.flags;
+    run = data.run;
+    $('sub').textContent = 'Ten flags shown to the reader in eval run ' + run + '. One at a time.';
+    return fetch('/labels.json').then(function (r) { return r.json(); }).catch(function () {
+      setServerUp(false);
+      return null;
+    });
+  }).then(function (fromServer) {
+    var fromBrowser = readLocal();
+    var pick = fromServer;
+    // The browser's copy wins only when it is newer, as when the server was down.
+    if (fromBrowser && (!fromServer || (fromBrowser.updatedAt || '') > (fromServer.updatedAt || ''))) {
+      pick = fromBrowser;
+    }
+    state = complete(pick);
+    writeLocal();
+    if (pick !== fromServer) saveToServer();
+    render();
+  }).catch(function () {
+    var fromBrowser = readLocal();
+    $('sub').textContent = 'The labelling server isn’t answering. Start it with npm run label and reload.';
+    setServerUp(false);
+    if (fromBrowser) { state = fromBrowser; }
+  });
+
+  loadPrd();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+{
+  "run": 1,
+  "judgedAt": "2026-10-30T17:29:47.195Z",
+  "judge": "fresh general-purpose subagent, no tools used, prompt held only the rubric and the ten flags",
+  "flagsFrom": "eval/labels/flags.json (eval run 2026-10-30T16-48-37Z)",
+  "rubric": "# Rubric for judging a flag\n\nYou are given flags that Redline showed a reader. Each flag names a clause type and\nquotes one sentence from an agreement, with the paragraph around it. Judge each flag\non its own against this rubric, and nothing else.\n\n## The rule\n\n**PASS** if the quoted sentence really is the kind of clause the flag names and really\ncosts the reader something. Otherwise **FAIL**.\n\nBoth halves have to hold. A sentence that costs the reader something but isn't the\nkind of clause the flag names is a FAIL. So is a sentence that is the kind of clause\nthe flag names but costs the reader nothing.\n\n## Who the reader is\n\nFrom `PRD.md`:\n\n> Redline reads a document someone is about to be bound by and tells them what it\n> actually says.\n\nThe reader is the person being asked to sign. \"The other side\" is the party that\nwrote the agreement.\n\n## What a flag is, and the clause types\n\n`PRD.md` doesn't define clause types by name. Each flag names its own type in a few\nplain words, and the first half of the rule asks whether the quoted sentence is a\nclause of that type, in the ordinary meaning of the words the flag uses. Read the\nsentence in its paragraph. The paragraph can show what the sentence refers to, but the\nsentence is the one being judged.\n\nWhat the PRD says a flag is:\n\n> **Flag** — a clause capable of harming the reader.\n\nAnd what it says separates a clause worth flagging from one that is merely unusual:\n\n> Use the dangerous-vs-unusual test from ADR-0004: a clause that lets the other side\n> change the reader's economics unilaterally after the reader is committed is\n> dangerous; a non-standard but symmetric clause is not, and gets dropped rather than\n> ranked low.\n\n## What \"costs the reader something\" means\n\nThe PRD measures cost by consequence:\n\n> **Severity** ranks what the item costs the reader if it fires, not how often it\n> fires (ADR-0004).\n\nA sentence costs the reader something when, if what it allows happens, the reader\nends up worse off: money paid or lost, a right given up, or something they now have to\ndo or may not do. How likely that is doesn't matter. Whether it happens is enough.\n\n## Edge cases\n\nNone are settled yet. The labeller's notes are empty, so there is nothing to turn into\na general rule.\n\n## Not part of the rule\n\n- **Severity.** The flag's number is shown, but whether it is too high or too low\n  doesn't change PASS or FAIL.\n- **Whether the quote is in the document.** Code already checks that every quoted\n  sentence appears in the agreement word for word. Take the quote as given.\n- **Enforceability.** Whether a court would uphold the clause, and what the law\n  somewhere requires, are not part of the rule.\n\n## What to return\n\nFor each flag, its number, PASS or FAIL, and one sentence on why.\n",
+  "verdicts": [
+    {
+      "number": 1,
+      "verdict": "PASS",
+      "reason": "The sentence is a late-notice clause that commits the reader to a further full term and leaves them owing that term's dues, which costs them money."
+    },
+    {
+      "number": 2,
+      "verdict": "PASS",
+      "reason": "The sentence says suspension or medical hold does not stop renewal, so a reader on hold can still be renewed into another term at the then-current rate."
+    },
+    {
+      "number": 3,
+      "verdict": "PASS",
+      "reason": "The sentence takes away any refund when the Plot Holder ends the licence early, while the Association refunds pro rata when it ends it, so the reader loses the unused part of the fee."
+    },
+    {
+      "number": 4,
+      "verdict": "PASS",
+      "reason": "The sentence is an early-termination clause that lets the Firm end the Programme for any reason on one week's notice, which costs the reader the rest of the engagement."
+    },
+    {
+      "number": 5,
+      "verdict": "PASS",
+      "reason": "The sentence is a confidentiality clause about borrower records, and under the rubric's definition of cost it counts because it names something the reader may not do, even though the harm to the reader is minimal."
+    },
+    {
+      "number": 6,
+      "verdict": "PASS",
+      "reason": "The sentence is a signing-payment clawback that makes the reader repay the full $15,000 if they resign or are fired for cause within twelve months."
+    },
+    {
+      "number": 7,
+      "verdict": "PASS",
+      "reason": "The sentence makes the whole unpaid device instalment balance due on the next bill when the reader cancels early, which is a balloon payment on cancellation."
+    },
+    {
+      "number": 8,
+      "verdict": "PASS",
+      "reason": "The sentence limits the reader's remedy for an availability shortfall to the service credit and nothing further, so they give up any other remedy."
+    },
+    {
+      "number": 9,
+      "verdict": "PASS",
+      "reason": "The sentence gives the Operator a lien on the stored property and the right to lock the reader out and sell the contents, which can cost the reader their belongings."
+    },
+    {
+      "number": 10,
+      "verdict": "PASS",
+      "reason": "The sentence is one of the refund tiers for giving up a place, and it costs the reader half the fee."
+    }
+  ]
+}
