@@ -34,8 +34,8 @@ export default function TryPage() {
           <h1 id="try-heading">Read an agreement without an account</h1>
           <p className="lede">
             You get the plain-English summary and the clauses that could cost
-            you, worst first, each quoting the sentence it came from. Nothing is
-            saved: the words stay in this tab.
+            you, each rated High, Medium or Low and quoting the sentence it came
+            from. Nothing is saved: the words stay in this tab.
           </p>
           <p className="try-terms">
             {ANONYMOUS_TRIES_PER_DAY} reads a day from one connection. Redline

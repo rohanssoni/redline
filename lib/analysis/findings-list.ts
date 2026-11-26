@@ -12,7 +12,7 @@
  */
 
 import { markUpDocument, type DocumentPiece } from './marked-document';
-import { rankFindings, type Finding } from './ranking';
+import { rankFindings, type Finding, type RankedGap } from './ranking';
 import type { GapClaim } from './gap';
 import type { Flag } from './verified-flag';
 
@@ -27,13 +27,16 @@ export interface ListEntry {
   showBand: boolean;
 }
 
+/** A gap's entry, for its note at the foot of the page. */
+export type GapEntry = ListEntry & { finding: RankedGap };
+
 export interface ReviewLayout {
   /** The page, top to bottom. Each mark carries its finding's rank. */
   pieces: DocumentPiece[];
   /** The findings list, in the order asked for. */
   entries: ListEntry[];
   /** The listed gaps, for the foot of the page, in the order the list shows them. */
-  gaps: ListEntry[];
+  gaps: GapEntry[];
   /** The number the reader sees for the finding with this rank, on the page and in the list. */
   numberOf: (rank: number) => number;
 }
@@ -74,7 +77,7 @@ export function layOutReview<F extends Flag, G extends GapClaim>(
   return {
     pieces,
     entries,
-    gaps: entries.filter((entry) => entry.finding.kind === 'gap'),
+    gaps: entries.filter((entry): entry is GapEntry => entry.finding.kind === 'gap'),
     numberOf: (rank) => numbers.get(rank) ?? rank,
   };
 }
