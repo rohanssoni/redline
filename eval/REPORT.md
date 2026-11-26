@@ -1,8 +1,9 @@
 # Eval report
 
 This is what I measured about Redline's analysis, how I measured it, and what the
-numbers do and don't tell me. Every figure comes from a file in this repository, and
-each section names the file.
+numbers do and don't tell me. Every figure comes from a file in this repository,
+except the gold-set counts, which come from `../redline-gold-set/corpus/README.md`.
+Each section names the file.
 
 ## What the product does
 
@@ -47,7 +48,8 @@ branch `fix-renewals-and-quotes` (commit `471354d`), not on this branch.
 
 ### The documents
 
-Six documents have planted clauses and three are benign (`eval/gold-set/corpus/README.md`):
+The gold set is kept outside this repository. Six documents have planted clauses and
+three are benign (`../redline-gold-set/corpus/README.md`):
 
 | Document | Planted clauses |
 |---|---|
@@ -186,8 +188,8 @@ On every flag shown in the run, the judge passed **57 of 62**
 authority to draw payments, the software subscription's no-refund-on-cancellation, the
 storage unit's allocation of payments to the oldest debt, the library confidentiality
 clause, and the swimming registration's rule that a parent watches from the gallery.
-Nine of my ten flags are among the 62, and it passed all nine. The tenth, flag 5, it
-failed again.
+All ten of my labelled flags are among the 62. It passed nine of them and failed flag
+5 again (number 60 in the full run).
 
 ## The fix on `fix-renewals-and-quotes`
 
@@ -267,7 +269,9 @@ order.
    before I change anything. In a later run, the library volunteer agreement came back
    with 0 flags and still got no clean read, because it had 4 gaps. That suggests gaps
    alone block the clean read. That later run (`eval-runs/2026-11-26T15-07-01Z`) read
-   only three documents and is not the scored run.
+   only three documents and is not the scored run. `lib/analysis/clean-read.ts` defines
+   the clean read as no flags and no gaps above the severity threshold, which agrees
+   with what the later run showed.
 2. **Labels that can test the judge.** I'm doing this second. I need more labelled
    flags, including ones I fail and ones that matched a planted clause, and a written
    note on flag 5 that settles whether a duty that costs nothing counts. Until I fail

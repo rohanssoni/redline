@@ -1,0 +1,201 @@
+Redline eval run, started 2026-10-30T16:48:37.829Z
+Model: z-ai/glm-5.3-flash through OpenRouter, settings from .env.local
+Gold set: eval/gold-set (written by a model, so every figure here is an upper bound)
+
+DOCUMENTS
+---------
+  Scored: 9 of 9
+  Left out because a model call failed: 0
+
+RECALL
+------
+  Planted clauses found:              31/35 (88.6%)
+  Found and named the right type:     29/35 (82.9%)
+  In scope: unilateral-modification, non-compete, auto-renewal, limitation-of-liability, indemnification, fee-escalators-and-late-fees
+
+  By type                               found            named right
+    unilateral-modification            6/6 (100.0%)     5/6 (83.3%)
+    non-compete                        4/4 (100.0%)     4/4 (100.0%)
+    auto-renewal                       3/6 (50.0%)      3/6 (50.0%)
+    limitation-of-liability            3/4 (75.0%)      3/4 (75.0%)
+    indemnification                    6/6 (100.0%)     6/6 (100.0%)
+    fee-escalators-and-late-fees       9/9 (100.0%)     8/9 (88.9%)
+
+  By the characters in the planted sentence
+    no special character               23/26 (88.5%)
+    at least one special character     8/9 (88.9%)
+      curly quote or apostrophe        2/3 (66.7%)
+      non-breaking space               1/2 (50.0%)
+      fi or fl ligature                4/4 (100.0%)
+      em dash                          1/2 (50.0%)
+      two spaces in a row              1/1 (100.0%)
+
+  Out of scope, never counted as a miss
+    arbitration-and-class-action-waiver: found anyway 5/5 (100.0%)
+      Moves no money and no obligation, so it fails the ADR-0004 test PRD.md uses for a flag, and every gold-set instance sends a dispute to arbitration whichever side brings it, the symmetric shape PRD.md says to drop.
+
+GROUNDEDNESS
+------------
+  Returned flags quoting the document exactly:  63/65 (96.9%)
+  Same, against the file before normalisation:  61/65 (93.8%)
+  Shown flags quoting the document exactly:     62/62 (100.0%)
+
+CLEAN DOCUMENTS
+---------------
+  Benign documents with no flags shown:  0/3 (0.0%)
+  Flags shown on benign documents:       5
+  Benign documents given the clean read: 0/3 (0.0%)
+    clean-document: 2 flags, 3 gaps, no clean read (completed)
+    library-volunteer-agreement: 1 flags, 3 gaps, no clean read (completed)
+    swim-lesson-registration: 2 flags, 3 gaps, no clean read (completed)
+  Unusual-but-harmless sentences flagged: 2/7 (28.6%)
+
+PLANTED CLAUSES MISSED
+----------------------
+  adhesion-contract P-05 limitation-of-liability
+    "Meridian’s total liability to you for any claim arising out of or relating to this Agreement, your membership or your use of any facility — whether the claim is framed in contract, in negligence or otherwise — will not exceed the total dues and fees you paid to Meridian in the twelve (12) months immediately before the event giving rise to the claim."
+  saas-subscription P-03 auto-renewal
+    "Your subscription continues from one Billing Period into the next without further action by either of us, and we bill the plan fee then in effect on the first day of each new Billing Period."
+  storage-unit-rental P-01 auto-renewal
+    "After the initial term this Agreement continues on a month to month basis, each month renewing on the first day of the month without notice from either party, until it is ended as Section 8 describes."
+  phone-plan-terms P-03 auto-renewal
+    "Service on a twelve month promotional plan renews for a further twelve month term at the end of the term then running, at the standard rate for the plan rather than at the promotional rate, unless you tell us to stop the renewal before the last day of the current term."
+
+EVERY FLAG SHOWN
+----------------
+  adhesion-contract  80 high  Twelve-month non-compete within fifteen miles of a Meridian location -> non-compete  matches P-08
+    "For twelve (12) months after your Program candidacy ends for any reason, you will not teach, coach or deliver group ﬁtness instruction or personal training, whether as an employee, as a contractor or on your own account, at any facility within ﬁfteen (15) miles of a Meridian location at which you taught or trained."
+  adhesion-contract  80 high  Meridian can amend the Agreement, rules and fees by posting -> unilateral-modification  matches P-04
+    "Meridian may amend the Club Rules, the Schedule of Fees, the hours of operation, the class timetable and the terms of this Agreement at any time by posting the amended version at the club or on the Meridian website, and the amended version applies to you from the date it is posted."
+  adhesion-contract  75 high  Late notice locks you into a further full term -> fee-escalators-and-late-fees  matches nothing planted
+    "Notice delivered after that day takes effect at the end of the term that follows, and the dues for the intervening term remain payable in full."
+  adhesion-contract  75 high  One-way indemnity with Meridian choosing the lawyer -> indemnification  matches P-06
+    "You will indemnify, defend and hold harmless Meridian and its ofﬁcers, employees, instructors and contractors against any claim, demand, loss, liability or expense, including reasonable legal fees, that is brought by a third party and arises out of your use of the facilities, your conduct on club premises, the conduct of a guest you bring, or any service you provide to another member."
+  adhesion-contract  70 high  Automatic renewal with a three-day cancellation window -> auto-renewal  matches P-01
+    "At the end of the initial term, and at the end of each term thereafter, your membership renews automatically for a further twelve (12) month term at the then-current rate."
+  adhesion-contract  65 high  Suspension or medical hold does not stop renewal -> auto-renewal  matches nothing planted
+    "A membership that has been suspended, frozen or placed on medical hold continues to renew on its original schedule."
+  adhesion-contract  60 medium  Unilateral dues increase -> fee-escalators-and-late-fees  matches P-02
+    "Meridian may adjust dues once in any twelve (12) month period by the greater of six percent (6%) or the increase in the Consumer Price Index for All Urban Consumers over the preceding twelve months, on thirty (30) days notice to the email address on your account."
+  adhesion-contract  55 medium  Open-ended authority to draw payments from your account -> fee-escalators-and-late-fees  matches nothing planted
+    "You authorise Meridian to draw all dues, tuition and charges from the payment method on your account until this Agreement has ended and your balance is nil."
+  adhesion-contract  55 medium  Program tuition renews automatically at the then-current rate -> auto-renewal  matches P-07
+    "Program enrolment renews on each anniversary of your Program start date at the then-current tuition."
+  adhesion-contract  55 medium  Binding arbitration and class-action waiver -> arbitration-and-class-action-waiver  matches P-09
+    "Any dispute, claim or controversy between you and Meridian arising out of or relating to this Agreement, your membership or the Program will be resolved by ﬁnal and binding arbitration administered by a nationally recognised arbitration provider under its consumer arbitration rules, and you and Meridian each waive any right to a trial by jury and any right to bring or participate in a class, collective or representative action."
+  adhesion-contract  45 medium  Late charge set by an external, changeable fee schedule -> fee-escalators-and-late-fees  matches P-03
+    "Dues not received within ten (10) days of the draw date incur the late charge set out in the Schedule of Fees then in effect, which is posted at the Member Services desk and on the Meridian website and forms part of this Agreement."
+  clean-document  55 medium  Loss of fee on early termination by the Plot Holder -> fee-escalators-and-late-fees  matches nothing planted
+    "Where the Plot Holder gives notice, no refund is due, and the Plot Holder may harvest whatever is ready before the notice period runs out."
+  clean-document  45 medium  Forfeiture of anything left on the plot -> unmapped  matches nothing planted
+    "Anything left after 15 December becomes the Association’s to keep or to clear."
+  saas-subscription  85 high  Liability cap -> limitation-of-liability  matches P-06
+    "Northwind’s aggregate liability to you for every claim relating to the service, whether framed in contract, in tort, in warranty or otherwise — and including any claim arising from lost work, lost revenue or a failed export — will not exceed the amount you actually paid us under Section 2 for the Billing Period in which the claim arose."
+  saas-subscription  80 high  Annual auto-renewal -> auto-renewal  matches P-04
+    "On an annual plan the deadline to cancel is the day that falls thirty (30) days before the anniversary of the date you first subscribed, and where no cancellation is received by that day the term extends by a further twelve (12) months at the annual fee then in effect."
+  saas-subscription  75 high  Unilateral amendment of terms and pricing -> unilateral-modification  matches P-05
+    "We may amend these terms, the pricing page and the Fee Schedule at any time, an amended version takes effect when we post it at northwindstudio.example/terms, and your continued use of the service after it is posted is your acceptance of the amended version."
+  saas-subscription  70 high  Fee revision -> fee-escalators-and-late-fees  matches P-01
+    "We may revise the fee for any plan, and a revised fee applies to you from the start of the first Billing Period that begins more than thirty (30) days after we send notice of the revision to the email address on your account."
+  saas-subscription  70 high  Indemnification for uploaded content -> indemnification  matches P-07
+    "You will indemnify and hold Northwind harmless from any claim brought by a third party that relates to content you uploaded, exported or published through the service, including a claim that the content infringes a copyright, a trade mark or a right of privacy, and you will pay our reasonable legal costs of defending such a claim."
+  saas-subscription  60 medium  Arbitration and class waiver -> arbitration-and-class-action-waiver  matches P-08
+    "Any dispute between you and Northwind arising out of these terms or out of your use of the service will be settled by binding arbitration before a single arbitrator under the consumer rules of a recognised arbitration body, and you agree to bring any claim only in your individual capacity and not as a plaintiff or class member in any purported class, collective or representative proceeding."
+  saas-subscription  55 medium  Late interest and reactivation charge -> fee-escalators-and-late-fees  matches P-02
+    "Where a payment is not collected on its due date, interest accrues on the unpaid amount at one and one half percent (1.5%) per month from the due date until payment is received, and an account suspended for non-payment is subject to the reactivation charge published in the Fee Schedule on the Northwind support site."
+  saas-subscription  50 medium  Service credit as exclusive remedy -> non-compete  matches nothing planted
+    "Where availability in a calendar month falls below that figure, your remedy is the service credit set out in the Service Credit Policy and nothing further."
+  saas-subscription  45 medium  No refund on cancellation -> unmapped  matches nothing planted
+    "A cancellation made on or after the first day of a Billing Period takes effect at the end of that Billing Period, and the fee already collected for it is not refunded."
+  saas-subscription  40 medium  No refund on account closure -> unmapped  matches nothing planted
+    "Closing an account stops future Billing Periods and does not refund a Billing Period already begun."
+  saas-subscription  35 medium  Termination for breach of a vague section -> unmapped  matches nothing planted
+    "We may suspend or close an account that has not paid, that has breached Section 1, or that is being used to store content we are required by law to remove."
+  saas-subscription  30 low  Suspension on belief of shared use -> unmapped  matches nothing planted
+    "You may not share your credentials with anyone else, and an account we believe is being used by more than one person may be suspended while we ask you about it."
+  offer-letter  90 high  Post-termination non-compete -> non-compete  matches P-02
+    "For a period of twelve (12) months following the last day of your employment, whether that employment ends at your choice or at ours, you will not provide services that are the same as or substantially similar to those you provided to Ardent, whether as an employee, a consultant, a contractor, an adviser or a principal, to any business that develops, manufactures or sells a product within the Restricted Field as that term is defined in Exhibit B to this letter."
+  offer-letter  85 high  Unilateral amendment of policies and terms -> unilateral-modification  matches P-01
+    "Ardent may introduce, withdraw, interpret or amend any policy, handbook provision, benefit plan or term of employment described in this letter at any time and without your agreement, and the version in force on the Ardent intranet governs from the date it is published there."
+  offer-letter  80 high  Personal indemnity -> indemnification  matches P-04
+    "You will indemnify Ardent and hold it harmless against any claim, loss, liability or expense, including reasonable attorney fees, that arises out of a breach by you of Section 4 or Section 5 of this letter, or out of a claim by a former employer that your employment with Ardent breaches an obligation you owe to them."
+  offer-letter  60 medium  Non-solicitation of staff and business contacts -> non-compete  matches P-03
+    "For the same period you will not solicit, or assist anyone else in soliciting, any employee of Ardent with whom you worked in your final twelve months, and you will not approach any customer, distributor or contract manufacturer of Ardent that you dealt with in that period for the purpose of providing a product or service in the Restricted Field."
+  offer-letter  55 medium  Arbitration and class/jury waiver -> arbitration-and-class-action-waiver  matches P-05
+    "You and Ardent each agree that any claim arising out of or relating to your employment, its terms, or its end, including any statutory claim, will be resolved by final and binding arbitration administered under the employment rules of a nationally recognised arbitration provider, on an individual basis only, and each of us waives any right to a jury trial and any right to participate in a class, collective or representative action."
+  offer-letter  55 medium  Signing payment clawback -> fee-escalators-and-late-fees  matches nothing planted
+    "If you resign or are terminated for cause within twelve (12) months of your start date, the full signing payment becomes repayable within thirty days of your last working day."
+  offer-letter  40 medium  Discretionary bonus -> unmapped  matches nothing planted
+    "Bonus awards are discretionary in amount and in whether they are made at all, and an award is paid only if you are employed on the payment date."
+  storage-unit-rental  95 high  Lien and sale of contents -> unmapped  matches nothing planted
+    "Where rent or any charge is unpaid, the Operator has a lien on all property stored in the unit and may deny the Occupant access, overlock the unit, and after the notice period the law requires, sell the contents and apply the proceeds to what is owed."
+  storage-unit-rental  80 high  Indemnification -> indemnification  matches P-05
+    "The Occupant will indemnify, defend and hold the Operator harmless from every claim, demand, loss, cost and expense, including reasonable attorney fees, brought by any person and arising out of the Occupant's use of the unit or the premises, the property stored in the unit, or the acts of anyone the Occupant allows on to the premises."
+  storage-unit-rental  75 high  Liability cap -> limitation-of-liability  matches P-04
+    "The Operator's total liability to the Occupant for any loss of or damage to stored property, however caused, including loss or damage caused by the Operator's own negligence, is limited to five thousand dollars ($5,000) unless the Occupant has declared a higher value on the Unit Schedule and paid the corresponding value protection fee."
+  storage-unit-rental  70 high  Unilateral changes to agreement and rules -> unilateral-modification  matches P-06
+    "Gate hours, the rules posted in the office, and the terms of this Agreement may be changed by the Operator on notice posted at the facility and sent to the Occupant's last known email address, and the changed version applies to the Occupant from the first day of the month after it is posted."
+  storage-unit-rental  65 high  Rent increase -> unmapped  matches P-02
+    "The Operator may increase the monthly rent on not less than thirty (30) days written notice to the Occupant, and the increased rent is due on the first rent day falling after the notice period ends."
+  storage-unit-rental  55 medium  Fees set by external schedule -> fee-escalators-and-late-fees  matches P-03
+    "Rent not received by the sixth day of the month incurs the late charge shown in the Schedule of Charges posted in the ofﬁce and on the Harbour Road website, and each further notice the Operator is required to send about an unpaid balance incurs the administration charge shown in the same schedule."
+  storage-unit-rental  50 medium  Insurance obligation -> unmapped  matches nothing planted
+    "Where the Occupant does not, the Occupant carries the risk of loss and the Operator is not an insurer of anything in the unit."
+  storage-unit-rental  40 medium  Termination by Operator -> unmapped  matches nothing planted
+    "The Operator may end this Agreement on thirty days written notice."
+  storage-unit-rental  35 medium  Allocation of payments -> fee-escalators-and-late-fees  matches nothing planted
+    "The Operator may apply any payment received to the oldest amount outstanding."
+  storage-unit-rental  30 low  No refund of prepaid rent -> unmapped  matches nothing planted
+    "Rent already paid for the month in which the Occupant moves out is not refunded."
+  storage-unit-rental  25 low  Right of entry -> unmapped  matches nothing planted
+    "The Operator may enter the unit to inspect it, to repair the premises, or where the Operator reasonably believes the contents present a danger, and will leave notice of the entry in or on the unit."
+  phone-plan-terms  85 high  Rate plan / charge change -> fee-escalators-and-late-fees  matches P-04
+    "Cascade may change any term of this Agreement, any charge, and any feature of your rate plan, and the change takes effect on the date stated in the notice we give you, which may be given on a bill, by message to your device, or by email."
+  phone-plan-terms  75 high  Indemnity -> indemnification  matches P-06
+    "You will indemnify and hold Cascade harmless from any claim, loss or expense, including reasonable legal fees, arising out of your use of the service, out of anything sent from or stored on your device, out of the use of your line by anyone you allow to use it, and out of any charge incurred on your account."
+  phone-plan-terms  75 high  Balloon instalment balance on cancellation -> unmapped  matches nothing planted
+    "Cancelling a promotional plan before the end of its term does not cancel a device instalment plan, and the unpaid instalment balance becomes due in full on your next bill."
+  phone-plan-terms  70 high  Liability cap -> limitation-of-liability  matches P-05
+    "Cascade’s entire liability to you for any claim relating to the service, a device, or this Agreement, whether the claim is made in contract, in negligence, in warranty or under any statute, is limited to the service charges applied to the affected line during the bill period in which the claim arose, and Cascade is not liable for lost profits, lost data, or any indirect or consequential loss."
+  phone-plan-terms  60 medium  Arbitration and class action waiver -> arbitration-and-class-action-waiver  matches P-07
+    "You and Cascade agree that any dispute arising out of or relating to this Agreement, the service or any device will be resolved by individual binding arbitration administered by a nationally recognised arbitration provider under its consumer rules, and both of us give up the right to a jury trial and the right to bring or join a class, collective or representative action."
+  phone-plan-terms  60 medium  Regulatory and administrative charges -> fee-escalators-and-late-fees  matches P-01
+    "Your bill includes a Regulatory Cost Recovery Charge and an Administrative Charge, neither of which is a tax or a charge required by any government, and Cascade may introduce, increase or remove either charge on notice given with the bill in which the change ﬁrst appears."
+  phone-plan-terms  45 medium  Late fees and restoral charge -> fee-escalators-and-late-fees  matches P-02
+    "An amount not paid by the due date shown on the bill incurs a late payment charge of the greater of five dollars ($5.00) or one and one half percent of the unpaid balance, applied each bill period until the balance is paid, and a restored line incurs the restoral charge shown in the Rate and Charge Guide."
+  phone-plan-terms  35 medium  No proration on cancellation -> unmapped  matches nothing planted
+    "Charges accrue to the end of the bill period in which you cancel, and a part bill period is not prorated."
+  internship-agreement  85 high  unilateralAmendment -> unilateral-modification  matches P-02
+    "The Firm may amend the Programme Handbook, the assessment structure, the teaching schedule and the terms of this Agreement at any time by issuing a revised version to the Analyst by email, and the revised version applies from the date of that email."
+  internship-agreement  85 high  indemnification -> indemnification  matches P-04
+    "The Analyst will indemnify the Firm and hold it harmless against any claim, loss or expense, including reasonable legal costs, arising out of a breach by the Analyst of Section 4 or Section 5, or out of anything the Analyst publishes about the Firm or a client of the Firm."
+  internship-agreement  75 high  nonCompete -> non-compete  matches P-03
+    "For six (6) months after the Programme ends, the Analyst will not accept an engagement, whether paid or unpaid and whether as an employee, a contractor or an intern, with any firm on the Restricted List issued to the Analyst in week one of the Programme, and will not approach any client of the Firm whose file the Analyst worked on."
+  internship-agreement  65 high  earlyTermination -> unmapped  matches nothing planted
+    "The Firm may end the Programme early for any reason on one week written notice."
+  internship-agreement  60 medium  arbitrationWaiver -> arbitration-and-class-action-waiver  matches P-05
+    "Any dispute between the Analyst and the Firm arising out of the Programme or out of this Agreement will be resolved by final and binding arbitration on an individual basis, administered under the employment rules of a nationally recognised provider, and the Analyst gives up any right to a jury trial and any right to bring or join a class or collective action."
+  internship-agreement  40 medium  lateFee -> fee-escalators-and-late-fees  matches P-01
+    "and any instalment not recovered within ten (10) days of its due date carries the late charge set out in the Programme Handbook until it is repaid in full."
+  internship-agreement  35 medium  equipmentCharge -> fee-escalators-and-late-fees  matches nothing planted
+    "An item not returned within five working days is charged at the replacement cost shown in the Programme Handbook."
+  internship-agreement  30 low  confidentialityPerpetual -> unmapped  matches nothing planted
+    "This obligation has no end date."
+  library-volunteer-agreement  25 low  Confidentiality of borrower records -> unmapped  matches nothing planted
+    "The volunteer will treat borrower records as confidential and will not discuss what any named person has borrowed."
+  swim-lesson-registration  55 medium  Refund tiers on giving up a place -> unmapped  matches nothing planted
+    "A place given up later than that, and before the third lesson, is refunded at half the fee."
+  swim-lesson-registration  25 low  Attendance condition on the parent or guardian -> unmapped  matches nothing planted
+    "A parent or guardian stays in the building for the whole lesson and watches from the viewing gallery rather than the poolside, so that the instructor has the pool edge clear."
+
+RETURNED FLAGS WHOSE QUOTE IS NOT IN THE DOCUMENT
+-------------------------------------------------
+  adhesion-contract  Liability capped at twelve months of dues
+    "Meridian's total liability to you for any claim arising out of or relating to this Agreement, your membership or your use of any facility — whether the claim is framed in contract, in negligence or otherwise — will not exceed the total dues and fees you paid to Meridian in the twelve (12) months immediately before the event giving rise to the claim."
+  phone-plan-terms  Automatic renewal at standard rate
+    "Service on a twelve month promotional plan renews for a further twelve month term at the standard rate for the plan rather than at the promotional rate, unless you tell us to stop the renewal before the last day of the current term."
+
+WHAT THE PIPELINE LOGGED
+------------------------
+  adhesion-contract: A flag was dropped because its source sentence is not in the document: },{-7 (Meridian's total liability to you for any claim arising out of or relating to this Agreement, your membership or your use of any facility — whether the claim is framed in contract, in negligence or otherwise — will not exceed the total dues and fees you paid to Meridian in the twelve (12) months immediately before the event giving rise to the claim.)
+  phone-plan-terms: A flag was dropped because its source sentence is not in the document: auto-renewal (Service on a twelve month promotional plan renews for a further twelve month term at the standard rate for the plan rather than at the promotional rate, unless you tell us to stop the renewal before the last day of the current term.)

@@ -1,0 +1,592 @@
+{
+  "startedAt": "2026-11-26T15:07:01.911Z",
+  "model": "z-ai/glm-5.3-flash",
+  "goldSet": "gold set kept outside the repo (corpus and fixtures)",
+  "redLines": [],
+  "inScopeTypes": [
+    "unilateral-modification",
+    "non-compete",
+    "auto-renewal",
+    "limitation-of-liability",
+    "indemnification",
+    "fee-escalators-and-late-fees"
+  ],
+  "outOfScope": {
+    "arbitration-and-class-action-waiver": "Moves no money and no obligation, so it fails the ADR-0004 test PRD.md uses for a flag, and every gold-set instance sends a dispute to arbitration whichever side brings it, the symmetric shape PRD.md says to drop."
+  },
+  "clauseTypeRules": [
+    {
+      "type": "arbitration-and-class-action-waiver",
+      "pattern": "arbitrat|class[- ]action|jury|right to sue|court waiver"
+    },
+    {
+      "type": "indemnification",
+      "pattern": "indemn|hold harmless|defend"
+    },
+    {
+      "type": "limitation-of-liability",
+      "pattern": "liabilit|damages cap|recovery cap|cap on (damages|recovery|claims)|limited (recovery|remedies)"
+    },
+    {
+      "type": "non-compete",
+      "pattern": "compet|solicit|restrictive covenant|restraint of trade|exclusiv"
+    },
+    {
+      "type": "auto-renewal",
+      "pattern": "renew|roll[- ]?over|evergreen|automatic (extension|continuation)|term extension"
+    },
+    {
+      "type": "unilateral-modification",
+      "pattern": "amend|modif|terms change|change (to|of) (the )?terms|unilateral (scope|terms|change)|scope change|rewrite|variation"
+    },
+    {
+      "type": "fee-escalators-and-late-fees",
+      "pattern": "fee|pric|\\brates?\\b|interest|\\blate\\b|charge|escalat|surcharge|tuition|dues|penalt|payment"
+    }
+  ],
+  "rates": {
+    "documents": {
+      "total": 3,
+      "scored": 3,
+      "leftOut": []
+    },
+    "recall": {
+      "count": 4,
+      "of": 4
+    },
+    "recallWithType": {
+      "count": 4,
+      "of": 4
+    },
+    "recallByType": [
+      {
+        "type": "unilateral-modification",
+        "found": {
+          "count": 1,
+          "of": 1
+        },
+        "withType": {
+          "count": 1,
+          "of": 1
+        }
+      },
+      {
+        "type": "non-compete",
+        "found": {
+          "count": 1,
+          "of": 1
+        },
+        "withType": {
+          "count": 1,
+          "of": 1
+        }
+      },
+      {
+        "type": "auto-renewal",
+        "found": {
+          "count": 0,
+          "of": 0
+        },
+        "withType": {
+          "count": 0,
+          "of": 0
+        }
+      },
+      {
+        "type": "limitation-of-liability",
+        "found": {
+          "count": 0,
+          "of": 0
+        },
+        "withType": {
+          "count": 0,
+          "of": 0
+        }
+      },
+      {
+        "type": "indemnification",
+        "found": {
+          "count": 1,
+          "of": 1
+        },
+        "withType": {
+          "count": 1,
+          "of": 1
+        }
+      },
+      {
+        "type": "fee-escalators-and-late-fees",
+        "found": {
+          "count": 1,
+          "of": 1
+        },
+        "withType": {
+          "count": 1,
+          "of": 1
+        }
+      }
+    ],
+    "recallByCharacters": {
+      "plain": {
+        "count": 4,
+        "of": 4
+      },
+      "special": {
+        "count": 0,
+        "of": 0
+      },
+      "byClass": [
+        {
+          "id": "curly-quote",
+          "label": "curly quote or apostrophe",
+          "found": {
+            "count": 0,
+            "of": 0
+          }
+        },
+        {
+          "id": "non-breaking-space",
+          "label": "non-breaking space",
+          "found": {
+            "count": 0,
+            "of": 0
+          }
+        },
+        {
+          "id": "ligature",
+          "label": "fi or fl ligature",
+          "found": {
+            "count": 0,
+            "of": 0
+          }
+        },
+        {
+          "id": "em-dash",
+          "label": "em dash",
+          "found": {
+            "count": 0,
+            "of": 0
+          }
+        },
+        {
+          "id": "double-space",
+          "label": "two spaces in a row",
+          "found": {
+            "count": 0,
+            "of": 0
+          }
+        }
+      ]
+    },
+    "outOfScope": [
+      {
+        "type": "arbitration-and-class-action-waiver",
+        "reason": "Moves no money and no obligation, so it fails the ADR-0004 test PRD.md uses for a flag, and every gold-set instance sends a dispute to arbitration whichever side brings it, the symmetric shape PRD.md says to drop.",
+        "foundAnyway": {
+          "count": 1,
+          "of": 1
+        }
+      }
+    ],
+    "groundedness": {
+      "count": 10,
+      "of": 10
+    },
+    "groundednessInFile": {
+      "count": 10,
+      "of": 10
+    },
+    "shownGroundedness": {
+      "count": 10,
+      "of": 10
+    },
+    "clean": {
+      "documents": {
+        "count": 1,
+        "of": 2
+      },
+      "flags": 2,
+      "cleanReads": {
+        "count": 0,
+        "of": 2
+      },
+      "perDocument": [
+        {
+          "id": "library-volunteer-agreement",
+          "flags": 0,
+          "gaps": 4,
+          "cleanRead": false,
+          "outcome": "completed"
+        },
+        {
+          "id": "swim-lesson-registration",
+          "flags": 2,
+          "gaps": 4,
+          "cleanRead": false,
+          "outcome": "completed"
+        }
+      ]
+    },
+    "unusualButHarmlessFlagged": {
+      "count": 1,
+      "of": 1
+    }
+  },
+  "documents": [
+    {
+      "id": "internship-agreement",
+      "outcome": "completed",
+      "durationMs": 15203,
+      "gaps": 6,
+      "cleanRead": false,
+      "notes": []
+    },
+    {
+      "id": "library-volunteer-agreement",
+      "outcome": "completed",
+      "durationMs": 10544,
+      "gaps": 4,
+      "cleanRead": false,
+      "notes": []
+    },
+    {
+      "id": "swim-lesson-registration",
+      "outcome": "completed",
+      "durationMs": 13517,
+      "gaps": 4,
+      "cleanRead": false,
+      "notes": []
+    }
+  ],
+  "planted": [
+    {
+      "documentId": "internship-agreement",
+      "id": "P-01",
+      "clauseType": "fee-escalators-and-late-fees",
+      "inScope": true,
+      "sourceSentence": "Where the Analyst takes the optional housing advance, it is repaid in six equal instalments deducted from the stipend, and any instalment not recovered within ten (10) days of its due date carries the late charge set out in the Programme Handbook until it is repaid in full.",
+      "characterClasses": [],
+      "found": true,
+      "typeMatched": true,
+      "matchedBy": [
+        "late-charge"
+      ]
+    },
+    {
+      "documentId": "internship-agreement",
+      "id": "P-02",
+      "clauseType": "unilateral-modification",
+      "inScope": true,
+      "sourceSentence": "The Firm may amend the Programme Handbook, the assessment structure, the teaching schedule and the terms of this Agreement at any time by issuing a revised version to the Analyst by email, and the revised version applies from the date of that email.",
+      "characterClasses": [],
+      "found": true,
+      "typeMatched": true,
+      "matchedBy": [
+        "unilateral-amendment"
+      ]
+    },
+    {
+      "documentId": "internship-agreement",
+      "id": "P-03",
+      "clauseType": "non-compete",
+      "inScope": true,
+      "sourceSentence": "For six (6) months after the Programme ends, the Analyst will not accept an engagement, whether paid or unpaid and whether as an employee, a contractor or an intern, with any firm on the Restricted List issued to the Analyst in week one of the Programme, and will not approach any client of the Firm whose file the Analyst worked on.",
+      "characterClasses": [],
+      "found": true,
+      "typeMatched": true,
+      "matchedBy": [
+        "non-compete"
+      ]
+    },
+    {
+      "documentId": "internship-agreement",
+      "id": "P-04",
+      "clauseType": "indemnification",
+      "inScope": true,
+      "sourceSentence": "The Analyst will indemnify the Firm and hold it harmless against any claim, loss or expense, including reasonable legal costs, arising out of a breach by the Analyst of Section 4 or Section 5, or out of anything the Analyst publishes about the Firm or a client of the Firm.",
+      "characterClasses": [],
+      "found": true,
+      "typeMatched": true,
+      "matchedBy": [
+        "indemnity"
+      ]
+    },
+    {
+      "documentId": "internship-agreement",
+      "id": "P-05",
+      "clauseType": "arbitration-and-class-action-waiver",
+      "inScope": false,
+      "sourceSentence": "Any dispute between the Analyst and the Firm arising out of the Programme or out of this Agreement will be resolved by final and binding arbitration on an individual basis, administered under the employment rules of a nationally recognised provider, and the Analyst gives up any right to a jury trial and any right to bring or join a class or collective action.",
+      "characterClasses": [],
+      "found": true,
+      "typeMatched": true,
+      "matchedBy": [
+        "arbitration"
+      ]
+    }
+  ],
+  "flags": [
+    {
+      "document": "internship-agreement",
+      "id": "unilateral-amendment",
+      "clauseType": "Unilateral amendment of the Agreement and Handbook",
+      "mappedType": "unilateral-modification",
+      "severity": 90,
+      "band": "high",
+      "sourceSentence": "The Firm may amend the Programme Handbook, the assessment structure, the teaching schedule and the terms of this Agreement at any time by issuing a revised version to the Analyst by email, and the revised version applies from the date of that email.",
+      "matchedPlanted": true,
+      "matchedPlantedIds": [
+        "P-02"
+      ],
+      "onUnusualButHarmless": false
+    },
+    {
+      "document": "internship-agreement",
+      "id": "indemnity",
+      "clauseType": "Indemnity for breaches and publications",
+      "mappedType": "indemnification",
+      "severity": 85,
+      "band": "high",
+      "sourceSentence": "The Analyst will indemnify the Firm and hold it harmless against any claim, loss or expense, including reasonable legal costs, arising out of a breach by the Analyst of Section 4 or Section 5, or out of anything the Analyst publishes about the Firm or a client of the Firm.",
+      "matchedPlanted": true,
+      "matchedPlantedIds": [
+        "P-04"
+      ],
+      "onUnusualButHarmless": false
+    },
+    {
+      "document": "internship-agreement",
+      "id": "non-compete",
+      "clauseType": "Non-compete with a changeable Restricted List",
+      "mappedType": "non-compete",
+      "severity": 75,
+      "band": "high",
+      "sourceSentence": "For six (6) months after the Programme ends, the Analyst will not accept an engagement, whether paid or unpaid and whether as an employee, a contractor or an intern, with any firm on the Restricted List issued to the Analyst in week one of the Programme, and will not approach any client of the Firm whose file the Analyst worked on.",
+      "matchedPlanted": true,
+      "matchedPlantedIds": [
+        "P-03"
+      ],
+      "onUnusualButHarmless": false
+    },
+    {
+      "document": "internship-agreement",
+      "id": "arbitration",
+      "clauseType": "Arbitration and waiver of jury and class actions",
+      "mappedType": "arbitration-and-class-action-waiver",
+      "severity": 70,
+      "band": "high",
+      "sourceSentence": "Any dispute between the Analyst and the Firm arising out of the Programme or out of this Agreement will be resolved by final and binding arbitration on an individual basis, administered under the employment rules of a nationally recognised provider, and the Analyst gives up any right to a jury trial and any right to bring or join a class or collective action.",
+      "matchedPlanted": true,
+      "matchedPlantedIds": [
+        "P-05"
+      ],
+      "onUnusualButHarmless": false
+    },
+    {
+      "document": "internship-agreement",
+      "id": "early-termination",
+      "clauseType": "Early termination for any reason",
+      "mappedType": null,
+      "severity": 70,
+      "band": "high",
+      "sourceSentence": "The Firm may end the Programme early for any reason on one week written notice.",
+      "matchedPlanted": false,
+      "matchedPlantedIds": [],
+      "onUnusualButHarmless": false
+    },
+    {
+      "document": "internship-agreement",
+      "id": "confidentiality",
+      "clauseType": "Open-ended confidentiality obligation",
+      "mappedType": null,
+      "severity": 55,
+      "band": "medium",
+      "sourceSentence": "This obligation has no end date.",
+      "matchedPlanted": false,
+      "matchedPlantedIds": [],
+      "onUnusualButHarmless": false
+    },
+    {
+      "document": "internship-agreement",
+      "id": "late-charge",
+      "clauseType": "Late charge on housing advance set by the Handbook",
+      "mappedType": "fee-escalators-and-late-fees",
+      "severity": 50,
+      "band": "medium",
+      "sourceSentence": "any instalment not recovered within ten (10) days of its due date carries the late charge set out in the Programme Handbook until it is repaid in full.",
+      "matchedPlanted": true,
+      "matchedPlantedIds": [
+        "P-01"
+      ],
+      "onUnusualButHarmless": false
+    },
+    {
+      "document": "internship-agreement",
+      "id": "equipment-charge",
+      "clauseType": "Equipment replacement charge",
+      "mappedType": "fee-escalators-and-late-fees",
+      "severity": 40,
+      "band": "medium",
+      "sourceSentence": "An item not returned within five working days is charged at the replacement cost shown in the Programme Handbook.",
+      "matchedPlanted": false,
+      "matchedPlantedIds": [],
+      "onUnusualButHarmless": true
+    },
+    {
+      "document": "swim-lesson-registration",
+      "id": "6a8b1c2d-3e4f-5a6b-7c8d-9e0f1a2b3c4d",
+      "clauseType": "Partial and full forfeiture of the fee when giving up a place",
+      "mappedType": "fee-escalators-and-late-fees",
+      "severity": 55,
+      "band": "medium",
+      "sourceSentence": "A place given up later than that, and before the third lesson, is refunded at half the fee.",
+      "matchedPlanted": false,
+      "matchedPlantedIds": [],
+      "onUnusualButHarmless": false
+    },
+    {
+      "document": "swim-lesson-registration",
+      "id": "7c9d2e3f-4a5b-6c7d-8e9f-0a1b2c3d4e5f",
+      "clauseType": "Discretionary carry-over of missed lessons",
+      "mappedType": null,
+      "severity": 22,
+      "band": "low",
+      "sourceSentence": "Two or more missed lessons in a row may be carried into the following session at no charge, on the Centre's agreement.",
+      "matchedPlanted": false,
+      "matchedPlantedIds": [],
+      "onUnusualButHarmless": false
+    }
+  ],
+  "returnedFlags": [
+    {
+      "document": "internship-agreement",
+      "id": "unilateral-amendment",
+      "clauseType": "Unilateral amendment of the Agreement and Handbook",
+      "mappedType": "unilateral-modification",
+      "severity": 90,
+      "sourceSentence": "The Firm may amend the Programme Handbook, the assessment structure, the teaching schedule and the terms of this Agreement at any time by issuing a revised version to the Analyst by email, and the revised version applies from the date of that email.",
+      "grounded": true,
+      "groundedInFile": true,
+      "matchedPlanted": true,
+      "matchedPlantedIds": [
+        "P-02"
+      ]
+    },
+    {
+      "document": "internship-agreement",
+      "id": "early-termination",
+      "clauseType": "Early termination for any reason",
+      "mappedType": null,
+      "severity": 70,
+      "sourceSentence": "The Firm may end the Programme early for any reason on one week written notice.",
+      "grounded": true,
+      "groundedInFile": true,
+      "matchedPlanted": false,
+      "matchedPlantedIds": []
+    },
+    {
+      "document": "internship-agreement",
+      "id": "non-compete",
+      "clauseType": "Non-compete with a changeable Restricted List",
+      "mappedType": "non-compete",
+      "severity": 75,
+      "sourceSentence": "For six (6) months after the Programme ends, the Analyst will not accept an engagement, whether paid or unpaid and whether as an employee, a contractor or an intern, with any firm on the Restricted List issued to the Analyst in week one of the Programme, and will not approach any client of the Firm whose file the Analyst worked on.",
+      "grounded": true,
+      "groundedInFile": true,
+      "matchedPlanted": true,
+      "matchedPlantedIds": [
+        "P-03"
+      ]
+    },
+    {
+      "document": "internship-agreement",
+      "id": "indemnity",
+      "clauseType": "Indemnity for breaches and publications",
+      "mappedType": "indemnification",
+      "severity": 85,
+      "sourceSentence": "The Analyst will indemnify the Firm and hold it harmless against any claim, loss or expense, including reasonable legal costs, arising out of a breach by the Analyst of Section 4 or Section 5, or out of anything the Analyst publishes about the Firm or a client of the Firm.",
+      "grounded": true,
+      "groundedInFile": true,
+      "matchedPlanted": true,
+      "matchedPlantedIds": [
+        "P-04"
+      ]
+    },
+    {
+      "document": "internship-agreement",
+      "id": "confidentiality",
+      "clauseType": "Open-ended confidentiality obligation",
+      "mappedType": null,
+      "severity": 55,
+      "sourceSentence": "This obligation has no end date.",
+      "grounded": true,
+      "groundedInFile": true,
+      "matchedPlanted": false,
+      "matchedPlantedIds": []
+    },
+    {
+      "document": "internship-agreement",
+      "id": "arbitration",
+      "clauseType": "Arbitration and waiver of jury and class actions",
+      "mappedType": "arbitration-and-class-action-waiver",
+      "severity": 70,
+      "sourceSentence": "Any dispute between the Analyst and the Firm arising out of the Programme or out of this Agreement will be resolved by final and binding arbitration on an individual basis, administered under the employment rules of a nationally recognised provider, and the Analyst gives up any right to a jury trial and any right to bring or join a class or collective action.",
+      "grounded": true,
+      "groundedInFile": true,
+      "matchedPlanted": true,
+      "matchedPlantedIds": [
+        "P-05"
+      ]
+    },
+    {
+      "document": "internship-agreement",
+      "id": "late-charge",
+      "clauseType": "Late charge on housing advance set by the Handbook",
+      "mappedType": "fee-escalators-and-late-fees",
+      "severity": 50,
+      "sourceSentence": "any instalment not recovered within ten (10) days of its due date carries the late charge set out in the Programme Handbook until it is repaid in full.",
+      "grounded": true,
+      "groundedInFile": true,
+      "matchedPlanted": true,
+      "matchedPlantedIds": [
+        "P-01"
+      ]
+    },
+    {
+      "document": "internship-agreement",
+      "id": "equipment-charge",
+      "clauseType": "Equipment replacement charge",
+      "mappedType": "fee-escalators-and-late-fees",
+      "severity": 40,
+      "sourceSentence": "An item not returned within five working days is charged at the replacement cost shown in the Programme Handbook.",
+      "grounded": true,
+      "groundedInFile": true,
+      "matchedPlanted": false,
+      "matchedPlantedIds": []
+    },
+    {
+      "document": "swim-lesson-registration",
+      "id": "6a8b1c2d-3e4f-5a6b-7c8d-9e0f1a2b3c4d",
+      "clauseType": "Partial and full forfeiture of the fee when giving up a place",
+      "mappedType": "fee-escalators-and-late-fees",
+      "severity": 55,
+      "sourceSentence": "A place given up later than that, and before the third lesson, is refunded at half the fee.",
+      "grounded": true,
+      "groundedInFile": true,
+      "matchedPlanted": false,
+      "matchedPlantedIds": []
+    },
+    {
+      "document": "swim-lesson-registration",
+      "id": "7c9d2e3f-4a5b-6c7d-8e9f-0a1b2c3d4e5f",
+      "clauseType": "Discretionary carry-over of missed lessons",
+      "mappedType": null,
+      "severity": 22,
+      "sourceSentence": "Two or more missed lessons in a row may be carried into the following session at no charge, on the Centre's agreement.",
+      "grounded": true,
+      "groundedInFile": true,
+      "matchedPlanted": false,
+      "matchedPlantedIds": []
+    }
+  ]
+}
