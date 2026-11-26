@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "roboto",
+        "files": [
+          "eval/labels/index.html"
+        ],
+        "createdAt": "2026-10-30T17:07:13.006Z",
+        "reason": "agent: internal labelling tool, not product UI; user asked for system font stacks only"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "sfmono-regular",
+        "files": [
+          "eval/labels/index.html"
+        ],
+        "createdAt": "2026-10-30T17:07:13.354Z",
+        "reason": "agent: system monospace stack in internal labelling tool; user asked for system fonts"
+      }
+    ]
+  }
+}
