@@ -165,13 +165,13 @@ export function DocumentReview({
   const [order, setOrder] = useState<FindingsOrder>('document');
   const layout = useMemo(() => layOutReview(text, flags, gaps, order), [text, flags, gaps, order]);
   const { pieces, entries, numberOf } = layout;
-  const rankedGaps = layout.gaps;
+  const gapEntries = layout.gaps;
   const onThePage = pieces.some((piece) => piece.kind === 'flag');
 
   // The first entry in document order is picked when the review opens, so the
   // opening state matches the opening order.
-  const sync = useLineUp(entries.length > 0 ? entries[0].finding.rank : null);
-  const { focusRank, hoverRank } = sync;
+  const lineUp = useLineUp(entries.length > 0 ? entries[0].finding.rank : null);
+  const { focusRank, hoverRank } = lineUp;
 
   return (
     <section className="review review-lineup doc-review" aria-labelledby="flags-heading">
@@ -186,9 +186,9 @@ export function DocumentReview({
           order={order}
           onOrder={setOrder}
           focusRank={focusRank}
-          onPick={sync.pick}
-          onHover={sync.setHoverRank}
-          entryRef={sync.entryRef}
+          onPick={lineUp.pick}
+          onHover={lineUp.setHoverRank}
+          entryRef={lineUp.entryRef}
           quiet={(finding) => finding.kind === 'flag' && quiet.has(finding.id)}
           aside={(finding) =>
             finding.kind === 'flag' && quiet.has(finding.id) ? (
@@ -197,7 +197,7 @@ export function DocumentReview({
           }
         />
       )}
-      <LineUpLeader leader={sync.leader} />
+      <LineUpLeader leader={lineUp.leader} />
 
       <article className="page" aria-label={`${name}, marked up`}>
         <p className="page-band">
@@ -222,20 +222,20 @@ export function DocumentReview({
           return (
             <div
               key={flag.id}
-              ref={sync.targetRef(rank)}
+              ref={lineUp.targetRef(rank)}
               className="flagged"
               data-focus={isFocus}
               data-hover={rank === hoverRank && !isFocus}
               data-quiet={isQuiet}
-              onMouseEnter={() => sync.setHoverRank(rank)}
-              onMouseLeave={() => sync.setHoverRank(null)}
+              onMouseEnter={() => lineUp.setHoverRank(rank)}
+              onMouseLeave={() => lineUp.setHoverRank(null)}
             >
               <button
                 type="button"
                 className="gutter-rank"
                 aria-pressed={isFocus}
                 aria-label={`Flag ${numberOf(rank)}: ${flag.clauseType}`}
-                onClick={() => sync.focusFromPage(rank)}
+                onClick={() => lineUp.focusFromPage(rank)}
               >
                 {numberOf(rank)}
               </button>
@@ -313,7 +313,7 @@ export function DocumentReview({
           );
         })}
 
-        {(flags.length === 0 || rankedGaps.length > 0) && (
+        {(flags.length === 0 || gapEntries.length > 0) && (
           <div className="page-foot">
             {/* Says only what it can see: this document has no flags on it, and
                 the gaps below are what is left. It never speaks for the whole
@@ -331,19 +331,22 @@ export function DocumentReview({
               </aside>
             )}
 
-            {rankedGaps.length > 0 && (
+            {gapEntries.length > 0 && (
               <div className="gap-notes">
                 <p className="gap-caption">
-                  {rankedGaps.length === 1
+                  {gapEntries.length === 1
                     ? 'One gap: a term this agreement leaves out. There’s no sentence to quote, because it isn’t in the document.'
-                    : `${rankedGaps.length} gaps: terms this agreement leaves out. There are no sentences to quote, because they aren’t in the document.`}
+                    : `${gapEntries.length} gaps: terms this agreement leaves out. There are no sentences to quote, because they aren’t in the document.`}
                 </p>
-                {rankedGaps.map(({ finding, number }) => (
+                {gapEntries.map(({ finding, number }) => (
                   <aside
                     key={finding.id}
-                    ref={sync.targetRef(finding.rank)}
+                    ref={lineUp.targetRef(finding.rank)}
                     className="gap-note"
                     data-focus={finding.rank === focusRank}
+                    data-hover={finding.rank === hoverRank && finding.rank !== focusRank}
+                    onMouseEnter={() => lineUp.setHoverRank(finding.rank)}
+                    onMouseLeave={() => lineUp.setHoverRank(null)}
                     aria-label={`Gap ${number}: ${finding.gap.statement}`}
                   >
                     <p className="gap-statement">

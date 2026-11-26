@@ -8,8 +8,7 @@ import {
   sampleTitle,
   type SampleFlag,
 } from "@/lib/sample-agreement";
-
-const FOLD_MS = 280;
+import { FOLD_MS } from "./_review/use-line-up";
 
 const flagBySentence = new Map(sampleFlags.map((flag) => [flag.sourceSentence, flag]));
 

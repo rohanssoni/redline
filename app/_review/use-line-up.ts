@@ -76,7 +76,19 @@ export function useLineUp(initialRank: number | null) {
     timers.current.push(window.setTimeout(align, 60), window.setTimeout(align, FOLD_MS + 420));
   }, []);
 
-  const focusFromPage = useCallback((rank: number) => setFocusRank(rank), []);
+  // Picking a mark on the page picks its entry. Where the list scrolls on its
+  // own beside the page, the entry is brought into the list's view; the page
+  // itself does not move, because the reader is already looking at the mark.
+  const focusFromPage = useCallback((rank: number) => {
+    setFocusRank(rank);
+    const entry = entries.current.get(rank);
+    const list = entry?.closest<HTMLElement>(".rank-index-sticky");
+    if (!entry || !list || !window.matchMedia(BESIDE_THE_PAGE).matches) return;
+    const e = entry.getBoundingClientRect();
+    const l = list.getBoundingClientRect();
+    if (e.top < l.top) list.scrollTop -= l.top - e.top;
+    else if (e.bottom > l.bottom) list.scrollTop += e.bottom - l.bottom;
+  }, []);
 
   // The line is drawn from the hovered entry if there is one, else the picked one.
   const shown = hoverRank ?? focusRank;

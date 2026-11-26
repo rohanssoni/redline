@@ -752,7 +752,8 @@ p {
   border-top-color: var(--markup);
 }
 
-.gap-note[data-focus="true"]::before {
+.gap-note[data-focus="true"]::before,
+.gap-note[data-hover="true"]::before {
   content: "";
   position: absolute;
   left: -16px;
@@ -762,6 +763,7 @@ p {
   background: var(--markup);
 }
 
+.gap-note[data-hover="true"] .gap-rank,
 .gap-note[data-focus="true"] .gap-rank {
   color: var(--markup);
   font-weight: 800;
